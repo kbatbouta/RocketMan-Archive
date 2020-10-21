@@ -14,7 +14,29 @@ namespace RocketMan.src
 
         public static byte PredictValueFromString(this String name)
         {
-            return 0;
+            if (false
+                || name.Contains("Combat")
+                || name.Contains("Melee")
+                || name.Contains("Range")
+                || name.Contains("Ability")
+                || name.Contains("Gain"))
+            {
+                return 0;
+            }
+            if (false
+                || name.Contains("Stuff")
+                || name.Contains("Cold")
+                || name.Contains("Hot")
+                || name.Contains("Insulation")
+                || name.Contains("WorkSpeed")
+                || name.Contains("Beauty")
+                || name.Contains("Comfort")
+                || name.Contains("Max")
+                || name.Contains("Min"))
+            {
+                return 128;
+            }
+            return 32;
         }
 
         public static int GetKey(StatWorker statWorker, StatRequest req, bool applyPostProcess)

@@ -168,7 +168,7 @@ namespace RocketMan.src
             statsSettings.Clear();
             foreach (StatDef def in defs)
             {
-                statsSettings.Add(new StatSettings() { stat = def.defName, expireAfter = defaultValue });
+                statsSettings.Add(new StatSettings() { stat = def.defName, expireAfter = def.defName.PredictValueFromString() + defaultValue });
             }
 
             var failed = false;
@@ -206,7 +206,7 @@ namespace RocketMan.src
                 statsSettings.Clear();
                 foreach (StatDef def in defs)
                 {
-                    statsSettings.Add(new StatSettings() { stat = def.defName, expireAfter = defaultValue });
+                    statsSettings.Add(new StatSettings() { stat = def.defName, expireAfter = def.defName.PredictValueFromString() + defaultValue });
 
                 }
             }
