@@ -12,8 +12,9 @@ using UnityEngine;
 using System.CodeDom;
 using System.Threading;
 using System.Diagnostics;
+using static RocketMan.RocketTicker;
 
-namespace RocketMan.src
+namespace RocketMan
 {
     [StaticConstructorOnStartup]
     public class Main : ModBase
@@ -62,6 +63,16 @@ namespace RocketMan.src
             {
                 onDefsLoaded[i].Invoke();
             }
+
+            DefDatabase<ThingDef>.ResolveAllReferences(onlyExactlyMyType: true, parallel: true);
+            var pawnsDef = DefDatabase<ThingDef>.AllDefs.Where(def => true
+                 && def.race?.IsFlesh == true
+                 && def.race?.Humanlike == false);
+            foreach (var def in pawnsDef)
+                if (def.thingClass == typeof(Pawn))
+                {
+                    def.thingClass = typeof(Rocket);
+                }
         }
 
         public override void Tick(int currentTick)
@@ -463,20 +474,176 @@ namespace RocketMan.src
             [HarmonyPostfix]
             public static void Notify_LostBodyPart_Postfix(Pawn_ApparelTracker __instance)
             {
-                var key = __instance.pawn.thingIDNumber;
-
-                StatPart_ApparelStatOffSet_Patch.cache.RemoveAll(t => t.Key == __instance.pawn.thingIDNumber);
-                StatWorker_GetValueUnfinalized_Hijacked_Patch.pawnsCleanupQueue.Add(__instance.pawn.thingIDNumber);
+                __instance.pawn.Notify_Dirty();
             }
 
             [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.ApparelChanged))]
             [HarmonyPostfix]
             public static void Notify_ApparelChanged_Postfix(Pawn_ApparelTracker __instance)
             {
-                var key = __instance.pawn.thingIDNumber;
+                __instance.pawn.Notify_Dirty();
+            }
+        }
 
-                StatPart_ApparelStatOffSet_Patch.cache.RemoveAll(t => t.Key == __instance.pawn.thingIDNumber);
-                StatWorker_GetValueUnfinalized_Hijacked_Patch.pawnsCleanupQueue.Add(__instance.pawn.thingIDNumber);
+        [HarmonyPatch]
+        public static class Pawn_Patch
+        {
+            [HarmonyPatch(typeof(Pawn), nameof(Pawn.Notify_BulletImpactNearby))]
+            [HarmonyPostfix]
+            public static void Notify_BulletImpactNearby_Postfix(Pawn __instance)
+            {
+                __instance.Notify_Dirty();
+            }
+        }
+
+        [HarmonyPatch]
+        public static class Pawn_HealthTracker_Patch
+        {
+            [HarmonyPatch(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_HediffChanged))]
+            [HarmonyPostfix]
+            public static void Notify_HediffChanged_Postfix(Pawn_HealthTracker __instance)
+            {
+                __instance.pawn.Notify_Dirty();
+            }
+
+            [HarmonyPatch(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_UsedVerb))]
+            [HarmonyPostfix]
+            public static void Notify_UsedVerb_Postfix(Pawn_HealthTracker __instance)
+            {
+                __instance.pawn.Notify_Dirty();
+            }
+        }
+
+        [HarmonyPatch(typeof(TickManager), nameof(TickManager.DoSingleTick))]
+        public static class TickManager_DoTick_Patch
+        {
+            public static void Prefix(out Stopwatch __state)
+            {
+                __state = new Stopwatch();
+                __state.Start();
+            }
+
+            public static void Postfix(Stopwatch __state)
+            {
+                __state.Stop();
+                RocketTicker.RandomTicker(__state.ElapsedTicks);
+            }
+        }
+
+        [HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.GetPawnLabelNameWidth))]
+        public static class GenMapUI_GetPawnLabelNameWidth_Patch
+        {
+            static readonly Dictionary<int, Pair<int, float>> cache = new Dictionary<int, Pair<int, float>>();
+
+            public static bool Prefix(Pawn pawn, float truncateToWidth, Dictionary<string, string> truncatedLabelsCache, GameFont font, ref float __result)
+            {
+                if (Finder.enabled && Finder.labelCaching)
+                {
+                    if (cache.TryGetValue(pawn.thingIDNumber, out var widthUnit) && GenTicks.TicksGame - widthUnit.first < Finder.universalCacheAge)
+                    {
+                        __result = widthUnit.second;
+                    }
+                    else
+                    {
+                        cache[pawn.thingIDNumber] = new Pair<int, float>(
+                            GenTicks.TicksGame,
+                            __result = GetPawnLabelNameWidth(pawn, truncateToWidth, truncatedLabelsCache, font));
+                    }
+
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            private static float GetPawnLabelNameWidth(Pawn pawn, float truncateToWidth, Dictionary<string, string> truncatedLabelsCache, GameFont font)
+            {
+                GameFont font2 = Text.Font;
+                Text.Font = font;
+                string pawnLabel = GenMapUI.GetPawnLabel(pawn, truncateToWidth, truncatedLabelsCache, font);
+                float num = (font != 0) ? Text.CalcSize(pawnLabel).x : GenUI.GetWidthCached(pawnLabel);
+                if (Math.Abs(Math.Round(Prefs.UIScale) - (double)Prefs.UIScale) > 1.401298464324817E-45)
+                {
+                    num += 0.5f;
+                }
+                if (num < 20f)
+                {
+                    num = 20f;
+                }
+                Text.Font = font2;
+                return num;
+            }
+        }
+
+        [HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.DrawPawnLabel), new[] { typeof(Pawn), typeof(Rect), typeof(float), typeof(float), typeof(Dictionary<string, string>), typeof(GameFont), typeof(bool), typeof(bool) })]
+        public static class GenMapUI_DrawPawnLabel_Patch
+        {
+            static readonly Color white = new Color(1f, 1f, 1f, 1f);
+
+            static readonly Dictionary<int, Tuple<int, float, float, string>> cache = new Dictionary<int, Tuple<int, float, float, string>>();
+
+            public static bool Prefix(Pawn pawn, Rect bgRect, float alpha = 1f, float truncateToWidth = 9999f, Dictionary<string, string> truncatedLabelsCache = null, GameFont font = GameFont.Tiny, bool alwaysDrawBg = true, bool alignCenter = true)
+            {
+                if (Finder.enabled && Finder.labelCaching)
+                {
+                    GUI.color = white;
+                    Text.Font = font;
+
+                    string pawnLabel = null;
+                    float pawnLabelNameWidth;
+                    float summaryHealthPercent;
+
+                    if (cache.TryGetValue(pawn.thingIDNumber, out var unit) && GenTicks.TicksGame - unit.Item1 < Finder.universalCacheAge / 5f)
+                    {
+                        pawnLabel = unit.Item4;
+                        pawnLabelNameWidth = unit.Item3;
+                        summaryHealthPercent = unit.Item2;
+                    }
+                    else
+                    {
+                        pawnLabel = GenMapUI.GetPawnLabel(pawn, truncateToWidth, truncatedLabelsCache, font);
+                        pawnLabelNameWidth = GenMapUI.GetPawnLabelNameWidth(pawn, truncateToWidth, truncatedLabelsCache, font);
+                        summaryHealthPercent = pawn.health.summaryHealth.SummaryHealthPercent;
+                        cache[pawn.thingIDNumber] = new Tuple<int, float, float, string>(GenTicks.TicksGame, summaryHealthPercent, pawnLabelNameWidth, pawnLabel);
+                    }
+
+                    if (alwaysDrawBg || summaryHealthPercent < 0.999f)
+                    {
+                        GUI.DrawTexture(bgRect, TexUI.GrayTextBG);
+                    }
+                    if (summaryHealthPercent < 0.999f)
+                    {
+                        Widgets.FillableBar(GenUI.ContractedBy(bgRect, 1f), summaryHealthPercent, GenMapUI.OverlayHealthTex, BaseContent.ClearTex, doBorder: false);
+                    }
+                    Color color = PawnNameColorUtility.PawnNameColorOf(pawn);
+                    color.a = alpha;
+                    GUI.color = color;
+                    Rect rect;
+                    if (alignCenter)
+                    {
+                        Text.Anchor = TextAnchor.UpperCenter;
+                        rect = new Rect(bgRect.center.x - pawnLabelNameWidth / 2f, bgRect.y - 2f, pawnLabelNameWidth, 100f);
+                    }
+                    else
+                    {
+                        Text.Anchor = TextAnchor.UpperLeft;
+                        rect = new Rect(bgRect.x + 2f, bgRect.center.y - Text.CalcSize(pawnLabel).y / 2f, pawnLabelNameWidth, 100f);
+                    }
+                    Widgets.Label(rect, pawnLabel);
+                    if (pawn.Drafted)
+                    {
+                        Widgets.DrawLineHorizontal(bgRect.center.x - pawnLabelNameWidth / 2f, bgRect.y + 11f, pawnLabelNameWidth);
+                    }
+                    GUI.color = Color.white;
+                    Text.Anchor = TextAnchor.UpperLeft;
+
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
     }

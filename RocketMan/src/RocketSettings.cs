@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.XR;
 using Verse;
 
-namespace RocketMan.src
+namespace RocketMan
 {
     public class RocketMod : Mod
     {
@@ -71,6 +71,9 @@ namespace RocketMan.src
             {
 
                 listing.CheckboxLabeled("Enable debuging", ref Finder.debug);
+                listing.GapLine();
+
+                listing.CheckboxLabeled("Enable pawns names caching", ref Finder.labelCaching);
                 listing.GapLine();
 
                 listing.CheckboxLabeled("Enable adaptive mod", ref Finder.learning);
@@ -246,6 +249,7 @@ namespace RocketMan.src
                 Scribe_Values.Look<bool>(ref Finder.enabled, "enabled", true);
                 Scribe_Values.Look<bool>(ref Finder.learning, "learning", false);
                 Scribe_Values.Look<bool>(ref Finder.debug, "debug", false);
+                Scribe_Values.Look<bool>(ref Finder.labelCaching, "labelCaching", true);
 
                 Scribe_Values.Look<int>(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache", 0);
                 Scribe_Values.Look<int>(ref Finder.universalCacheAge, "universalCacheAge", 0);

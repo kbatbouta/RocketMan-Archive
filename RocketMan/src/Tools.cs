@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Reflection;
 using RimWorld;
+using Verse;
+using static RocketMan.Main;
 
-namespace RocketMan.src
+namespace RocketMan
 {
     public static class Tools
     {
@@ -37,6 +39,22 @@ namespace RocketMan.src
                 return 128;
             }
             return 32;
+        }
+
+        public static void Notify_Dirty(this Pawn pawn)
+        {
+            try
+            {
+                if (pawn != null)
+                {
+                    StatPart_ApparelStatOffSet_Patch.cache.RemoveAll(t => t.Key == pawn.thingIDNumber);
+                    StatWorker_GetValueUnfinalized_Hijacked_Patch.pawnsCleanupQueue.Add(pawn.thingIDNumber);
+                }
+            }
+            catch (Exception er)
+            {
+                Log.Warning(string.Format("ROCKETMAN: Notify_Dirty error of {0} at {1}", er.Message, er.StackTrace));
+            }
         }
 
         public static int GetKey(StatWorker statWorker, StatRequest req, bool applyPostProcess)

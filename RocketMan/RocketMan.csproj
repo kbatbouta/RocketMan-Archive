@@ -307,6 +307,7 @@
         <Compile Include="src\RocketSettings.cs" />
         <Compile Include="src\Main.cs" />
         <Compile Include="src\Tools.cs" />
+        <Compile Include="src\Rockets.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

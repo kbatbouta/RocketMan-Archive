@@ -2,6 +2,7 @@
 using Verse;
 using HarmonyLib;
 using System.Collections.Generic;
+using static RocketMan.RocketTicker;
 
 namespace RocketMan
 {
@@ -13,6 +14,8 @@ namespace RocketMan
         public static bool debug = false;
 
         public static bool learning = true;
+
+        public static bool labelCaching = true;
 
         public static float learningRate = 0.001f;
 
