@@ -16,7 +16,7 @@ namespace RocketMan
             public static CachedDict<int, Hediff> cache = new CachedDict<int, Hediff>();
             public static Dictionary<Pawn, List<int>> cachedKeys = new Dictionary<Pawn, List<int>>();
 
-            public static bool SkipFix(ref Hediff result, ThoughtDef def, Pawn pawn)
+            public static bool Skipper(ref Hediff result, ThoughtDef def, Pawn pawn)
             {
                 if (Finder.enabled && Finder.thoughtsCaching)
                 {
@@ -31,7 +31,7 @@ namespace RocketMan
                 return true;
             }
 
-            public static void SetFix(Hediff result, ThoughtDef def, Pawn pawn)
+            public static void Setter(Hediff result, ThoughtDef def, Pawn pawn)
             {
                 if (Finder.enabled && Finder.thoughtsCaching)
                 {
@@ -58,7 +58,7 @@ namespace RocketMan
         {
             public static CachedDict<int, Trait> cache = new CachedDict<int, Trait>();
 
-            public static bool SkipFix(ref Trait result, ThoughtDef def, Pawn pawn)
+            public static bool Skipper(ref Trait result, ThoughtDef def, Pawn pawn)
             {
                 if (Finder.enabled && Finder.thoughtsCaching)
                 {
@@ -72,7 +72,7 @@ namespace RocketMan
                 return true;
             }
 
-            public static void SetFix(Trait result, ThoughtDef def, Pawn pawn)
+            public static void Setter(Trait result, ThoughtDef def, Pawn pawn)
             {
                 if (Finder.enabled && Finder.thoughtsCaching)
                 {

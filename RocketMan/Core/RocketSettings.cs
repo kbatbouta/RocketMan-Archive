@@ -9,7 +9,7 @@ using Verse;
 
 namespace RocketMan
 {
-    public class RocketMod : Mod
+    public partial class RocketMod : Mod
     {
         public static RocketModSettings settings;
 
@@ -45,6 +45,7 @@ namespace RocketMan
         {
             RocketMod.instance = this;
             RocketMod.settings = GetSettings<RocketModSettings>();
+            UpdateExceptions();
         }
 
         public override string SettingsCategory()
@@ -61,6 +62,7 @@ namespace RocketMan
         public override void WriteSettings()
         {
             UpdateStats();
+            UpdateExceptions();
             base.WriteSettings();
         }
 
@@ -181,6 +183,7 @@ namespace RocketMan
             }
 
             RocketMod.instance.WriteSettings();
+            RocketMod.UpdateExceptions();
         }
 
         public static void ReadStats()
@@ -225,6 +228,8 @@ namespace RocketMan
 
                 UpdateStats();
             }
+
+            UpdateExceptions();
         }
 
         public static void UpdateStats()
@@ -265,6 +270,8 @@ namespace RocketMan
 
                 UpdateStats();
             }
+
+            UpdateExceptions();
         }
 
         public class RocketModSettings : ModSettings
@@ -287,6 +294,8 @@ namespace RocketMan
                 Scribe_Values.Look<int>(ref Finder.universalCacheAge, "universalCacheAge", 0);
 
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
+
+                UpdateExceptions();
             }
         }
     }

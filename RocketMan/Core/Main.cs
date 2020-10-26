@@ -36,13 +36,16 @@ namespace RocketMan
 
         public static Action[] onTick = new Action[]
         {
-            () => StatWorker_GetValueUnfinalized_Hijacked_Patch.CleanCache()
-        };
+            () => StatWorker_GetValueUnfinalized_Hijacked_Patch.CleanCache(),
+            () => StatWorker_GetValueUnfinalized_Hijacked_Patch.FlushMessages(),
+            () => RocketMod.UpdateExceptions()
+    };
 
         public static Action[] onDefsLoaded = new Action[]
         {
             () => Finder.harmony.PatchAll(),
             () => RocketMod.UpdateStats(),
+            () => RocketMod.UpdateExceptions(),
             () => StatWorker_GetValueUnfinalized_Hijacked_Patch.Initialize()
         };
 
@@ -75,6 +78,7 @@ namespace RocketMan
             for (int i = 0; i < onTick.Length; i++)
             {
                 onTick[i].Invoke();
+
             }
         }
 
@@ -148,38 +152,42 @@ namespace RocketMan
 
             internal static List<Tuple<int, int, float>> requests = new List<Tuple<int, int, float>>();
 
-            private static ThreadStart starter = null;
+            private static ThreadStart starter = new ThreadStart(OffMainThreadProcessing);
             private static Thread worker = null;
 
             public static void Initialize()
             {
-                starter = new ThreadStart(OffMainThreadProcessing);
                 worker = new Thread(starter);
                 worker.Start();
             }
 
+            public static void FlushMessages()
+            {
+                if (!Finder.debug) return;
+                while (messages.Count > 0)
+                    Log.Message(messages.Pop());
+            }
+
+            internal static Dictionary<int, float> expiryCache = new Dictionary<int, float>();
+            internal static List<string> messages = new List<string>();
+
+            internal static int counter = 0;
+            internal static int ticker = 0;
+            internal static int cleanUps = 0;
+            internal static int stage = 0;
+
             internal static void OffMainThreadProcessing()
             {
-                Dictionary<int, float> expiryCache = new Dictionary<int, float>();
-
-                float counter = 0;
-
                 while (true)
                 {
                     try
                     {
                         Thread.Sleep((int)Mathf.Clamp(15 - expiryCache.Count, 0, 15));
-
                         if (Current.Game == null)
-                        {
                             continue;
-                        }
-
                         if (Find.TickManager.Paused)
-                        {
                             continue;
-                        }
-
+                        stage = 1;
                         if (Finder.learning)
                         {
                             if (counter++ % 20 == 0 && expiryCache.Count != 0)
@@ -187,51 +195,44 @@ namespace RocketMan
                                 foreach (var unit in expiryCache)
                                 {
                                     Finder.statExpiry[unit.Key] = (byte)Mathf.Clamp(unit.Value, 0f, 255f);
+                                    cleanUps++;
                                 }
-
                                 expiryCache.Clear();
                             }
-
+                            stage = 2;
                             if (requests.Count > 0)
                             {
                                 var request = requests.Pop();
-
                                 var statIndex = request.Item1;
-
-                                var deltaT = request.Item2;
-                                var deltaX = request.Item3;
+                                var deltaT = Mathf.Abs(request.Item2);
+                                var deltaX = Mathf.Abs(request.Item3);
 
                                 if (expiryCache.TryGetValue(statIndex, out float value))
-                                {
-                                    expiryCache[statIndex] += Finder.learningRate * (128 - deltaX * deltaT);
-                                }
+                                    expiryCache[statIndex] += Finder.learningRate * (256 - deltaX * deltaT);
                                 else
-                                {
                                     expiryCache[statIndex] = Finder.statExpiry[statIndex];
-                                }
                             }
                         }
-
+                        stage = 3;
                         while (pawnsCleanupQueue.Count > 0)
                         {
                             var pawnIndex = pawnsCleanupQueue.Pop();
-
                             if (pawnCachedKeys.ContainsKey(pawnIndex))
-                            {
                                 foreach (var key in pawnCachedKeys[pawnIndex])
                                 {
                                     cache.RemoveAll(u => u.Key == key);
+                                    cleanUps++;
                                 }
-                            }
                         }
                     }
-                    catch
+                    catch (Exception er)
                     {
-
+                        messages.Add(string.Format("ROCKETMAN: error off the main thread in stage {0} with error {1} at {2}", stage, er.Message, er.StackTrace));
                     }
                     finally
                     {
-
+                        if (ticker++ % 128 == 0 && Finder.debug)
+                            messages.Add(string.Format("ROCKETMAN: off the main thead cleaned {0} and counted {1}", cleanUps, counter));
                     }
                 }
             }
@@ -285,9 +286,11 @@ namespace RocketMan
 
                 if (req.HasThing && req.Thing is Pawn pawn && pawn != null)
                 {
-                    List<int> keys = null;
-                    if (!pawnCachedKeys.TryGetValue(pawn.thingIDNumber, out keys))
+                    if (!pawnCachedKeys.TryGetValue(pawn.thingIDNumber, out List<int> keys))
+                    {
                         pawnCachedKeys[pawn.thingIDNumber] = (keys = new List<int>());
+                    }
+
                     keys.Add(key);
                 }
 
@@ -302,11 +305,14 @@ namespace RocketMan
 
             public static float Replacemant(StatWorker statWorker, StatRequest req, bool applyPostProcess)
             {
-                if (Finder.enabled && Current.Game != null)
+                var tick = GenTicks.TicksGame;
+
+                if (true
+                    && Finder.enabled
+                    && Current.Game != null
+                    && tick >= 600)
                 {
                     var key = Tools.GetKey(statWorker, req, applyPostProcess);
-
-                    var tick = GenTicks.TicksGame;
 
                     if (!cache.TryGetValue(key, out var store))
                     {
@@ -332,14 +338,14 @@ namespace RocketMan
             }
         }
 
-        [HarmonyPatch]
+        //[HarmonyPatch]
         public static class StatPart_ApparelStatOffSet_Patch
         {
             internal static Dictionary<int, Pair<Dictionary<ushort, float>, int>> cache = new Dictionary<int, Pair<Dictionary<ushort, float>, int>>();
 
-            [HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
-            [HarmonyPriority(9999)]
-            [HarmonyPrefix]
+            //[HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
+            //[HarmonyPriority(9999)]
+            //[HarmonyPrefix]
             public static bool TransformValue_Prefix(StatPart_ApparelStatOffset __instance, StatRequest req, ref float val, out Pair<float, bool> __state)
             {
                 if (Finder.enabled)
@@ -380,8 +386,8 @@ namespace RocketMan
                 }
             }
 
-            [HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
-            [HarmonyPostfix]
+            //[HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
+            //[HarmonyPostfix]
             public static void TransformValue_Postfix(StatPart_ApparelStatOffset __instance, StatRequest req, ref float val, Pair<float, bool> __state)
             {
                 if (!__state.second || !Finder.enabled)

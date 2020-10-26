@@ -1,0 +1,19 @@
+﻿using System;
+using RimWorld;
+using Verse;
+
+namespace RocketMan
+{
+    public partial class RocketMod
+    {
+        public static void UpdateExceptions()
+        {
+            DefDatabase<StatDef>.ResolveAllReferences(true);
+            if (StatDefOf.MarketValue != null && StatDefOf.MarketValueIgnoreHp != null)
+            {
+                Finder.statExpiry[StatDefOf.MarketValue.index] = 0;
+                Finder.statExpiry[StatDefOf.MarketValueIgnoreHp.index] = 0;
+            }
+        }
+    }
+}

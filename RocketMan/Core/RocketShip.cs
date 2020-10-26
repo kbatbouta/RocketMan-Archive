@@ -17,8 +17,8 @@ namespace RocketMan
         public static IEnumerable<CodeInstruction> SkipperPatch(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase original)
         {
             return RocketShip.SetupSkipping(instructions, generator, original,
-                    AccessTools.Method(GetStaticType(), "SkipFix"),
-                    AccessTools.Method(GetStaticType(), "SetFix"));
+                    AccessTools.Method(GetStaticType(), "Skipper"),
+                    AccessTools.Method(GetStaticType(), "Setter"));
         }
 
         private static Type GetStaticType()
@@ -33,28 +33,29 @@ namespace RocketMan
 
 
         private static IEnumerable<CodeInstruction> SetupSkipping(IEnumerable<CodeInstruction> instructions,
-            ILGenerator generator, MethodBase original, MethodBase skipfix, MethodBase setfix)
+            ILGenerator generator, MethodBase original, MethodBase skipper, MethodBase setter)
         {
             var codes = instructions.ToList();
             var returnType = (original as MethodInfo).ReturnType;
 
             LocalBuilder result = generator.DeclareLocal(returnType);
-            LocalBuilder execute = generator.DeclareLocal(typeof(bool));
 
-            if (skipfix != null)
+            if (skipper != null)
             {
                 var start = generator.DefineLabel();
-
-                yield return new CodeInstruction(OpCodes.Ldloca_S, result.LocalIndex);
-
-                var extras = CallInside(original, skipfix).ToList();
+                if (returnType != typeof(void))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloca_S, result.LocalIndex);
+                }
+                var extras = CallInside(original, skipper).ToList();
                 foreach (var extra in extras)
                     yield return extra;
 
-                yield return new CodeInstruction(OpCodes.Stloc_S, execute.LocalIndex);
-                yield return new CodeInstruction(OpCodes.Ldloc_S, execute.LocalIndex);
                 yield return new CodeInstruction(OpCodes.Brtrue_S, start);
-                yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
+                if (returnType != typeof(void))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
+                }
                 yield return new CodeInstruction(OpCodes.Ret);
 
                 codes[0].labels.Add(start);
@@ -63,17 +64,24 @@ namespace RocketMan
             for (int i = 0; i < codes.Count; i++)
             {
                 var code = codes[i];
-                if (code.opcode == OpCodes.Ret && setfix != null)
+                if (code.opcode == OpCodes.Ret && setter != null)
                 {
-                    yield return new CodeInstruction(OpCodes.Stloc_S, result.LocalIndex);
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
-                    var extras = CallInside(original, setfix).ToList();
+                    if (returnType != typeof(void))
+                    {
+                        yield return new CodeInstruction(OpCodes.Stloc_S, result.LocalIndex);
+                        yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
+                    }
+                    var extras = CallInside(original, setter).ToList();
                     extras[0].labels = code.labels;
                     foreach (var extra in extras)
                     {
                         yield return extra;
                     }
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
+
+                    if (returnType != typeof(void))
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
+                    }
                     yield return new CodeInstruction(OpCodes.Ret);
                 }
                 else
