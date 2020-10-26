@@ -311,6 +311,7 @@
         <Compile Include="src\RocketWindow.cs" />
         <Compile Include="src\Main.ThoughtUtility.cs" />
         <Compile Include="src\Main.CachedDict.cs" />
+        <Compile Include="src\RocketShip.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

@@ -29,6 +29,12 @@ namespace RocketMan
 
         public static object locker = new object();
 
-        static Finder() => harmony.PatchAll();
+        static Finder()
+        {
+#if DEBUG
+            //Harmony.DEBUG = true;
+#endif
+            harmony.PatchAll();
+        }
     }
 }

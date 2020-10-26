@@ -503,162 +503,162 @@ namespace RocketMan
             }
         }
 
-        [HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.GetPawnLabelNameWidth))]
-        public static class GenMapUI_GetPawnLabelNameWidth_Patch
-        {
-            static readonly Dictionary<int, Pair<int, float>> cache = new Dictionary<int, Pair<int, float>>();
+        //[HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.GetPawnLabelNameWidth))]
+        //public static class GenMapUI_GetPawnLabelNameWidth_Patch
+        //{
+        //    static readonly Dictionary<int, Pair<int, float>> cache = new Dictionary<int, Pair<int, float>>();
 
-            public static bool Prefix(Pawn pawn, float truncateToWidth, Dictionary<string, string> truncatedLabelsCache, GameFont font, ref float __result)
-            {
-                if (Finder.enabled && Finder.labelCaching)
-                {
-                    if (cache.TryGetValue(pawn.thingIDNumber, out var widthUnit) && GenTicks.TicksGame - widthUnit.first < Finder.universalCacheAge)
-                    {
-                        __result = widthUnit.second;
-                    }
-                    else
-                    {
-                        cache[pawn.thingIDNumber] = new Pair<int, float>(
-                            GenTicks.TicksGame,
-                            __result = GetPawnLabelNameWidth(pawn, truncateToWidth, truncatedLabelsCache, font));
-                    }
+        //    public static bool Prefix(Pawn pawn, float truncateToWidth, Dictionary<string, string> truncatedLabelsCache, GameFont font, ref float __result)
+        //    {
+        //        if (Finder.enabled && Finder.labelCaching)
+        //        {
+        //            if (cache.TryGetValue(pawn.thingIDNumber, out var widthUnit) && GenTicks.TicksGame - widthUnit.first < Finder.universalCacheAge)
+        //            {
+        //                __result = widthUnit.second;
+        //            }
+        //            else
+        //            {
+        //                cache[pawn.thingIDNumber] = new Pair<int, float>(
+        //                    GenTicks.TicksGame,
+        //                    __result = GetPawnLabelNameWidth(pawn, truncateToWidth, truncatedLabelsCache, font));
+        //            }
 
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            private static float GetPawnLabelNameWidth(Pawn pawn, float truncateToWidth, Dictionary<string, string> truncatedLabelsCache, GameFont font)
-            {
-                GameFont font2 = Text.Font;
-                Text.Font = font;
-                string pawnLabel = GenMapUI.GetPawnLabel(pawn, truncateToWidth, truncatedLabelsCache, font);
-                float num = (font != 0) ? Text.CalcSize(pawnLabel).x : GenUI.GetWidthCached(pawnLabel);
-                if (Math.Abs(Math.Round(Prefs.UIScale) - (double)Prefs.UIScale) > 1.401298464324817E-45)
-                {
-                    num += 0.5f;
-                }
-                if (num < 20f)
-                {
-                    num = 20f;
-                }
-                Text.Font = font2;
-                return num;
-            }
-        }
+        //            return false;
+        //        }
+        //        else
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //    private static float GetPawnLabelNameWidth(Pawn pawn, float truncateToWidth, Dictionary<string, string> truncatedLabelsCache, GameFont font)
+        //    {
+        //        GameFont font2 = Text.Font;
+        //        Text.Font = font;
+        //        string pawnLabel = GenMapUI.GetPawnLabel(pawn, truncateToWidth, truncatedLabelsCache, font);
+        //        float num = (font != 0) ? Text.CalcSize(pawnLabel).x : GenUI.GetWidthCached(pawnLabel);
+        //        if (Math.Abs(Math.Round(Prefs.UIScale) - (double)Prefs.UIScale) > 1.401298464324817E-45)
+        //        {
+        //            num += 0.5f;
+        //        }
+        //        if (num < 20f)
+        //        {
+        //            num = 20f;
+        //        }
+        //        Text.Font = font2;
+        //        return num;
+        //    }
+        //}
 
-        [HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.DrawPawnLabel), new[] { typeof(Pawn), typeof(Rect), typeof(float), typeof(float), typeof(Dictionary<string, string>), typeof(GameFont), typeof(bool), typeof(bool) })]
-        public static class GenMapUI_DrawPawnLabel_Patch
-        {
-            static readonly Color white = new Color(1f, 1f, 1f, 1f);
+        //[HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.DrawPawnLabel), new[] { typeof(Pawn), typeof(Rect), typeof(float), typeof(float), typeof(Dictionary<string, string>), typeof(GameFont), typeof(bool), typeof(bool) })]
+        //public static class GenMapUI_DrawPawnLabel_Patch
+        //{
+        //    static readonly Color white = new Color(1f, 1f, 1f, 1f);
 
-            static readonly Dictionary<int, Tuple<int, float, float, string>> cache = new Dictionary<int, Tuple<int, float, float, string>>();
+        //    static readonly Dictionary<int, Tuple<int, float, float, string>> cache = new Dictionary<int, Tuple<int, float, float, string>>();
 
-            public static bool Prefix(Pawn pawn, Rect bgRect, float alpha = 1f, float truncateToWidth = 9999f, Dictionary<string, string> truncatedLabelsCache = null, GameFont font = GameFont.Tiny, bool alwaysDrawBg = true, bool alignCenter = true)
-            {
-                if (Finder.enabled && Finder.labelCaching)
-                {
-                    GUI.color = white;
-                    Text.Font = font;
+        //    public static bool Prefix(Pawn pawn, Rect bgRect, float alpha = 1f, float truncateToWidth = 9999f, Dictionary<string, string> truncatedLabelsCache = null, GameFont font = GameFont.Tiny, bool alwaysDrawBg = true, bool alignCenter = true)
+        //    {
+        //        if (Finder.enabled && Finder.labelCaching)
+        //        {
+        //            GUI.color = white;
+        //            Text.Font = font;
 
-                    string pawnLabel = null;
-                    float pawnLabelNameWidth;
-                    float summaryHealthPercent;
+        //            string pawnLabel = null;
+        //            float pawnLabelNameWidth;
+        //            float summaryHealthPercent;
 
-                    if (cache.TryGetValue(pawn.thingIDNumber, out var unit) && GenTicks.TicksGame - unit.Item1 < Finder.universalCacheAge / 5f)
-                    {
-                        pawnLabel = unit.Item4;
-                        pawnLabelNameWidth = unit.Item3;
-                        summaryHealthPercent = unit.Item2;
-                    }
-                    else
-                    {
-                        pawnLabel = GenMapUI.GetPawnLabel(pawn, truncateToWidth, truncatedLabelsCache, font);
-                        pawnLabelNameWidth = GenMapUI.GetPawnLabelNameWidth(pawn, truncateToWidth, truncatedLabelsCache, font);
-                        summaryHealthPercent = pawn.health.summaryHealth.SummaryHealthPercent;
-                        cache[pawn.thingIDNumber] = new Tuple<int, float, float, string>(GenTicks.TicksGame, summaryHealthPercent, pawnLabelNameWidth, pawnLabel);
-                    }
+        //            if (cache.TryGetValue(pawn.thingIDNumber, out var unit) && GenTicks.TicksGame - unit.Item1 < Finder.universalCacheAge / 5f)
+        //            {
+        //                pawnLabel = unit.Item4;
+        //                pawnLabelNameWidth = unit.Item3;
+        //                summaryHealthPercent = unit.Item2;
+        //            }
+        //            else
+        //            {
+        //                pawnLabel = GenMapUI.GetPawnLabel(pawn, truncateToWidth, truncatedLabelsCache, font);
+        //                pawnLabelNameWidth = GenMapUI.GetPawnLabelNameWidth(pawn, truncateToWidth, truncatedLabelsCache, font);
+        //                summaryHealthPercent = pawn.health.summaryHealth.SummaryHealthPercent;
+        //                cache[pawn.thingIDNumber] = new Tuple<int, float, float, string>(GenTicks.TicksGame, summaryHealthPercent, pawnLabelNameWidth, pawnLabel);
+        //            }
 
-                    if (alwaysDrawBg || summaryHealthPercent < 0.999f)
-                    {
-                        GUI.DrawTexture(bgRect, TexUI.GrayTextBG);
-                    }
-                    if (summaryHealthPercent < 0.999f)
-                    {
-                        Widgets.FillableBar(GenUI.ContractedBy(bgRect, 1f), summaryHealthPercent, GenMapUI.OverlayHealthTex, BaseContent.ClearTex, doBorder: false);
-                    }
-                    Color color = PawnNameColorUtility.PawnNameColorOf(pawn);
-                    color.a = alpha;
-                    GUI.color = color;
-                    Rect rect;
-                    if (alignCenter)
-                    {
-                        Text.Anchor = TextAnchor.UpperCenter;
-                        rect = new Rect(bgRect.center.x - pawnLabelNameWidth / 2f, bgRect.y - 2f, pawnLabelNameWidth, 100f);
-                    }
-                    else
-                    {
-                        Text.Anchor = TextAnchor.UpperLeft;
-                        rect = new Rect(bgRect.x + 2f, bgRect.center.y - Text.CalcSize(pawnLabel).y / 2f, pawnLabelNameWidth, 100f);
-                    }
-                    Widgets.Label(rect, pawnLabel);
-                    if (pawn.Drafted)
-                    {
-                        Widgets.DrawLineHorizontal(bgRect.center.x - pawnLabelNameWidth / 2f, bgRect.y + 11f, pawnLabelNameWidth);
-                    }
-                    GUI.color = Color.white;
-                    Text.Anchor = TextAnchor.UpperLeft;
+        //            if (alwaysDrawBg || summaryHealthPercent < 0.999f)
+        //            {
+        //                GUI.DrawTexture(bgRect, TexUI.GrayTextBG);
+        //            }
+        //            if (summaryHealthPercent < 0.999f)
+        //            {
+        //                Widgets.FillableBar(GenUI.ContractedBy(bgRect, 1f), summaryHealthPercent, GenMapUI.OverlayHealthTex, BaseContent.ClearTex, doBorder: false);
+        //            }
+        //            Color color = PawnNameColorUtility.PawnNameColorOf(pawn);
+        //            color.a = alpha;
+        //            GUI.color = color;
+        //            Rect rect;
+        //            if (alignCenter)
+        //            {
+        //                Text.Anchor = TextAnchor.UpperCenter;
+        //                rect = new Rect(bgRect.center.x - pawnLabelNameWidth / 2f, bgRect.y - 2f, pawnLabelNameWidth, 100f);
+        //            }
+        //            else
+        //            {
+        //                Text.Anchor = TextAnchor.UpperLeft;
+        //                rect = new Rect(bgRect.x + 2f, bgRect.center.y - Text.CalcSize(pawnLabel).y / 2f, pawnLabelNameWidth, 100f);
+        //            }
+        //            Widgets.Label(rect, pawnLabel);
+        //            if (pawn.Drafted)
+        //            {
+        //                Widgets.DrawLineHorizontal(bgRect.center.x - pawnLabelNameWidth / 2f, bgRect.y + 11f, pawnLabelNameWidth);
+        //            }
+        //            GUI.color = Color.white;
+        //            Text.Anchor = TextAnchor.UpperLeft;
 
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-        }
+        //            return false;
+        //        }
+        //        else
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //}
 
-        [HarmonyPatch(typeof(Translator), nameof(Translator.Translate), new[] { typeof(string) })]
-        public static class Translator_Translate_Patch
-        {
-            static bool devMod = Prefs.DevMode;
-            static Dictionary<string, TaggedString> cache = new Dictionary<string, TaggedString>();
+        //[HarmonyPatch(typeof(Translator), nameof(Translator.Translate), new[] { typeof(string) })]
+        //public static class Translator_Translate_Patch
+        //{
+        //    static bool devMod = Prefs.DevMode;
+        //    static Dictionary<string, TaggedString> cache = new Dictionary<string, TaggedString>();
 
-            public static bool Prefix(string key, ref TaggedString __result, out bool __state)
-            {
-                if (devMod != Prefs.DevMode)
-                {
-                    devMod = Prefs.DevMode;
-                    cache.Clear();
-                }
+        //    public static bool Prefix(string key, ref TaggedString __result, out bool __state)
+        //    {
+        //        if (devMod != Prefs.DevMode)
+        //        {
+        //            devMod = Prefs.DevMode;
+        //            cache.Clear();
+        //        }
 
-                if (Finder.enabled && Finder.translationCaching)
-                {
-                    if (cache.TryGetValue(key, out var value))
-                    {
-                        __result = value;
-                        __state = false;
-                        return false;
-                    }
+        //        if (Finder.enabled && Finder.translationCaching)
+        //        {
+        //            if (cache.TryGetValue(key, out var value))
+        //            {
+        //                __result = value;
+        //                __state = false;
+        //                return false;
+        //            }
 
-                    __state = true;
-                    return true;
-                }
-                else
-                {
-                    __state = false;
-                    return true;
-                }
-            }
+        //            __state = true;
+        //            return true;
+        //        }
+        //        else
+        //        {
+        //            __state = false;
+        //            return true;
+        //        }
+        //    }
 
-            public static void Postfix(string key, TaggedString __result, bool __state)
-            {
-                if (__state == false) return;
-                cache[key] = __result;
-            }
-        }
+        //    public static void Postfix(string key, TaggedString __result, bool __state)
+        //    {
+        //        if (__state == false) return;
+        //        cache[key] = __result;
+        //    }
+        //}
 
         [HarmonyPatch(typeof(Pawn_TimetableTracker), nameof(Pawn_TimetableTracker.GetAssignment))]
         public static class Pawn_TimetableTracker_GetAssignment_Patch
