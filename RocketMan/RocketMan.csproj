@@ -302,33 +302,33 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="src.old\Utilities\HashUtility.cs" />
-        <Compile Include="src\Finder.cs" />
-        <Compile Include="src\RocketSettings.cs" />
-        <Compile Include="src\Main.cs" />
-        <Compile Include="src\Tools.cs" />
-        <Compile Include="src\MainButton_Toggle.cs" />
-        <Compile Include="src\RocketWindow.cs" />
-        <Compile Include="src\Main.ThoughtUtility.cs" />
-        <Compile Include="src\Main.CachedDict.cs" />
-        <Compile Include="src\RocketShip.cs" />
+        <Compile Include="Legacy\Utilities\HashUtility.cs" />
+        <Compile Include="Core\Finder.cs" />
+        <Compile Include="Core\RocketSettings.cs" />
+        <Compile Include="Core\Main.cs" />
+        <Compile Include="Core\Tools.cs" />
+        <Compile Include="Core\MainButton_Toggle.cs" />
+        <Compile Include="Core\RocketWindow.cs" />
+        <Compile Include="Core\Main.ThoughtUtility.cs" />
+        <Compile Include="Core\Main.Tools.cs" />
+        <Compile Include="Core\RocketShip.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
         <None Include="..\..\About\About.xml">
             <Link>About\About.xml</Link>
         </None>
-        <None Include="src.old\Cacheable.cs" />
-        <None Include="src.old\Model\AbstractStatRequestModel.cs" />
-        <None Include="src.old\Model\StatRequestModel.cs" />
-        <None Include="src.old\Model\StatRequestModelComparer.cs" />
-        <None Include="src.old\Model\GridTempModel.cs" />
-        <None Include="src.old\HarmonyPatches\HarmonyUtility.cs" />
-        <None Include="src.old\HarmonyPatches\zStatExtension_Patch.cs" />
+        <None Include="Legacy\Cacheable.cs" />
+        <None Include="Legacy\Model\AbstractStatRequestModel.cs" />
+        <None Include="Legacy\Model\StatRequestModel.cs" />
+        <None Include="Legacy\Model\StatRequestModelComparer.cs" />
+        <None Include="Legacy\Model\GridTempModel.cs" />
+        <None Include="Legacy\HarmonyPatches\HarmonyUtility.cs" />
+        <None Include="Legacy\HarmonyPatches\zStatExtension_Patch.cs" />
     </ItemGroup>
     <ItemGroup />
     <ItemGroup>
-      <Folder Include="src\" />
+      <Folder Include="Core\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Target Name="Publicise" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOsPlatform(OSX))">
