@@ -17,7 +17,7 @@ using UnityEngine.Assertions.Must;
 namespace RocketMan
 {
     [StaticConstructorOnStartup]
-    public class Main : ModBase
+    public partial class Main : ModBase
     {
         public static Action[] onMapComponentsInitializing = new Action[]
         {
@@ -92,26 +92,6 @@ namespace RocketMan
             for (int i = 0; i < onClearCache.Length; i++)
             {
                 onClearCache[i].Invoke();
-            }
-        }
-
-        public struct CachedUnit<T>
-        {
-            public readonly int tick;
-
-            public readonly T value;
-
-            public CachedUnit(T value)
-            {
-                this.tick = GenTicks.TicksGame;
-                this.value = value;
-            }
-
-            public bool IsValid(int expiry = 0)
-            {
-                if (GenTicks.TicksGame - tick <= expiry)
-                    return true;
-                return false;
             }
         }
 

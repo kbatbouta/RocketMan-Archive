@@ -309,6 +309,8 @@
         <Compile Include="src\Tools.cs" />
         <Compile Include="src\MainButton_Toggle.cs" />
         <Compile Include="src\RocketWindow.cs" />
+        <Compile Include="src\Main.ThoughtUtility.cs" />
+        <Compile Include="src\Main.CachedDict.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

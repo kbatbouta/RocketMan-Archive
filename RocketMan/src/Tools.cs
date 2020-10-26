@@ -49,6 +49,7 @@ namespace RocketMan
                 {
                     StatPart_ApparelStatOffSet_Patch.cache.RemoveAll(t => t.Key == pawn.thingIDNumber);
                     StatWorker_GetValueUnfinalized_Hijacked_Patch.pawnsCleanupQueue.Add(pawn.thingIDNumber);
+                    ThoughtUtility_NullifyingHediff_Patch.Dirty(pawn);
                 }
             }
             catch (Exception er)
@@ -72,6 +73,17 @@ namespace RocketMan
                 hash = HashUtility.HashOne(applyPostProcess ? 1 : 0, hash);
                 return hash;
             }
+        }
+
+        public static int GetKey(ThoughtDef def, Pawn pawn)
+        {
+            int hash = 0;
+            unchecked
+            {
+                hash = HashUtility.HashOne(def.shortHash);
+                hash = HashUtility.HashOne(pawn.thingIDNumber.GetHashCode(), hash);
+            }
+            return hash;
         }
 
         public static int GetKey(StatRequest req)

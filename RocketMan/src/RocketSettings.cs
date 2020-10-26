@@ -98,6 +98,8 @@ namespace RocketMan
 
                 listing.CheckboxLabeled("Enable translation caching", ref Finder.translationCaching);
 
+                listing.CheckboxLabeled("Enable thoughts checks caching", ref Finder.thoughtsCaching);
+
                 listing.CheckboxLabeled("Enable adaptive mod", ref Finder.learning);
                 listing.GapLine();
 
@@ -289,6 +291,7 @@ namespace RocketMan
                 Scribe_Values.Look<bool>(ref Finder.debug, "debug", false);
                 Scribe_Values.Look<bool>(ref Finder.translationCaching, "translation", true);
                 Scribe_Values.Look<bool>(ref Finder.labelCaching, "labelCaching", true);
+                Scribe_Values.Look<bool>(ref Finder.thoughtsCaching, "thoughtsCaching", true);
 
                 Scribe_Values.Look<int>(ref Finder.resourceReadOutCacheAge, "resourceReadOutCacheAge", 2);
                 Scribe_Values.Look<int>(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache", 0);
