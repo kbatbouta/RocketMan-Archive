@@ -12,7 +12,7 @@ using UnityEngine;
 using System.CodeDom;
 using System.Threading;
 using System.Diagnostics;
-using static RocketMan.RocketTicker;
+using UnityEngine.Assertions.Must;
 
 namespace RocketMan
 {
@@ -63,16 +63,6 @@ namespace RocketMan
             {
                 onDefsLoaded[i].Invoke();
             }
-
-            DefDatabase<ThingDef>.ResolveAllReferences(onlyExactlyMyType: true, parallel: true);
-            var pawnsDef = DefDatabase<ThingDef>.AllDefs.Where(def => true
-                 && def.race?.IsFlesh == true
-                 && def.race?.Humanlike == false);
-            foreach (var def in pawnsDef)
-                if (def.thingClass == typeof(Pawn))
-                {
-                    def.thingClass = typeof(Rocket);
-                }
         }
 
         public override void Tick(int currentTick)
@@ -102,6 +92,26 @@ namespace RocketMan
             for (int i = 0; i < onClearCache.Length; i++)
             {
                 onClearCache[i].Invoke();
+            }
+        }
+
+        public struct CachedUnit<T>
+        {
+            public readonly int tick;
+
+            public readonly T value;
+
+            public CachedUnit(T value)
+            {
+                this.tick = GenTicks.TicksGame;
+                this.value = value;
+            }
+
+            public bool IsValid(int expiry = 0)
+            {
+                if (GenTicks.TicksGame - tick <= expiry)
+                    return true;
+                return false;
             }
         }
 
@@ -156,7 +166,6 @@ namespace RocketMan
             internal static List<int> pawnsCleanupQueue = new List<int>();
 
             internal static List<Tuple<int, int, float>> requests = new List<Tuple<int, int, float>>();
-
 
             private static ThreadStart starter = null;
             private static Thread worker = null;
@@ -235,7 +244,7 @@ namespace RocketMan
                             }
                         }
                     }
-                    catch (Exception er)
+                    catch
                     {
 
                     }
@@ -514,22 +523,6 @@ namespace RocketMan
             }
         }
 
-        [HarmonyPatch(typeof(TickManager), nameof(TickManager.DoSingleTick))]
-        public static class TickManager_DoTick_Patch
-        {
-            public static void Prefix(out Stopwatch __state)
-            {
-                __state = new Stopwatch();
-                __state.Start();
-            }
-
-            public static void Postfix(Stopwatch __state)
-            {
-                __state.Stop();
-                RocketTicker.RandomTicker(__state.ElapsedTicks);
-            }
-        }
-
         [HarmonyPatch(typeof(GenMapUI), nameof(GenMapUI.GetPawnLabelNameWidth))]
         public static class GenMapUI_GetPawnLabelNameWidth_Patch
         {
@@ -644,6 +637,105 @@ namespace RocketMan
                 {
                     return true;
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(Translator), nameof(Translator.Translate), new[] { typeof(string) })]
+        public static class Translator_Translate_Patch
+        {
+            static bool devMod = Prefs.DevMode;
+            static Dictionary<string, TaggedString> cache = new Dictionary<string, TaggedString>();
+
+            public static bool Prefix(string key, ref TaggedString __result, out bool __state)
+            {
+                if (devMod != Prefs.DevMode)
+                {
+                    devMod = Prefs.DevMode;
+                    cache.Clear();
+                }
+
+                if (Finder.enabled && Finder.translationCaching)
+                {
+                    if (cache.TryGetValue(key, out var value))
+                    {
+                        __result = value;
+                        __state = false;
+                        return false;
+                    }
+
+                    __state = true;
+                    return true;
+                }
+                else
+                {
+                    __state = false;
+                    return true;
+                }
+            }
+
+            public static void Postfix(string key, TaggedString __result, bool __state)
+            {
+                if (__state == false) return;
+                cache[key] = __result;
+            }
+        }
+
+        [HarmonyPatch(typeof(Pawn_TimetableTracker), nameof(Pawn_TimetableTracker.GetAssignment))]
+        public static class Pawn_TimetableTracker_GetAssignment_Patch
+        {
+            static Exception Finalizer(Exception __exception, Pawn_TimetableTracker __instance, int hour, ref TimeAssignmentDef __result)
+            {
+                if (__exception != null)
+                {
+                    try
+                    {
+                        __result = TimeAssignmentDefOf.Anything;
+                        __instance.SetAssignment(hour, TimeAssignmentDefOf.Anything);
+                    }
+                    catch
+                    {
+                        return __exception;
+                    }
+                    finally
+                    {
+
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        [HarmonyPatch(typeof(ResourceCounter), nameof(ResourceCounter.GetCountIn), new[] { typeof(ThingRequestGroup) })]
+        public static class ResourceCounter_GetCountIn_Patch
+        {
+            internal static Dictionary<ThingRequestGroup, CachedUnit<int>> cache = new Dictionary<ThingRequestGroup, CachedUnit<int>>();
+
+            internal static bool Prefix(ThingRequestGroup group, ref int __result, out bool __state)
+            {
+                if (Finder.enabled)
+                {
+                    if (cache.TryGetValue(group, out var store) && store.IsValid(Finder.resourceReadOutCacheAge))
+                    {
+                        __result = store.value;
+                        __state = false;
+                        return false;
+                    }
+
+                    __state = true;
+                    return true;
+                }
+                else
+                {
+                    __state = false;
+                    return true;
+                }
+            }
+
+            internal static void Postfix(ThingRequestGroup group, int __result, bool __state)
+            {
+                if (__state == false) return;
+                cache[group] = new CachedUnit<int>(__result);
             }
         }
     }

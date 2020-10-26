@@ -2,7 +2,6 @@
 using Verse;
 using HarmonyLib;
 using System.Collections.Generic;
-using static RocketMan.RocketTicker;
 
 namespace RocketMan
 {
@@ -17,9 +16,13 @@ namespace RocketMan
 
         public static bool labelCaching = true;
 
+        public static bool translationCaching = true;
+
         public static float learningRate = 0.001f;
 
         public static int universalCacheAge = 2500;
+
+        public static int resourceReadOutCacheAge = 10;
 
         public static int ageOfGetValueUnfinalizedCache = 0;
 
