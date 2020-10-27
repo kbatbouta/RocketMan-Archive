@@ -44,6 +44,7 @@ namespace RocketMan
         public static Action[] onDefsLoaded = new Action[]
         {
             () => Finder.harmony.PatchAll(),
+            () => Finder.rocket.PatchAll(),
             () => RocketMod.UpdateStats(),
             () => RocketMod.UpdateExceptions(),
             () => StatWorker_GetValueUnfinalized_Hijacked_Patch.Initialize()

@@ -10,7 +10,7 @@ namespace RocketMan
 {
     public partial class Main
     {
-        [HarmonyPatch(typeof(ThoughtUtility), nameof(ThoughtUtility.NullifyingHediff))]
+        [RocketShip.SkipperPatch(typeof(ThoughtUtility), nameof(ThoughtUtility.NullifyingHediff))]
         public static class ThoughtUtility_NullifyingHediff_Patch
         {
             public static CachedDict<int, Hediff> cache = new CachedDict<int, Hediff>();
@@ -45,15 +45,9 @@ namespace RocketMan
                     }
                 }
             }
-
-            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
-            ILGenerator generator, MethodBase original)
-            {
-                return RocketShip.SkipperPatch(instructions, generator, original);
-            }
         }
 
-        [HarmonyPatch(typeof(ThoughtUtility), nameof(ThoughtUtility.NullifyingTrait))]
+        [RocketShip.SkipperPatch(typeof(ThoughtUtility), nameof(ThoughtUtility.NullifyingTrait))]
         public static class ThoughtUtility_NullifyingTrait_Patch
         {
             public static CachedDict<int, Trait> cache = new CachedDict<int, Trait>();
@@ -78,12 +72,6 @@ namespace RocketMan
                 {
                     cache[Tools.GetKey(def, pawn)] = result;
                 }
-            }
-
-            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
-            ILGenerator generator, MethodBase original)
-            {
-                return RocketShip.SkipperPatch(instructions, generator, original);
             }
         }
     }

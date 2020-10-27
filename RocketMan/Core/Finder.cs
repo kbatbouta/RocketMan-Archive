@@ -25,6 +25,7 @@ namespace RocketMan
         public static readonly string HarmonyID = "NotooShabby.RocketMan";
 
         public static Harmony harmony = new Harmony(HarmonyID);
+        public static RocketShip.RocketPatcher rocket = new RocketShip.RocketPatcher(HarmonyID);
 
         public static object locker = new object();
     }
