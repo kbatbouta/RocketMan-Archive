@@ -47,7 +47,7 @@ namespace RocketMan
             {
                 if (pawn != null)
                 {
-                    StatPart_ApparelStatOffSet_Patch.cache.RemoveAll(t => t.Key == pawn.thingIDNumber);
+                    StatPart_ApparelStatOffSet_Skipper_Patch.Dirty(pawn);
                     StatWorker_GetValueUnfinalized_Hijacked_Patch.pawnsCleanupQueue.Add(pawn.thingIDNumber);
                     if (ThoughtUtility_NullifyingHediff_Patch.cachedKeys.TryGetValue(pawn, out var store))
                     {

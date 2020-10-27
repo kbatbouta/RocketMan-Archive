@@ -31,7 +31,7 @@ namespace RocketMan
                 return true;
             }
 
-            public static void Setter(Hediff result, ThoughtDef def, Pawn pawn)
+            public static void Setter(ref Hediff result, ThoughtDef def, Pawn pawn)
             {
                 if (Finder.enabled && Finder.thoughtsCaching)
                 {
@@ -72,7 +72,7 @@ namespace RocketMan
                 return true;
             }
 
-            public static void Setter(Trait result, ThoughtDef def, Pawn pawn)
+            public static void Setter(ref Trait result, ThoughtDef def, Pawn pawn)
             {
                 if (Finder.enabled && Finder.thoughtsCaching)
                 {

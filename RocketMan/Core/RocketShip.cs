@@ -38,7 +38,12 @@ namespace RocketMan
             var codes = instructions.ToList();
             var returnType = (original as MethodInfo).ReturnType;
 
-            LocalBuilder result = generator.DeclareLocal(returnType);
+            LocalBuilder result = null;
+
+            if (returnType != typeof(void))
+            {
+                result = generator.DeclareLocal(returnType);
+            }
 
             if (skipper != null)
             {
@@ -69,7 +74,7 @@ namespace RocketMan
                     if (returnType != typeof(void))
                     {
                         yield return new CodeInstruction(OpCodes.Stloc_S, result.LocalIndex);
-                        yield return new CodeInstruction(OpCodes.Ldloc_S, result.LocalIndex);
+                        yield return new CodeInstruction(OpCodes.Ldloca_S, result.LocalIndex);
                     }
                     var extras = CallInside(original, setter).ToList();
                     extras[0].labels = code.labels;
@@ -117,7 +122,12 @@ namespace RocketMan
                         if (methodParam.ParameterType != parentParam.ParameterType)
                             throw new InvalidOperationException(
                                 string.Format("ROCKETMAN: error in patching:CallInside with method {0} with type mismatch {1}", parent.Name, methodParam.Name));
-                        yield return new CodeInstruction(OpCodes.Ldarg_S, paramCounter);
+                        if (methodParam.ParameterType.IsByRef)
+                            yield return new CodeInstruction(OpCodes.Ldarga_S, paramCounter);
+                        else
+                        {
+                            yield return new CodeInstruction(OpCodes.Ldarg_S, paramCounter);
+                        }
                         paramCounter++;
                     }
                 }

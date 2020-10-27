@@ -139,13 +139,10 @@ namespace RocketMan
         internal static class StatWorker_GetValueUnfinalized_Hijacked_Patch
         {
             internal static MethodBase m_GetValueUnfinalized = AccessTools.Method(typeof(StatWorker), "GetValueUnfinalized", new[] { typeof(StatRequest), typeof(bool) });
-
             internal static MethodBase m_GetValueUnfinalized_Replacemant = AccessTools.Method(typeof(StatWorker_GetValueUnfinalized_Hijacked_Patch), "Replacemant");
-
             internal static MethodBase m_GetValueUnfinalized_Transpiler = AccessTools.Method(typeof(Main.StatWorker_GetValueUnfinalized_Hijacked_Patch), "Transpiler");
 
             internal static Dictionary<int, Pair<float, int>> cache = new Dictionary<int, Pair<float, int>>(1000);
-
             internal static Dictionary<int, List<int>> pawnCachedKeys = new Dictionary<int, List<int>>();
 
             internal static List<int> pawnsCleanupQueue = new List<int>();
@@ -204,11 +201,12 @@ namespace RocketMan
                             {
                                 var request = requests.Pop();
                                 var statIndex = request.Item1;
+
                                 var deltaT = Mathf.Abs(request.Item2);
                                 var deltaX = Mathf.Abs(request.Item3);
 
                                 if (expiryCache.TryGetValue(statIndex, out float value))
-                                    expiryCache[statIndex] += Finder.learningRate * (256 - deltaX * deltaT);
+                                    expiryCache[statIndex] += Mathf.Clamp(Finder.learningRate * (deltaT / 100 - deltaX * deltaT), -5, 5);
                                 else
                                     expiryCache[statIndex] = Finder.statExpiry[statIndex];
                             }
@@ -264,9 +262,9 @@ namespace RocketMan
             internal static IEnumerable<MethodBase> TargetMethods()
             {
                 var methods = TargetMethodsUnfinalized().Where(m => true
-                   && m != null
-                   && !m.IsAbstract
-                   && !m.DeclaringType.IsAbstract);
+                    && m != null
+                    && !m.IsAbstract
+                    && !m.DeclaringType.IsAbstract).ToHashSet();
 
                 return methods;
             }
@@ -338,133 +336,30 @@ namespace RocketMan
             }
         }
 
-        //[HarmonyPatch]
-        public static class StatPart_ApparelStatOffSet_Patch
+        [HarmonyPatch]
+        public static class Pawn_Notify_Dirty
         {
-            internal static Dictionary<int, Pair<Dictionary<ushort, float>, int>> cache = new Dictionary<int, Pair<Dictionary<ushort, float>, int>>();
-
-            //[HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
-            //[HarmonyPriority(9999)]
-            //[HarmonyPrefix]
-            public static bool TransformValue_Prefix(StatPart_ApparelStatOffset __instance, StatRequest req, ref float val, out Pair<float, bool> __state)
-            {
-                if (Finder.enabled)
-                {
-                    if (!req.HasThing || req.Thing == null || !(req.thingInt is Pawn))
-                    {
-                        __state = new Pair<float, bool>(val, true);
-                        return false;
-                    }
-
-                    var key = Tools.GetKey(req);
-                    var tick = GenTicks.TicksGame;
-                    var stat = __instance.apparelStat ?? __instance.parentStat;
-                    var subKey = 0;
-
-                    unchecked
-                    {
-                        subKey = HashUtility.HashOne(val.GetHashCode());
-                        subKey = HashUtility.HashOne(stat.index, subKey);
-                    }
-
-                    if (cache.TryGetValue(key, out var store) && tick - store.second < 2500)
-                    {
-                        if (store.first.TryGetValue((ushort)subKey, out float value))
-                        {
-                            __state = new Pair<float, bool>(val = value, false);
-                            return false;
-                        }
-                    }
-
-                    __state = new Pair<float, bool>(val, true);
-                    return true;
-                }
-                else
-                {
-                    __state = new Pair<float, bool>(val, false);
-                    return true;
-                }
-            }
-
-            //[HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
-            //[HarmonyPostfix]
-            public static void TransformValue_Postfix(StatPart_ApparelStatOffset __instance, StatRequest req, ref float val, Pair<float, bool> __state)
-            {
-                if (!__state.second || !Finder.enabled)
-                {
-                    return;
-                }
-
-                if (!req.HasThing || req.Thing == null || !(req.thingInt is Pawn))
-                {
-                    return;
-                }
-
-                var key = Tools.GetKey(req);
-                var tick = GenTicks.TicksGame;
-                var stat = __instance.apparelStat ?? __instance.parentStat;
-                var subKey = 0;
-
-                unchecked
-                {
-                    subKey = HashUtility.HashOne(__state.first.GetHashCode());
-                    subKey = HashUtility.HashOne(stat.index, subKey);
-                }
-
-                if (cache.TryGetValue(key, out var store) && tick - store.second < 2500)
-                {
-                    store.first[(ushort)subKey] = val;
-                }
-                else
-                {
-                    Dictionary<ushort, float> dict;
-
-                    if (store == null || store.first == null)
-                    {
-                        dict = new Dictionary<ushort, float>();
-                    }
-                    else
-                    {
-                        store.first.Clear();
-                        dict = store.first;
-                    }
-
-                    dict[(ushort)subKey] = val;
-                    cache[key] = new Pair<Dictionary<ushort, float>, int>(dict, tick);
-                }
-            }
-
             [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_ApparelAdded))]
             [HarmonyPostfix]
             public static void Notify_ApparelAdded_Postfix(Pawn_ApparelTracker __instance, Apparel apparel)
             {
-                var key = __instance.pawn.thingIDNumber;
-
-                cache.RemoveAll(t => t.Key == __instance.pawn.thingIDNumber);
+                __instance.pawn.Notify_Dirty();
             }
 
             [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_ApparelRemoved))]
             [HarmonyPostfix]
             public static void Notify_ApparelRemoved_Postfix(Pawn_ApparelTracker __instance, Apparel apparel)
             {
-                var key = __instance.pawn.thingIDNumber;
-
-                cache.RemoveAll(t => t.Key == __instance.pawn.thingIDNumber);
+                __instance.pawn.Notify_Dirty();
             }
 
             [HarmonyPatch(typeof(Pawn), nameof(Pawn.Destroy))]
             [HarmonyPostfix]
             public static void Destroy_Postfix(Pawn __instance)
             {
-                var key = __instance.thingIDNumber;
-
-                cache.RemoveAll(t => t.Key == __instance.thingIDNumber);
+                __instance.Notify_Dirty();
             }
-        }
 
-        [HarmonyPatch]
-        public static class Pawn_ApparelTracker_Patch
-        {
             [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_LostBodyPart))]
             [HarmonyPostfix]
             public static void Notify_LostBodyPart_Postfix(Pawn_ApparelTracker __instance)
@@ -478,22 +373,14 @@ namespace RocketMan
             {
                 __instance.pawn.Notify_Dirty();
             }
-        }
 
-        [HarmonyPatch]
-        public static class Pawn_Patch
-        {
             [HarmonyPatch(typeof(Pawn), nameof(Pawn.Notify_BulletImpactNearby))]
             [HarmonyPostfix]
             public static void Notify_BulletImpactNearby_Postfix(Pawn __instance)
             {
                 __instance.Notify_Dirty();
             }
-        }
 
-        [HarmonyPatch]
-        public static class Pawn_HealthTracker_Patch
-        {
             [HarmonyPatch(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_HediffChanged))]
             [HarmonyPostfix]
             public static void Notify_HediffChanged_Postfix(Pawn_HealthTracker __instance)
