@@ -48,7 +48,7 @@ namespace RocketMan
                 }
                 else if (this.methodType == MethodType.Normal)
                 {
-                    var m = AccessTools.Method(this.targetType, this.targetMethod, this.methodArguments, this.methodArguments);
+                    var m = AccessTools.Method(this.targetType, this.targetMethod, this.methodArguments, this.genericsTypes);
                     if (m != null) found = true;
                     method = m;
                     return m;
