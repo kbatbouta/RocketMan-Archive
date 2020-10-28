@@ -21,13 +21,15 @@ namespace RocketMan.Core
 {
     public partial class Main
     {
-        [HarmonyPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), new[] { typeof(int), typeof(int) })]
+        [SkipperPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), methodArguments: new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
             internal static HashSet<int> visitedTiles;
+
             internal static int visitedTilesCount = 0;
             internal static int islandCounter = 0;
             internal static int[] tilesToIsland;
+
             internal static World world;
 
             private static Dictionary<int, List<int>> islands = new Dictionary<int, List<int>>();
@@ -92,7 +94,8 @@ namespace RocketMan.Core
                     }
                     else
                     {
-                        Log.Message(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
+                        if (Prefs.DevMode)
+                            Log.Message(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
                         var randomTile = passableTiles.RandomElement();
                         if (Find.World.Impassable(randomTile))
                             continue;
@@ -115,12 +118,12 @@ namespace RocketMan.Core
 
                 if (world != Find.World) return;
                 finished = true;
-                Log.Message(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
-                Log.Message(string.Format("ROCKETMAN: FINISHED BUILDING ISLANDS!, {0}, {1}, {2}, {3}", islandCounter, visitedTilesCount, passableTiles.Count, currentIslandCounter));
+                if (Prefs.DevMode)
+                {
+                    Log.Message(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
+                    Log.Message(string.Format("ROCKETMAN: FINISHED BUILDING ISLANDS!, {0}, {1}, {2}, {3}", islandCounter, visitedTilesCount, passableTiles.Count, currentIslandCounter));
+                }
             }
-
-            //internal static ThreadStart threadStart;
-            //internal static Thread thread;
 
             internal static void Initialize()
             {
@@ -131,53 +134,33 @@ namespace RocketMan.Core
                 islandCounter = 1;
                 islands.Clear();
 
-                //if (threadStart == null)
-                //{
-                //    threadStart = new ThreadStart(GenerateIslands);
-                //    thread = new Thread(GenerateIslands);
-                //}
-                //else
-                //{
-                //    if (thread.IsAlive)
-                //    {
-                //        thread.Interrupt();
-                //    }
-                //    threadStart = new ThreadStart(GenerateIslands);
-                //    thread = new Thread(GenerateIslands);
-                //}
-                //
-                //thread.Start();
-
                 GenerateIslands();
             }
 
-            internal static bool Prefix(ref bool __result, WorldReachability __instance, int startTile, int destTile)
+            internal static bool Skipper(ref bool __result, WorldReachability __instance, int startTile, int destTile)
             {
                 if (Finder.enabled)
                 {
-                    Log.Message("dude");
                     if (world != Find.World)
                     {
+                        if (Finder.debug) Log.Message("ROCKETMAN: Creating world map cache");
                         Initialize();
                     }
-
                     if (!finished)
                     {
+                        if (Finder.debug) Log.Message("ROCKETMAN: Tried to call WorldReachability while still processing");
                         return true;
                     }
-
-                    if (tilesToIsland[startTile] == 0 || tilesToIsland[destTile] == 0)
+                    if (tilesToIsland[startTile] == 0 || tilesToIsland[destTile] == 0 || tilesToIsland[startTile] != tilesToIsland[destTile])
                     {
-                        return true;
+                        if (Finder.debug) Log.Message("ROCKETMAN: Not Allowed");
+                        __result = false;
                     }
-
                     if (tilesToIsland[startTile] == tilesToIsland[destTile])
                     {
+                        if (Finder.debug) Log.Message("ROCKETMAN: Allowed");
                         __result = true;
-                        return false;
                     }
-
-                    __result = false;
                     return false;
                 }
                 else
