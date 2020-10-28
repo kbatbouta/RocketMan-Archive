@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using static RocketMan.RocketShip;
 using RimWorld.Planet;
 using HarmonyLib;
+using System.Threading;
+using System;
+using System.Linq;
 
-namespace RocketMan.Core
+namespace RocketMan
 {
     public partial class Main
     {
@@ -21,6 +24,27 @@ namespace RocketMan.Core
 
             private static Dictionary<int, List<int>> islands = new Dictionary<int, List<int>>();
             private static bool finished = false;
+
+            private static List<string> messages = new List<string>();
+            private static object locker = new object();
+
+            internal static void StartIslandGeneration()
+            {
+                lock (locker)
+                {
+                    finished = false;
+
+                    try
+                    {
+                        GenerateIslands();
+                        finished = true;
+                    }
+                    catch (Exception er)
+                    {
+                        messages.Add(string.Format("ROCKETMAN: Error in island generation with message {0} at {1}", er.Message, er.StackTrace));
+                    }
+                }
+            }
 
             internal static void GenerateIslands()
             {
@@ -81,8 +105,8 @@ namespace RocketMan.Core
                     }
                     else
                     {
-                        if (Prefs.DevMode)
-                            Log.Message(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
+                        if (Prefs.DevMode && Finder.debug)
+                            messages.Add(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
                         var randomTile = passableTiles.RandomElement();
                         if (Find.World.Impassable(randomTile))
                             continue;
@@ -104,24 +128,58 @@ namespace RocketMan.Core
                     }
 
                 if (world != Find.World) return;
-                finished = true;
                 if (Prefs.DevMode)
                 {
-                    Log.Message(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
-                    Log.Message(string.Format("ROCKETMAN: FINISHED BUILDING ISLANDS!, {0}, {1}, {2}, {3}", islandCounter, visitedTilesCount, passableTiles.Count, currentIslandCounter));
+                    if (Finder.debug)
+                        messages.Add(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
+                    messages.Add(string.Format("ROCKETMAN: FINISHED BUILDING ISLANDS!, {0}, {1}, {2}, {3}", islandCounter, visitedTilesCount, passableTiles.Count, currentIslandCounter));
+                }
+            }
+
+            internal static Thread thread;
+            internal static ThreadStart threadStart;
+
+            internal static void FlushMessages()
+            {
+                var counter = 0;
+                while (messages.Count > 0 || counter++ < 128)
+                {
+                    var message = messages.Pop();
+                    if (message.ToLower().Contains("error"))
+                        Log.Error(message);
+                    else
+                        Log.Message(message);
                 }
             }
 
             internal static void Initialize()
             {
-                world = Find.World;
-                tilesToIsland = new int[Find.WorldGrid.TilesCount];
-                visitedTilesCount = 0;
-                visitedTiles = new HashSet<int>();
-                islandCounter = 1;
-                islands.Clear();
+                lock (locker)
+                {
+                    world = Find.World;
+                    tilesToIsland = new int[Find.WorldGrid.TilesCount];
+                    visitedTilesCount = 0;
+                    visitedTiles = new HashSet<int>();
+                    islandCounter = 1;
+                    islands.Clear();
+                }
 
-                GenerateIslands();
+                if (thread == null || !thread.IsAlive)
+                {
+                    threadStart = new ThreadStart(StartIslandGeneration);
+                    thread = new Thread(threadStart);
+                }
+                else
+                {
+                    if (thread.IsAlive)
+                    {
+                        thread.Interrupt();
+                    }
+                    threadStart = new ThreadStart(StartIslandGeneration);
+                    thread = new Thread(threadStart);
+                }
+
+                thread.Start();
             }
 
             internal static bool Prefix(ref bool __result, int startTile, int destTile)
@@ -130,12 +188,12 @@ namespace RocketMan.Core
                 {
                     if (world != Find.World)
                     {
-                        if (Finder.debug) Log.Message("ROCKETMAN: Creating world map cache");
+                        Log.Message("ROCKETMAN: Creating world map cache");
                         Initialize();
                     }
                     if (!finished)
                     {
-                        if (Finder.debug) Log.Message("ROCKETMAN: Tried to call WorldReachability while still processing");
+                        Log.Warning("ROCKETMAN: Tried to call WorldReachability while still processing");
                         return true;
                     }
                     if (tilesToIsland[startTile] == 0 || tilesToIsland[destTile] == 0 || tilesToIsland[startTile] != tilesToIsland[destTile])

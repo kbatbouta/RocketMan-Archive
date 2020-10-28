@@ -39,6 +39,7 @@ namespace RocketMan
         {
             () => StatWorker_GetValueUnfinalized_Hijacked_Patch.CleanCache(),
             () => StatWorker_GetValueUnfinalized_Hijacked_Patch.FlushMessages(),
+            () => WorldReachability_CanReach_Patch.FlushMessages(),
             () => RocketMod.UpdateExceptions()
         };
 
