@@ -13,6 +13,7 @@ using System.CodeDom;
 using System.Threading;
 using System.Diagnostics;
 using UnityEngine.Assertions.Must;
+using RimWorld.Planet;
 
 namespace RocketMan
 {
@@ -39,7 +40,7 @@ namespace RocketMan
             () => StatWorker_GetValueUnfinalized_Hijacked_Patch.CleanCache(),
             () => StatWorker_GetValueUnfinalized_Hijacked_Patch.FlushMessages(),
             () => RocketMod.UpdateExceptions()
-    };
+        };
 
         public static Action[] onDefsLoaded = new Action[]
         {

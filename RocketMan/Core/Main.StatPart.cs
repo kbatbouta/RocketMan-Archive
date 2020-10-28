@@ -5,32 +5,27 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using static RocketMan.RocketShip;
 
 namespace RocketMan
 {
     public partial class Main
     {
-        [RocketShip.SkipperPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
+        [SkipperPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
         public static class StatPart_ApparelStatOffSet_Skipper_Patch
         {
             public static CachedDict<int, Dictionary<int, float>> cache = new CachedDict<int, Dictionary<int, float>>();
-
-            public static float currentValue;
-
-            public static int currentKey;
-
-            public static object locker = new object();
 
             public static bool Skipper(StatPart_ApparelStatOffset __instance, ref float __state, StatRequest req, ref float val)
             {
                 if (Finder.enabled)
                 {
-                    if (!req.HasThing || req.Thing == null || !(req.thingInt is Pawn))
+                    if (!req.HasThing || req.thingInt == null || !(req.thingInt is Pawn))
                         return false;
 
                     if (cache.TryGetValue(req.thingInt.thingIDNumber, out var store, expiry: 2500))
                     {
-                        var sub = currentKey = Tools.GetKey(req);
+                        var sub = Tools.GetKey(req);
                         var stat = __instance.apparelStat ?? __instance.parentStat;
 
                         unchecked
@@ -54,7 +49,6 @@ namespace RocketMan
             {
                 if (Finder.enabled)
                 {
-
                     var key = req.thingInt.thingIDNumber;
 
                     var sub = Tools.GetKey(req);

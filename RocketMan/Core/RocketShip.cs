@@ -27,6 +27,7 @@ namespace RocketMan
             public Type[] genericsTypes;
 
             private bool found = false;
+
             private MethodInfo method;
 
             public SkipperPatch(Type type, string methodName, MethodType methodType = MethodType.Normal, Type[] methodArguments = null, Type[] genericsTypes = null)
@@ -49,18 +50,21 @@ namespace RocketMan
                 {
                     var m = AccessTools.Method(this.targetType, this.targetMethod, this.methodArguments, this.methodArguments);
                     if (m != null) found = true;
+                    method = m;
                     return m;
                 }
                 else if (this.methodType == MethodType.Getter)
                 {
                     var m = AccessTools.PropertyGetter(this.targetType, this.targetMethod);
                     if (m != null) found = true;
+                    method = m;
                     return m;
                 }
                 else if (this.methodType == MethodType.Setter)
                 {
                     var m = AccessTools.PropertySetter(this.targetType, this.targetMethod);
                     if (m != null) found = true;
+                    method = m;
                     return m;
                 }
                 throw new NotImplementedException();
@@ -71,6 +75,7 @@ namespace RocketMan
         {
             public string id;
             public List<MethodInfo> patchedMethods = new List<MethodInfo>();
+            public Dictionary<MethodInfo, Type> patches = new Dictionary<MethodInfo, Type>();
 
             private Harmony harmony;
             private static MethodInfo mTranspiler = AccessTools.Method("RocketPatcher:SkipperTranspiler");
@@ -102,6 +107,7 @@ namespace RocketMan
                         RocketPatcher.patchType = patchType;
                         this.harmony.Patch(target, transpiler: new HarmonyMethod(mTranspiler));
                         this.patchedMethods.Add(target);
+                        this.patches.Add(target, patchType);
                         Log.Message(string.Format("ROCKETMAN: patched target {0}", target));
                     }
                     catch (Exception er)

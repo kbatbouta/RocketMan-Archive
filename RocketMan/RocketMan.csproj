@@ -22,6 +22,7 @@
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -314,6 +315,7 @@
         <Compile Include="Core\Utilities\HashUtility.cs" />
         <Compile Include="Core\RocketSettings.Exceptions.cs" />
         <Compile Include="Core\Main.StatPart.cs" />
+        <Compile Include="Core\Main.WorldReachability.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
