@@ -316,6 +316,7 @@
         <Compile Include="Core\RocketSettings.Exceptions.cs" />
         <Compile Include="Core\Main.StatPart.cs" />
         <Compile Include="Core\Main.WorldReachability.cs" />
+        <Compile Include="Core\Main.WorldGrid.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

@@ -142,7 +142,7 @@ namespace RocketMan
             internal static void FlushMessages()
             {
                 var counter = 0;
-                while (messages.Count > 0 || counter++ < 128)
+                while (messages.Count > 0 && counter++ < 128)
                 {
                     var message = messages.Pop();
                     if (message.ToLower().Contains("error"))
