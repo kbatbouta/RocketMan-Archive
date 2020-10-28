@@ -1,27 +1,14 @@
-﻿using System;
-using HugsLib;
-using HarmonyLib;
-using RimWorld;
-using Verse;
+﻿using Verse;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEngine;
-using System.CodeDom;
-using System.Threading;
-using System.Diagnostics;
-using UnityEngine.Assertions.Must;
 using static RocketMan.RocketShip;
 using RimWorld.Planet;
-using System.Runtime.Serialization.Formatters;
+using HarmonyLib;
 
 namespace RocketMan.Core
 {
     public partial class Main
     {
-        [SkipperPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), methodArguments: new[] { typeof(int), typeof(int) })]
+        [HarmonyPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
             internal static HashSet<int> visitedTiles;
@@ -137,7 +124,7 @@ namespace RocketMan.Core
                 GenerateIslands();
             }
 
-            internal static bool Skipper(ref bool __result, WorldReachability __instance, int startTile, int destTile)
+            internal static bool Prefix(ref bool __result, int startTile, int destTile)
             {
                 if (Finder.enabled)
                 {
