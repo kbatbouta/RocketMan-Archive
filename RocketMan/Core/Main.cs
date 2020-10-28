@@ -123,7 +123,7 @@ namespace RocketMan
 
             public static void Interrupt(StatWorker statWorker, StatRequest req, bool applyPostProcess)
             {
-                if (Finder.learning && Finder.debug)
+                if (Finder.learning && Finder.statLogging)
                 {
                     StackTrace trace = new StackTrace();
                     StackFrame frame = trace.GetFrame(2);
@@ -276,7 +276,7 @@ namespace RocketMan
             {
                 var value = statWorker.GetValueUnfinalized(req, applyPostProcess);
 
-                if (Finder.debug && !Finder.learning)
+                if (Finder.statLogging && !Finder.learning)
                 {
                     Log.Message(string.Format("ROCKETMAN: state {0} for {1} took {2} with key {3}", statWorker.stat.defName, req.thingInt, tick - store.second, key));
                 }

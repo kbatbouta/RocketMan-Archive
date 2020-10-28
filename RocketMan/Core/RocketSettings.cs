@@ -94,6 +94,12 @@ namespace RocketMan
             {
                 Text.Font = GameFont.Tiny;
                 listing.CheckboxLabeled("Enable debuging", ref Finder.debug);
+
+                if (Finder.debug)
+                {
+                    listing.CheckboxLabeled("Enable Stat Logging (will destroy performance!)", ref Finder.statLogging);
+                }
+
                 listing.GapLine();
 
                 listing.CheckboxLabeled("Enable thoughts checks caching", ref Finder.thoughtsCaching);

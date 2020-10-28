@@ -10,6 +10,7 @@ namespace RocketMan
     {
         public static bool enabled = true;
         public static bool debug = false;
+        public static bool statLogging = false;
         public static bool learning = true;
         public static bool labelCaching = true;
         public static bool translationCaching = true;

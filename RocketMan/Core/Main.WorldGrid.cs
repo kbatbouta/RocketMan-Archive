@@ -11,7 +11,7 @@ namespace RocketMan
 {
     public partial class Main
     {
-        [SkipperPatch(typeof(WorldGrid), nameof(WorldGrid.TraversalDistanceBetween))]
+        [HarmonyPatch(typeof(WorldGrid), nameof(WorldGrid.TraversalDistanceBetween))]
         public static class WorldGrid_TraversalDistanceBetween
         {
             private static WorldGrid grid;
@@ -20,6 +20,7 @@ namespace RocketMan
             internal static int[] offsets;
 
             private static int target;
+            private static object locker = new object();
 
             private struct QPair : IComparable<QPair>
             {
@@ -118,18 +119,25 @@ namespace RocketMan
                 throw new Exception(string.Format("ROCKETMAN: target not reachable {0}, visited {1}", queue.Count, visitedCounter));
             }
 
-            internal static bool Skipper(ref int __result, WorldGrid __instance, int start, int end)
+            internal static bool Prefix(ref int __result, WorldGrid __instance, int start, int end)
             {
                 if (Finder.enabled)
                 {
-                    if (grid != Find.WorldGrid)
-                        Initialize();
-                    //
-                    // using a* to find the "best" path in "minimal" time
-                    __result = Search(start, end);
-
-                    if (Finder.debug == true)
-                        Log.Warning(string.Format("ROCKETMAN: [R] travel distance between {1}, {2} is {0}", __result, start, end));
+                    lock (locker)
+                    {
+                        if (grid != Find.WorldGrid)
+                            Initialize();
+                        //
+                        // using a* to find the "best" path in "minimal" time
+                        if (Finder.debug == true)
+                        {
+                            Log.Warning(string.Format("ROCKETMAN: [R] travel distance between {1}, {2} is {0}", Search(start, end), start, end));
+                        }
+                        else
+                        {
+                            __result = Search(start, end);
+                        }
+                    }
                     return Finder.debug;
                 }
                 else
@@ -138,10 +146,12 @@ namespace RocketMan
                 }
             }
 
-            internal static void Setter(ref int __result, WorldGrid __instance)
+            internal static void Postfix(ref int __result, WorldGrid __instance)
             {
                 if (Finder.debug == true)
+                {
                     Log.Warning(string.Format("ROCKETMAN: [C] travel distance in vanilla between  is {0}", __result));
+                }
             }
         }
     }
