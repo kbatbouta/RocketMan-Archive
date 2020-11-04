@@ -15,6 +15,8 @@ namespace RocketMan
         public static bool labelCaching = true;
         public static bool translationCaching = true;
         public static bool thoughtsCaching = true;
+        public static bool refreshGrid = false;
+        public static bool enableGridRefresh = false;
 
         public static bool drawGlowerUpdates = false;
 

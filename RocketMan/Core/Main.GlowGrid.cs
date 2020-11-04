@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -19,23 +20,23 @@ namespace RocketMan
     {
         public static class GlowGrid_Patch
         {
-            internal static GlowerPorperties currentProp;
+            public static GlowerPorperties currentProp;
 
-            internal static Map[] maps = new Map[20];
+            public static Map[] maps = new Map[20];
 
             internal static bool deregister = false;
+
             internal static bool register = false;
+
             internal static bool calculating = false;
-            internal static bool refreshAll = false;
 
-            internal static HashSet<int>[] litCells = new HashSet<int>[20];
-            internal static HashSet<int>[] removalIndices = new HashSet<int>[20];
-            internal static HashSet<GlowerPorperties>[] removalList = new HashSet<GlowerPorperties>[20];
-            internal static HashSet<GlowerPorperties>[] changedList = new HashSet<GlowerPorperties>[20];
+            public static List<GlowerPorperties>[] propsList = new List<GlowerPorperties>[20];
+            public static HashSet<int>[] litCells = new HashSet<int>[20];
+            public static HashSet<GlowerPorperties>[] removedProps = new HashSet<GlowerPorperties>[20];
+            public static HashSet<GlowerPorperties>[] changedProps = new HashSet<GlowerPorperties>[20];
+            public static Dictionary<CompGlower, GlowerPorperties>[] props = new Dictionary<CompGlower, GlowerPorperties>[20];
 
-            internal static Dictionary<CompGlower, GlowerPorperties>[] props = new Dictionary<CompGlower, GlowerPorperties>[20];
-
-            internal class GlowerPorperties
+            public class GlowerPorperties
             {
                 public CompGlower glower;
 
@@ -47,7 +48,7 @@ namespace RocketMan
                 public bool drawen = false;
 
                 public bool IsValid => !glower.parent.Destroyed && glower.ShouldBeLitNow;
-                public bool ShouldRemove => glower.parent.Destroyed;
+                public bool ShouldRemove => glower.parent.Destroyed || !glower.ShouldBeLitNow;
 
                 public GlowerPorperties(CompGlower glower)
                 {
@@ -55,7 +56,7 @@ namespace RocketMan
                     this.indices = new HashSet<int>();
 
                     var dim = glower.Props.glowRadius * 2;
-                    this.position = glower.parent.TrueCenter();
+                    this.position = glower.parent.positionInt.ToVector3();
                     this.position.y = 0.0f;
                 }
 
@@ -103,7 +104,10 @@ namespace RocketMan
                         return null;
                     if (props[comp.parent.Map.Index].TryGetValue(comp, out var prop))
                         return prop;
-                    return props[comp.parent.Map.Index][comp] = new GlowerPorperties(comp);
+                    var result = new GlowerPorperties(comp);
+                    propsList[comp.parent.Map.Index].Add(result);
+                    props[comp.parent.Map.Index][comp] = result;
+                    return result;
                 }
             }
 
@@ -116,10 +120,10 @@ namespace RocketMan
                 {
                     maps[map.Index] = map;
                     props[map.Index] = new Dictionary<CompGlower, GlowerPorperties>();
-                    removalIndices[map.Index] = new HashSet<int>();
-                    removalList[map.Index] = new HashSet<GlowerPorperties>();
-                    changedList[map.Index] = new HashSet<GlowerPorperties>();
+                    propsList[map.Index] = new List<GlowerPorperties>();
                     litCells[map.Index] = new HashSet<int>();
+                    removedProps[map.Index] = new HashSet<GlowerPorperties>();
+                    changedProps[map.Index] = new HashSet<GlowerPorperties>();
                 }
                 return true;
             }
@@ -133,21 +137,19 @@ namespace RocketMan
                     register = true;
                     TryRegisterMap(map);
 
-                    GlowerPorperties prop;
+                    GlowerPorperties prop = GlowerPorperties.GetGlowerPorperties(newGlow);
                     if (props[map.Index].ContainsKey(newGlow))
                     {
                         if (Finder.debug) Log.Warning(string.Format("ROCKETMAN: Double registering an registered glower {0}:{1}", newGlow, newGlow.parent));
                         return;
                     }
-                    prop = new GlowerPorperties(newGlow);
-                    props[map.Index][newGlow] = prop;
+                    if (Finder.debug) Log.Warning(string.Format("ROCKETMAN: Registering an registered glower {0}:{1}", newGlow, newGlow.parent));
                 }
 
                 internal static void Postfix()
                 {
                     register = false;
                 }
-
             }
 
             [HarmonyPatch(typeof(GlowGrid), nameof(GlowGrid.DeRegisterGlower))]
@@ -159,16 +161,17 @@ namespace RocketMan
                     deregister = true;
                     TryRegisterMap(map);
 
+                    GlowerPorperties prop;
                     if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Removed {0}", oldGlow));
                     if (!props[map.Index].ContainsKey(oldGlow))
                     {
-                        if (Finder.debug) Log.Warning(string.Format("ROCKETMAN: Found an unregisterd {0}:{1}", oldGlow, oldGlow.parent));
+                        if (Finder.debug && !removedProps[map.Index].Any(p => p.glower == oldGlow)) Log.Warning(string.Format("ROCKETMAN: Found an unregisterd {0}:{1}", oldGlow, oldGlow.parent));
                         return;
                     }
-                    GlowerPorperties prop = props[map.Index][oldGlow];
-                    prop.drawen = false;
-                    removalList[map.Index].Add(prop);
-                    props[map.Index].Remove(oldGlow);
+                    prop = props[map.Index][oldGlow];
+
+                    if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Queued {0} for removal", oldGlow.parent));
+                    removedProps[map.Index].Add(prop);
                 }
 
                 internal static void Postfix()
@@ -181,217 +184,186 @@ namespace RocketMan
             [HarmonyPatch(typeof(GlowGrid), nameof(GlowGrid.RecalculateAllGlow))]
             internal static class RecalculateAllGlow_Patch
             {
-                private static Color32[] glowGridTemp;
-                private static Color32[] glowGridEmpty;
-
-                private static HashSet<GlowerPorperties> removalHolder = new HashSet<GlowerPorperties>();
+                internal static Color32[] tBufferedGrid;
+                internal static Color32[] tEmptyGrid;
 
                 internal static void Prefix(GlowGrid __instance)
                 {
-                    if (Current.ProgramState == ProgramState.Playing)
+                    var map = __instance.map;
+                    var mapIndex = map.Index;
+                    if (!TryRegisterMap(map))
+                        return;
+                    if (Finder.refreshGrid)
                     {
-                        var map = __instance.map;
-                        var mapIndex = map.Index;
-                        if (!TryRegisterMap(map))
-                            return;
-                        FixGridTemp(ref __instance.glowGrid);
-                        calculating = true;
+                        tEmptyGrid.CopyTo(__instance.glowGrid, 0);
+                        tEmptyGrid.CopyTo(__instance.glowGridNoCavePlants, 0);
+                        return;
                     }
+                    if (tEmptyGrid == null || tEmptyGrid.Length != __instance.glowGrid.Length)
+                    {
+                        tEmptyGrid = new Color32[__instance.glowGrid.Length];
+                        tBufferedGrid = new Color32[__instance.glowGrid.Length];
+                        for (int i = 0; i < __instance.glowGrid.Length; i++)
+                        {
+                            tEmptyGrid[i] = new Color32(0, 0, 0, 0);
+                        }
+                    }
+                    tEmptyGrid.CopyTo(tBufferedGrid, 0);
+                    tEmptyGrid.CopyTo(__instance.glowGridNoCavePlants, 0);
+                    calculating = true;
                 }
 
                 internal static void Postfix(GlowGrid __instance)
                 {
-                    if (Current.ProgramState == ProgramState.Playing)
-                    {
-                        var map = __instance.map;
-                        var mapIndex = map.Index;
+                    var map = __instance.map;
+                    var mapIndex = map.Index;
 
-                        if (refreshAll)
-                        {
-                            RefreshAll(__instance);
-                            FinalizeCleanUp(__instance);
-                            return;
-                        }
-                        if (changedList[mapIndex].Count != 0)
-                        {
-                            RefreshChanged(__instance);
-                        }
-                        foreach (var prop in changedList[mapIndex].Intersect(removalHolder))
-                        {
-                            removalHolder.Remove(prop);
-                        }
-                        if (removalHolder.Count != 0)
-                        {
-                            RefreshRemoved(__instance);
-                        }
-                        FinalizeCleanUp(__instance);
-                        calculating = false;
+                    if (Finder.refreshGrid)
+                    {
+                        Finder.refreshGrid = false;
+                        return;
                     }
+
+                    if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for removed with {0} queued for removal", removedProps[mapIndex].Count));
+                    foreach (var prop in removedProps[mapIndex])
+                    {
+                        FixRemovedGlowers(__instance, prop);
+                        props[map.Index].Remove(prop.glower);
+                        propsList[map.Index].Remove(prop);
+                    }
+
+                    if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for changes with {0} queued for changes", changedProps[mapIndex].Count));
+                    if (changedProps[mapIndex].Count != 0)
+                    {
+                        FixChanged(__instance);
+                    }
+
+                    calculating = false;
+                    FinalizeNewGlowers(__instance);
+                    FinalizeCleanUp(__instance);
                 }
 
                 internal static void AddFloodGlowFor(CompGlower glower, Color32[] glowGrid)
                 {
-                    int mapIndex = glower.parent.Map.Index;
-                    GlowFlooder flooder = glower.parent.Map.glowFlooder;
-                    if (Current.ProgramState == ProgramState.Playing)
+                    GlowerPorperties.GetGlowerPorperties(glower);
+                    if (Finder.refreshGrid)
                     {
-                        GlowerPorperties prop = GlowerPorperties.GetGlowerPorperties(glower);
-                        if (glower == null)
-                        {
-                            return;
-                        }
-                        // -1. CASE:
-                        //   - it's hopeless just redo it all.
-                        if (refreshAll)
-                        {
-                            return;
-                        }
-                        // 0. CASE:
-                        //   - Nothing happended expect maybe addition.
-                        if (prop.drawen && removalList[mapIndex].Count == 0 && changedList[mapIndex].Count == 0)
-                        {
-                            return;
-                        }
-                        // 1. CASE:
-                        //   - Adding new lights only.
-                        if (prop.drawen == false)
-                        {
-                            prop.drawen = true;
-                            flooder.AddFloodGlowFor(glower, glowGrid);
+                        var flooder = glower.parent.Map.glowFlooder;
+                        flooder.AddFloodGlowFor(glower, tBufferedGrid);
+                    }
+                }
 
-                            // 1.1 CASE:
-                            //   - Adding new lights while removing or redrawing others.
-                            if (removalList[mapIndex].Count != 0 || changedList[mapIndex].Count != 0)
-                                flooder.AddFloodGlowFor(glower, glowGridTemp);
-                            return;
-                        }
-                        // 2. CASE:
-                        //   - Removing lights only.
-                        if (removalList[mapIndex].Count != 0)
+                private static void FixChanged(GlowGrid instance)
+                {
+                    var map = instance.map;
+                    var mapIndex = map.Index;
+
+                    var queue = new Queue<GlowerPorperties>();
+                    foreach (var glower in instance.litGlowers)
+                    {
+                        var prop = GlowerPorperties.GetGlowerPorperties(glower);
+                        queue.Enqueue(prop);
+                    }
+                    while (true)
+                    {
+                        var count = changedProps[mapIndex].Count;
+                        var tqueue = new Queue<GlowerPorperties>();
+                        var changedArray = changedProps[mapIndex].ToArray();
+                        while (queue.Count > 0)
                         {
-                            foreach (var other in removalList[mapIndex])
-                                if (other.Inersects(prop) && other != prop)
+                            var prop = queue.Dequeue();
+                            if (!prop.drawen || changedProps[mapIndex].Contains(prop))
+                                continue;
+                            var found = false;
+                            foreach (var other in changedArray)
+                                if (other != prop && other.Inersects(prop))
                                 {
-                                    removalHolder.Add(prop);
+                                    changedProps[mapIndex].Add(prop);
+                                    found = true;
                                     break;
                                 }
-                            return;
+                            if (!found) tqueue.Enqueue(prop);
                         }
+                        if (count == changedProps[mapIndex].Count)
+                            break;
+                        queue = tqueue;
                     }
-                    else
-                    {
-                        flooder.AddFloodGlowFor(glower, glowGrid);
-                    }
-                }
-
-                private static void RefreshAll(GlowGrid instance)
-                {
-                    Map map = instance.map;
-                    glowGridEmpty.CopyTo(instance.glowGrid, 0);
-                    glowGridEmpty.CopyTo(instance.glowGridNoCavePlants, 0);
-                    foreach (CompGlower litGlower in instance.litGlowers)
-                    {
-                        if (litGlower == null)
-                            continue;
-                        map.glowFlooder.AddFloodGlowFor(litGlower, instance.glowGrid);
-                        if (litGlower.parent.def.category != ThingCategory.Plant || !litGlower.parent.def.plant.cavePlant)
-                        {
-                            map.glowFlooder.AddFloodGlowFor(litGlower, instance.glowGridNoCavePlants);
-                        }
-                    }
-                }
-
-                private static void RefreshChanged(GlowGrid instance)
-                {
-                    int mapIndex = instance.map.Index;
-                    GlowFlooder flooder = instance.map.glowFlooder;
-                    foreach (var changedProp in changedList[mapIndex])
-                        foreach (var index in changedProp.indices)
-                        {
-                            instance.glowGrid[index] = glowGridTemp[index];
-                        }
-                    foreach (var prop in changedList[mapIndex])
-                        if (prop != null)
-                        {
-                            flooder.AddFloodGlowFor(prop.glower, glowGridTemp);
-                        }
-                    foreach (var changedProp in changedList[mapIndex])
-                        foreach (var index in changedProp.indices)
-                        {
-                            instance.glowGrid[index] = glowGridTemp[index];
-                        }
-                }
-
-                private static void CleanRemoved(GlowGrid instance)
-                {
-                    int mapIndex = instance.map.Index;
-                    GlowFlooder flooder = instance.map.glowFlooder;
-
-                    foreach (var removedProp in removalList[mapIndex])
-                        foreach (var index in removedProp.indices)
+                    foreach (var prop in changedProps[mapIndex])
+                        foreach (var index in prop.indices)
                         {
                             instance.glowGrid[index] = new Color32(0, 0, 0, 0);
+#if DEBUG
+                            if (Finder.drawGlowerUpdates) map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "000", 10);
+#endif
+                        }
+                    foreach (var prop in changedProps[mapIndex])
+                        map.glowFlooder.AddFloodGlowFor(prop.glower, tBufferedGrid);
+                    foreach (var prop in changedProps[mapIndex])
+                        foreach (var index in prop.indices)
+                        {
+                            instance.glowGrid[index] = tBufferedGrid[index];
+#if DEBUG
+                            if (Finder.drawGlowerUpdates) map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "1__", 50);
+#endif
                         }
                 }
 
-                private static void RefreshRemoved(GlowGrid instance)
+                private static void FixRemovedGlowers(GlowGrid instance, GlowerPorperties prop)
                 {
-                    int mapIndex = instance.map.Index;
-                    GlowFlooder flooder = instance.map.glowFlooder;
-
-                    void DrawCell(int index, string message = "")
+                    if (prop.glower?.parent?.Destroyed ?? true)
                     {
-                        if (Finder.debug && Finder.drawGlowerUpdates)
+                        calculating = false;
+                        instance.MarkGlowGridDirty(prop.position.ToIntVec3());
+                        calculating = true;
+                    }
+                    var flooder = instance.map.glowFlooder;
+                    var mapIndex = instance.map.Index;
+                    foreach (var index in prop.indices)
+                    {
+                        litCells[mapIndex].Remove(index);
+#if DEBUG
+                        if (Finder.drawGlowerUpdates) instance.map.debugDrawer.FlashCell(
+                            instance.map.cellIndices.IndexToCell(index), 0.5f, "__1", 50);
+#endif
+                    }
+                    foreach (var otherGlower in instance.litGlowers)
+                    {
+                        var other = GlowerPorperties.GetGlowerPorperties(otherGlower);
+                        if (other != prop && other.drawen && other.Inersects(prop))
                         {
-                            IntVec3 cell = instance.map.cellIndices.IndexToCell(index);
-                            instance.map.debugDrawer.FlashCell(cell, colorPct: 0.1f, duration: 100, text: message);
+                            flooder.AddFloodGlowFor(otherGlower, tBufferedGrid);
                         }
                     }
+                    foreach (var index in prop.indices)
+                    {
+                        instance.glowGrid[index] = tBufferedGrid[index];
+#if DEBUG
+                        if (Finder.drawGlowerUpdates) instance.map.debugDrawer.FlashCell(
+                            instance.map.cellIndices.IndexToCell(index), 0.05f, "_1_", 50);
+#endif
+                    }
+                }
 
-                    HashSet<int> removedIndices = new HashSet<int>();
-                    foreach (var removedProp in removalList[mapIndex])
-                        foreach (var index in removedProp.indices)
+                private static void FinalizeNewGlowers(GlowGrid instance)
+                {
+                    var map = instance.map;
+                    var flooder = map.glowFlooder;
+                    foreach (var glower in instance.litGlowers)
+                    {
+                        var prop = GlowerPorperties.GetGlowerPorperties(glower);
+                        if (!prop.drawen)
                         {
-                            removedIndices.Add(index);
-                            instance.glowGrid[index] = glowGridTemp[index];
-                            DrawCell(index, "0_");
+                            flooder.AddFloodGlowFor(prop.glower, instance.glowGrid);
                         }
-                    foreach (var prop in removalHolder)
-                        if (prop != null && !removalList[mapIndex].Contains(prop))
-                        {
-                            flooder.AddFloodGlowFor(prop.glower, glowGridTemp);
-                        }
-                    foreach (var prop in removalHolder)
-                        foreach (var index in removedIndices)
-                            if (prop.indices.Contains(index))
-                            {
-                                instance.glowGrid[index] = glowGridTemp[index];
-                                DrawCell(index, "_0");
-                            }
+                    }
                 }
 
                 private static void FinalizeCleanUp(GlowGrid instance)
                 {
                     var map = instance.map;
                     var mapIndex = map.Index;
-                    changedList[mapIndex].Clear();
-                    removalList[mapIndex].Clear();
-                    removalIndices[mapIndex].Clear();
-                    removalHolder.Clear();
-                }
-
-                private static void FixGridTemp(ref Color32[] aGrid)
-                {
-                    if (glowGridTemp == null || aGrid.Length != glowGridTemp.Length)
-                    {
-                        glowGridTemp = new Color32[aGrid.Length];
-                        glowGridEmpty = new Color32[aGrid.Length];
-
-                        var limit = aGrid.Length;
-                        for (int i = 0; i < limit; i++)
-                            glowGridEmpty[i] = new Color32(0, 0, 0, 0);
-                    }
-                    glowGridEmpty.CopyTo(glowGridTemp, 0);
+                    removedProps[mapIndex].Clear();
+                    changedProps[mapIndex].Clear();
                 }
 
                 private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -453,36 +425,24 @@ namespace RocketMan
                             {
                                 return;
                             }
-                            if (deregister || calculating || register)
+                            if (register || deregister || calculating)
                             {
                                 return;
                             }
+#if DEBUG
                             if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Map glow grid dirty at {0}", loc));
-                            Vector3 changePoint = loc.ToVector3();
-                            GlowerPorperties[] glowers = props[mapIndex].Values.ToArray();
-                            foreach (var prop in glowers)
-                                if (prop.Contains(changePoint))
-                                {
-                                    changedList[mapIndex].Add(prop);
-                                }
-                            while (true)
+#endif
+                            var changedPos = loc.ToVector3();
+                            foreach (var glower in __instance.litGlowers)
                             {
-                                var count = changedList[mapIndex].Count;
-                                foreach (GlowerPorperties prop in changedList[mapIndex].ToArray())
-                                    for (int i = 0; i < glowers.Length; i++)
-                                    {
-                                        var other = glowers[i];
-                                        if (true
-                                            && other != null
-                                            && prop != other
-                                            && other.Inersects(prop))
-                                        {
-                                            changedList[mapIndex].Add(other);
-                                            glowers[i] = null;
-                                        }
-                                    }
-                                if (count == changedList[mapIndex].Count)
-                                    break;
+                                var prop = GlowerPorperties.GetGlowerPorperties(glower);
+                                if (prop.Contains(changedPos))
+                                {
+                                    changedProps[mapIndex].Add(prop);
+#if DEBUG
+                                    if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Changed and glow grid dirty at {0} for {1}", loc, glower.parent));
+#endif
+                                }
                             }
                         }
                     }
@@ -538,11 +498,14 @@ namespace RocketMan
                 {
                     Map map = currentProp.glower.parent.Map;
                     currentProp.indices.Add(index);
+                    litCells[map.Index].Add(index);
+#if DEBUG
                     if (Finder.debug && Finder.drawGlowerUpdates)
                     {
                         IntVec3 cell = map.cellIndices.IndexToCell(index);
                         map.debugDrawer.FlashCell(cell, colorPct: 0.1f, duration: 100, text: "a");
                     }
+#endif
                 }
             }
         }

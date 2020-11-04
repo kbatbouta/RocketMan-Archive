@@ -105,8 +105,10 @@ namespace RocketMan
                     }
                     else
                     {
+#if DEBUG
                         if (Prefs.DevMode && Finder.debug)
                             messages.Add(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
+#endif
                         var randomTile = passableTiles.RandomElement();
                         if (Find.World.Impassable(randomTile))
                             continue;
@@ -128,12 +130,14 @@ namespace RocketMan
                     }
 
                 if (world != Find.World) return;
+#if DEBUG
                 if (Prefs.DevMode)
                 {
                     if (Finder.debug)
                         messages.Add(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
                     messages.Add(string.Format("ROCKETMAN: FINISHED BUILDING ISLANDS!, {0}, {1}, {2}, {3}", islandCounter, visitedTilesCount, passableTiles.Count, currentIslandCounter));
                 }
+#endif
             }
 
             internal static Thread thread;

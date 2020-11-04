@@ -43,6 +43,20 @@ namespace RocketMan
             () => RocketMod.UpdateExceptions()
         };
 
+        public static Action[] onTickLong = new Action[]
+        {
+        () => {
+                if(!Finder.enableGridRefresh)
+                    return;
+#if DEBUG
+                if(Finder.debug) Log.Message("ROCKETMAN: Refreshing all light grid");
+#endif
+                Finder.refreshGrid = true;
+                Find.CurrentMap.glowGrid.RecalculateAllGlow();
+            }
+        };
+
+
         public static Action[] onDefsLoaded = new Action[]
         {
             () => Finder.harmony.PatchAll(),
@@ -81,7 +95,13 @@ namespace RocketMan
             for (int i = 0; i < onTick.Length; i++)
             {
                 onTick[i].Invoke();
+            }
 
+            if (currentTick % (Finder.universalCacheAge * 5) != 0) return;
+
+            for (int i = 0; i < onTickLong.Length; i++)
+            {
+                onTickLong[i].Invoke();
             }
         }
 
