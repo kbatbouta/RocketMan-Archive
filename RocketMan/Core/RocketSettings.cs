@@ -98,6 +98,8 @@ namespace RocketMan
                 if (Finder.debug)
                 {
                     listing.CheckboxLabeled("Enable Stat Logging (will destroy performance!)", ref Finder.statLogging);
+
+                    listing.CheckboxLabeled("Enable glower cells flashing (will destroy performance!)", ref Finder.drawGlowerUpdates);
                 }
 
                 listing.GapLine();

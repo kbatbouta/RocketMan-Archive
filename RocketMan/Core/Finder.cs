@@ -16,6 +16,8 @@ namespace RocketMan
         public static bool translationCaching = true;
         public static bool thoughtsCaching = true;
 
+        public static bool drawGlowerUpdates = false;
+
         public static float learningRate = 0.005f;
 
         public static int universalCacheAge = 2500;
