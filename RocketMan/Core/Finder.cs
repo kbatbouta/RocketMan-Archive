@@ -32,6 +32,9 @@ namespace RocketMan
         public static Harmony harmony = new Harmony(HarmonyID);
         public static RocketShip.RocketPatcher rocket = new RocketShip.RocketPatcher(HarmonyID);
 
+        public static ReGrowthHelper Mod_ReGrowth;
+        public static WallLightHelper Mod_WallLight;
+
         public static object locker = new object();
     }
 }

@@ -59,6 +59,8 @@ namespace RocketMan
 
         public static Action[] onDefsLoaded = new Action[]
         {
+            () => { Finder.Mod_ReGrowth = new ReGrowthHelper(); },
+            () => { Finder.Mod_WallLight = new WallLightHelper(); },
             () => Finder.harmony.PatchAll(),
             () => Finder.rocket.PatchAll(),
             () => RocketMod.UpdateStats(),

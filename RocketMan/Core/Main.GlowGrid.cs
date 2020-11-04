@@ -25,16 +25,12 @@ namespace RocketMan
             public static Map[] maps = new Map[20];
 
             internal static bool deregister = false;
-
             internal static bool register = false;
-
             internal static bool calculating = false;
 
-            public static List<GlowerPorperties>[] propsList = new List<GlowerPorperties>[20];
-            public static HashSet<int>[] litCells = new HashSet<int>[20];
             public static HashSet<GlowerPorperties>[] removedProps = new HashSet<GlowerPorperties>[20];
             public static HashSet<GlowerPorperties>[] changedProps = new HashSet<GlowerPorperties>[20];
-            public static Dictionary<CompGlower, GlowerPorperties>[] props = new Dictionary<CompGlower, GlowerPorperties>[20];
+            public static Dictionary<CompGlower, GlowerPorperties> props = new Dictionary<CompGlower, GlowerPorperties>();
 
             public class GlowerPorperties
             {
@@ -102,11 +98,10 @@ namespace RocketMan
                 {
                     if (comp == null)
                         return null;
-                    if (props[comp.parent.Map.Index].TryGetValue(comp, out var prop))
+                    if (props.TryGetValue(comp, out var prop))
                         return prop;
                     var result = new GlowerPorperties(comp);
-                    propsList[comp.parent.Map.Index].Add(result);
-                    props[comp.parent.Map.Index][comp] = result;
+                    props[comp] = result;
                     return result;
                 }
             }
@@ -119,9 +114,6 @@ namespace RocketMan
                 if (maps[index] != map)
                 {
                     maps[map.Index] = map;
-                    props[map.Index] = new Dictionary<CompGlower, GlowerPorperties>();
-                    propsList[map.Index] = new List<GlowerPorperties>();
-                    litCells[map.Index] = new HashSet<int>();
                     removedProps[map.Index] = new HashSet<GlowerPorperties>();
                     changedProps[map.Index] = new HashSet<GlowerPorperties>();
                 }
@@ -138,7 +130,7 @@ namespace RocketMan
                     TryRegisterMap(map);
 
                     GlowerPorperties prop = GlowerPorperties.GetGlowerPorperties(newGlow);
-                    if (props[map.Index].ContainsKey(newGlow))
+                    if (props.ContainsKey(newGlow))
                     {
                         if (Finder.debug) Log.Warning(string.Format("ROCKETMAN: Double registering an registered glower {0}:{1}", newGlow, newGlow.parent));
                         return;
@@ -163,12 +155,12 @@ namespace RocketMan
 
                     GlowerPorperties prop;
                     if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Removed {0}", oldGlow));
-                    if (!props[map.Index].ContainsKey(oldGlow))
+                    if (!props.ContainsKey(oldGlow))
                     {
                         if (Finder.debug && !removedProps[map.Index].Any(p => p.glower == oldGlow)) Log.Warning(string.Format("ROCKETMAN: Found an unregisterd {0}:{1}", oldGlow, oldGlow.parent));
                         return;
                     }
-                    prop = props[map.Index][oldGlow];
+                    prop = props[oldGlow];
 
                     if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Queued {0} for removal", oldGlow.parent));
                     removedProps[map.Index].Add(prop);
@@ -208,7 +200,6 @@ namespace RocketMan
                             tEmptyGrid[i] = new Color32(0, 0, 0, 0);
                         }
                     }
-                    tEmptyGrid.CopyTo(tBufferedGrid, 0);
                     tEmptyGrid.CopyTo(__instance.glowGridNoCavePlants, 0);
                     calculating = true;
                 }
@@ -227,20 +218,30 @@ namespace RocketMan
                     if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for removed with {0} queued for removal", removedProps[mapIndex].Count));
                     foreach (var prop in removedProps[mapIndex])
                     {
+                        tEmptyGrid.CopyTo(tBufferedGrid, 0);
                         FixRemovedGlowers(__instance, prop);
-                        props[map.Index].Remove(prop.glower);
-                        propsList[map.Index].Remove(prop);
+                        props.Remove(prop.glower);
                     }
 
                     if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for changes with {0} queued for changes", changedProps[mapIndex].Count));
                     if (changedProps[mapIndex].Count != 0)
                     {
+                        tEmptyGrid.CopyTo(tBufferedGrid, 0);
                         FixChanged(__instance);
                     }
 
                     calculating = false;
                     FinalizeNewGlowers(__instance);
                     FinalizeCleanUp(__instance);
+                }
+
+                internal static void FloodGlow(GlowerPorperties prop, Color32[] grid, Map map, GlowFlooder flooder)
+                {
+                    if (removedProps[map.Index].Contains(prop))
+                        return;
+                    if (prop.glower.parent.Destroyed || !prop.glower.parent.Spawned)
+                        return;
+                    flooder.AddFloodGlowFor(prop.glower, grid);
                 }
 
                 internal static void AddFloodGlowFor(CompGlower glower, Color32[] glowGrid)
@@ -297,7 +298,7 @@ namespace RocketMan
 #endif
                         }
                     foreach (var prop in changedProps[mapIndex])
-                        map.glowFlooder.AddFloodGlowFor(prop.glower, tBufferedGrid);
+                        FloodGlow(prop, tBufferedGrid, map, map.glowFlooder);
                     foreach (var prop in changedProps[mapIndex])
                         foreach (var index in prop.indices)
                         {
@@ -318,20 +319,12 @@ namespace RocketMan
                     }
                     var flooder = instance.map.glowFlooder;
                     var mapIndex = instance.map.Index;
-                    foreach (var index in prop.indices)
-                    {
-                        litCells[mapIndex].Remove(index);
-#if DEBUG
-                        if (Finder.drawGlowerUpdates) instance.map.debugDrawer.FlashCell(
-                            instance.map.cellIndices.IndexToCell(index), 0.5f, "__1", 50);
-#endif
-                    }
                     foreach (var otherGlower in instance.litGlowers)
                     {
                         var other = GlowerPorperties.GetGlowerPorperties(otherGlower);
                         if (other != prop && other.drawen && other.Inersects(prop))
                         {
-                            flooder.AddFloodGlowFor(otherGlower, tBufferedGrid);
+                            FloodGlow(other, tBufferedGrid, instance.map, flooder);
                         }
                     }
                     foreach (var index in prop.indices)
@@ -425,7 +418,7 @@ namespace RocketMan
                             {
                                 return;
                             }
-                            if (register || deregister || calculating)
+                            if (register || calculating || deregister)
                             {
                                 return;
                             }
@@ -496,12 +489,11 @@ namespace RocketMan
 
                 internal static void PushIndex(int index, ColorInt color, float distance)
                 {
-                    Map map = currentProp.glower.parent.Map;
                     currentProp.indices.Add(index);
-                    litCells[map.Index].Add(index);
 #if DEBUG
                     if (Finder.debug && Finder.drawGlowerUpdates)
                     {
+                        Map map = Find.CurrentMap;
                         IntVec3 cell = map.cellIndices.IndexToCell(index);
                         map.debugDrawer.FlashCell(cell, colorPct: 0.1f, duration: 100, text: "a");
                     }
