@@ -16,7 +16,7 @@ namespace RocketMan.Optimizations
             return !RimWarThreadedHelper.Instance.IsLoaded() && !RimWarHelper.Instance.IsLoaded();
         }
 
-        [ConditionalHarmonyPatch("WorldReachability_Patch:ShouldPatch", typeof(WorldReachability), nameof(WorldReachability.CanReach), methodArguments: new[] { typeof(int), typeof(int) })]
+        [HarmonyPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
             internal static HashSet<int> visitedTiles;
@@ -32,6 +32,8 @@ namespace RocketMan.Optimizations
 
             private static List<string> messages = new List<string>();
             private static object locker = new object();
+
+            internal static bool Prepare() => ShouldPatch();
 
             internal static void StartIslandGeneration()
             {

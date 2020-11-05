@@ -51,13 +51,6 @@ namespace RocketMan
         {
         }
 
-        [Main.OnDefsLoaded]
-        public static void Initialization()
-        {
-            Finder.harmony.PatchAll();
-            Finder.rocket.PatchAll();
-        }
-
         public static IEnumerable<Action> GetActions<T>() where T : Attribute
         {
             foreach (var method in AppDomain.CurrentDomain.GetAssemblies()
@@ -91,7 +84,10 @@ namespace RocketMan
         public override void DefsLoaded()
         {
             base.DefsLoaded();
-
+            {
+                Finder.harmony.PatchAll();
+                Finder.rocket.PatchAll();
+            }
             for (int i = 0; i < onDefsLoaded.Count; i++)
             {
                 onDefsLoaded[i].Invoke();

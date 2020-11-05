@@ -114,8 +114,12 @@ namespace RocketMan.Optimizations
         public static void TickRefreshGrid()
         {
             if (!Finder.enableGridRefresh)
+            {
+                Finder.refreshGrid = false;
                 return;
+            }
 #if DEBUG
+
             if (Finder.debug) Log.Message("ROCKETMAN: Refreshing all light grid");
 #endif
             Finder.refreshGrid = true;
@@ -136,9 +140,11 @@ namespace RocketMan.Optimizations
             return true;
         }
 
-        [ConditionalHarmonyPatch("GlowGrid_Patch:ShouldPatch", typeof(GlowGrid), nameof(GlowGrid.RegisterGlower))]
+        [HarmonyPatch(typeof(GlowGrid), nameof(GlowGrid.RegisterGlower))]
         internal static class RegisterGlower_Patch
         {
+            internal static bool Prepare() => ShouldPatch();
+
             internal static void Prefix(GlowGrid __instance, CompGlower newGlow)
             {
                 Map map = __instance.map;
@@ -160,9 +166,11 @@ namespace RocketMan.Optimizations
             }
         }
 
-        [ConditionalHarmonyPatch("GlowGrid_Patch:ShouldPatch", typeof(GlowGrid), nameof(GlowGrid.DeRegisterGlower))]
+        [HarmonyPatch(typeof(GlowGrid), nameof(GlowGrid.DeRegisterGlower))]
         internal static class DeRegisterGlower_Patch
         {
+            internal static bool Prepare() => ShouldPatch();
+
             internal static void Prefix(GlowGrid __instance, CompGlower oldGlow)
             {
                 Map map = __instance.map;
@@ -189,11 +197,13 @@ namespace RocketMan.Optimizations
         }
 
 
-        [ConditionalHarmonyPatch("GlowGrid_Patch:ShouldPatch", typeof(GlowGrid), nameof(GlowGrid.RecalculateAllGlow))]
+        [HarmonyPatch(typeof(GlowGrid), nameof(GlowGrid.RecalculateAllGlow))]
         internal static class RecalculateAllGlow_Patch
         {
             internal static Color32[] tBufferedGrid;
             internal static Color32[] tEmptyGrid;
+
+            internal static bool Prepare() => ShouldPatch();
 
             internal static void Prefix(GlowGrid __instance)
             {
@@ -422,9 +432,11 @@ namespace RocketMan.Optimizations
             }
         }
 
-        [ConditionalHarmonyPatch("GlowGrid_Patch:ShouldPatch", typeof(GlowGrid), nameof(GlowGrid.MarkGlowGridDirty))]
+        [HarmonyPatch(typeof(GlowGrid), nameof(GlowGrid.MarkGlowGridDirty))]
         internal static class MarkGlowGridDirty_Patch
         {
+            public static bool Prepare() => ShouldPatch();
+
             public static void Prefix(GlowGrid __instance, IntVec3 loc)
             {
                 if (Current.ProgramState == ProgramState.Playing)
@@ -461,9 +473,11 @@ namespace RocketMan.Optimizations
             }
         }
 
-        [ConditionalHarmonyPatch("GlowGrid_Patch:ShouldPatch", typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor))]
+        [HarmonyPatch(typeof(GlowFlooder), nameof(GlowFlooder.AddFloodGlowFor))]
         internal static class AddFloodGlow_Patch
         {
+            internal static bool Prepare() => ShouldPatch();
+
             internal static void Prefix(CompGlower theGlower)
             {
                 currentProp = GlowerPorperties.GetGlowerPorperties(theGlower);
@@ -489,9 +503,11 @@ namespace RocketMan.Optimizations
             }
         }
 
-        [ConditionalHarmonyPatch("GlowGrid_Patch:ShouldPatch", typeof(GlowFlooder), nameof(GlowFlooder.SetGlowGridFromDist))]
+        [HarmonyPatch(typeof(GlowFlooder), nameof(GlowFlooder.SetGlowGridFromDist))]
         internal static class SetGlowGridFromDist_Patch
         {
+            internal static bool Prepare() => ShouldPatch();
+
             internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
             {
                 var codes = instructions.ToList();
