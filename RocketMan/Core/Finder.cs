@@ -9,13 +9,21 @@ namespace RocketMan
     public static class Finder
     {
         public static bool enabled = true;
+
         public static bool debug = false;
+
         public static bool statLogging = false;
+
         public static bool learning = true;
+
         public static bool labelCaching = true;
+
         public static bool translationCaching = true;
+
         public static bool thoughtsCaching = true;
+
         public static bool refreshGrid = false;
+
         public static bool enableGridRefresh = false;
 
         public static bool drawGlowerUpdates = false;
@@ -23,6 +31,7 @@ namespace RocketMan
         public static float learningRate = 0.005f;
 
         public static int universalCacheAge = 2500;
+
         public static int ageOfGetValueUnfinalizedCache = 0;
 
         public static byte[] statExpiry = new byte[ushort.MaxValue];
@@ -36,5 +45,14 @@ namespace RocketMan
         public static WallLightHelper Mod_WallLight;
 
         public static object locker = new object();
+
+        [Main.OnDefsLoaded]
+        public static void Initialization()
+        {
+            Finder.Mod_ReGrowth = new ReGrowthHelper();
+            Finder.Mod_WallLight = new WallLightHelper();
+            Finder.harmony.PatchAll();
+            Finder.rocket.PatchAll();
+        }
     }
 }

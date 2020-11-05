@@ -30,6 +30,7 @@ namespace RocketMan
 
             public static HashSet<GlowerPorperties>[] removedProps = new HashSet<GlowerPorperties>[20];
             public static HashSet<GlowerPorperties>[] changedProps = new HashSet<GlowerPorperties>[20];
+
             public static Dictionary<CompGlower, GlowerPorperties> props = new Dictionary<CompGlower, GlowerPorperties>();
 
             public class GlowerPorperties
@@ -50,8 +51,6 @@ namespace RocketMan
                 {
                     this.glower = glower;
                     this.indices = new HashSet<int>();
-
-                    var dim = glower.Props.glowRadius * 2;
                     this.position = glower.parent.positionInt.ToVector3();
                     this.position.y = 0.0f;
                 }
@@ -104,6 +103,18 @@ namespace RocketMan
                     props[comp] = result;
                     return result;
                 }
+            }
+
+            [OnTickLong]
+            public static void TickRefreshGrid()
+            {
+                if (!Finder.enableGridRefresh)
+                    return;
+#if DEBUG
+                if (Finder.debug) Log.Message("ROCKETMAN: Refreshing all light grid");
+#endif
+                Finder.refreshGrid = true;
+                Find.CurrentMap.glowGrid.RecalculateAllGlow();
             }
 
             private static bool TryRegisterMap(Map map)
@@ -182,7 +193,6 @@ namespace RocketMan
                 internal static void Prefix(GlowGrid __instance)
                 {
                     var map = __instance.map;
-                    var mapIndex = map.Index;
                     if (!TryRegisterMap(map))
                         return;
                     if (Finder.refreshGrid)
@@ -238,9 +248,13 @@ namespace RocketMan
                 internal static void FloodGlow(GlowerPorperties prop, Color32[] grid, Map map, GlowFlooder flooder)
                 {
                     if (removedProps[map.Index].Contains(prop))
+                    {
                         return;
+                    }
                     if (prop.glower.parent.Destroyed || !prop.glower.parent.Spawned)
+                    {
                         return;
+                    }
                     flooder.AddFloodGlowFor(prop.glower, grid);
                 }
 

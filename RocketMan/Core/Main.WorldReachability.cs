@@ -46,7 +46,7 @@ namespace RocketMan
                 }
             }
 
-            internal static void GenerateIslands()
+            public static void GenerateIslands()
             {
                 var world = Find.World;
                 var offsets = Find.WorldGrid.tileIDToNeighbors_offsets;
@@ -105,10 +105,6 @@ namespace RocketMan
                     }
                     else
                     {
-#if DEBUG
-                        if (Prefs.DevMode && Finder.debug)
-                            messages.Add(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter, visitedTilesCount));
-#endif
                         var randomTile = passableTiles.RandomElement();
                         if (Find.World.Impassable(randomTile))
                             continue;
@@ -143,7 +139,8 @@ namespace RocketMan
             internal static Thread thread;
             internal static ThreadStart threadStart;
 
-            internal static void FlushMessages()
+            [OnTick]
+            public static void FlushMessages()
             {
                 var counter = 0;
                 while (messages.Count > 0 && counter++ < 128)
@@ -156,7 +153,7 @@ namespace RocketMan
                 }
             }
 
-            internal static void Initialize()
+            public static void Initialize()
             {
                 lock (locker)
                 {
@@ -186,7 +183,7 @@ namespace RocketMan
                 thread.Start();
             }
 
-            internal static bool Prefix(ref bool __result, int startTile, int destTile)
+            public static bool Prefix(ref bool __result, int startTile, int destTile)
             {
                 if (Finder.enabled)
                 {

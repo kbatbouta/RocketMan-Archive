@@ -20,59 +20,55 @@ namespace RocketMan
     [StaticConstructorOnStartup]
     public partial class Main : ModBase
     {
-        public static Action[] onMapComponentsInitializing = new Action[]
+        public class OnDefsLoaded : Attribute
         {
+        }
 
-        };
-
-        public static Action[] onEarlyInitialize = new Action[]
+        public class OnTickLong : Attribute
         {
+        }
 
-        };
-
-        public static Action[] onClearCache = new Action[]
+        public class OnTick : Attribute
         {
+        }
 
-        };
-
-        public static Action[] onTick = new Action[]
+        public class OnEarlyInitialize : Attribute
         {
-            () => StatWorker_GetValueUnfinalized_Hijacked_Patch.CleanCache(),
-            () => StatWorker_GetValueUnfinalized_Hijacked_Patch.FlushMessages(),
-            () => WorldReachability_CanReach_Patch.FlushMessages(),
-            () => RocketMod.UpdateExceptions()
-        };
+        }
 
-        public static Action[] onTickLong = new Action[]
+        public class OnMapComponentsInitializing : Attribute
         {
-        () => {
-                if(!Finder.enableGridRefresh)
-                    return;
-#if DEBUG
-                if(Finder.debug) Log.Message("ROCKETMAN: Refreshing all light grid");
-#endif
-                Finder.refreshGrid = true;
-                Find.CurrentMap.glowGrid.RecalculateAllGlow();
+        }
+
+        public class OnClearCache : Attribute
+        {
+        }
+
+        public static IEnumerable<Action> GetActions<T>() where T : Attribute
+        {
+            foreach (var method in AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .SelectMany(t => t.GetMethods())
+                .Where(m => m.TryGetAttribute<T>(out var _))
+                .ToArray())
+            {
+                Log.Message(string.Format("ROCKETMAN: Found method with attribute {0}, {1}:{2}", typeof(T).Name, method.DeclaringType.Name, method.Name));
+                yield return () => { method.Invoke(null, null); };
             }
-        };
+        }
 
-
-        public static Action[] onDefsLoaded = new Action[]
-        {
-            () => { Finder.Mod_ReGrowth = new ReGrowthHelper(); },
-            () => { Finder.Mod_WallLight = new WallLightHelper(); },
-            () => Finder.harmony.PatchAll(),
-            () => Finder.rocket.PatchAll(),
-            () => RocketMod.UpdateStats(),
-            () => RocketMod.UpdateExceptions(),
-            () => StatWorker_GetValueUnfinalized_Hijacked_Patch.Initialize()
-        };
+        public List<Action> onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
+        public List<Action> onEarlyInitialize = GetActions<OnEarlyInitialize>().ToList();
+        public List<Action> onClearCache = GetActions<OnClearCache>().ToList();
+        public List<Action> onTick = GetActions<OnTick>().ToList();
+        public List<Action> onTickLong = GetActions<OnTickLong>().ToList();
+        public List<Action> onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
 
         public override void MapComponentsInitializing(Map map)
         {
             base.MapComponentsInitializing(map);
 
-            for (int i = 0; i < onMapComponentsInitializing.Length; i++)
+            for (int i = 0; i < onMapComponentsInitializing.Count; i++)
             {
                 onMapComponentsInitializing[i].Invoke();
             }
@@ -82,7 +78,7 @@ namespace RocketMan
         {
             base.DefsLoaded();
 
-            for (int i = 0; i < onDefsLoaded.Length; i++)
+            for (int i = 0; i < onDefsLoaded.Count; i++)
             {
                 onDefsLoaded[i].Invoke();
             }
@@ -94,14 +90,14 @@ namespace RocketMan
 
             if (currentTick % Finder.universalCacheAge != 0) return;
 
-            for (int i = 0; i < onTick.Length; i++)
+            for (int i = 0; i < onTick.Count; i++)
             {
                 onTick[i].Invoke();
             }
 
             if (currentTick % (Finder.universalCacheAge * 5) != 0) return;
 
-            for (int i = 0; i < onTickLong.Length; i++)
+            for (int i = 0; i < onTickLong.Count; i++)
             {
                 onTickLong[i].Invoke();
             }
@@ -111,7 +107,7 @@ namespace RocketMan
         {
             base.EarlyInitialize();
 
-            for (int i = 0; i < onEarlyInitialize.Length; i++)
+            for (int i = 0; i < onEarlyInitialize.Count; i++)
             {
                 onEarlyInitialize[i].Invoke();
             }
@@ -119,7 +115,7 @@ namespace RocketMan
 
         public void ClearCache()
         {
-            for (int i = 0; i < onClearCache.Length; i++)
+            for (int i = 0; i < onClearCache.Count; i++)
             {
                 onClearCache[i].Invoke();
             }
@@ -177,12 +173,14 @@ namespace RocketMan
             private static ThreadStart starter = new ThreadStart(OffMainThreadProcessing);
             private static Thread worker = null;
 
+            [OnDefsLoaded]
             public static void Initialize()
             {
                 worker = new Thread(starter);
                 worker.Start();
             }
 
+            [OnTick]
             public static void FlushMessages()
             {
                 if (!Finder.debug) return;
@@ -321,6 +319,7 @@ namespace RocketMan
                 return value;
             }
 
+            [OnTick]
             public static void CleanCache()
             {
                 cache.Clear();

@@ -6,6 +6,8 @@ namespace RocketMan
 {
     public partial class RocketMod
     {
+        [Main.OnTick]
+        [Main.OnDefsLoaded]
         public static void UpdateExceptions()
         {
             DefDatabase<StatDef>.ResolveAllReferences(true);

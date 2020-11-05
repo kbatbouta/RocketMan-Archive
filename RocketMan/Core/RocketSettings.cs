@@ -242,6 +242,7 @@ namespace RocketMan
             UpdateExceptions();
         }
 
+        [Main.OnDefsLoaded]
         public static void UpdateStats()
         {
             if (statsSettings == null)
