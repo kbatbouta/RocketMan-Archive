@@ -309,11 +309,9 @@
         <Compile Include="Core\MainButton_Toggle.cs" />
         <Compile Include="Core\RocketWindow.cs" />
         <Compile Include="Core\RocketShip.cs" />
-        <Compile Include="Core\Utilities\HashUtility.cs" />
         <Compile Include="Core\RocketSettings.Exceptions.cs" />
-        <Compile Include="Core\Compatibility\ModHelper.cs" />
-        <Compile Include="Core\Compatibility\ReGrowthHelper.cs" />
-        <Compile Include="Core\Compatibility\WallLightHelper.cs" />
+        <Compile Include="Core\Compatibility\DubsPreformanceAnalyzerHelper.cs" />
+        <Compile Include="Core\Compatibility\RimWarThreadedHelper.cs" />
         <Compile Include="Core\Optimizations\GlowGrid_Patch.cs" />
         <Compile Include="Core\Optimizations\StatPart_ApparelStatOffSet_Patch.cs" />
         <Compile Include="Core\Optimizations\ThoughtUtility_Patch.cs" />
@@ -322,6 +320,9 @@
         <Compile Include="Core\Optimizations\StatWorker_Patch.cs" />
         <Compile Include="Core\Patches\Pawn_Notify_Patch.cs" />
         <Compile Include="Core\Patches\Pawn_TimetableTracker_Patch.cs" />
+        <Compile Include="Core\ModHelper.cs" />
+        <Compile Include="Core\Compatibility\RimWarHelper.cs" />
+        <Compile Include="Core\HashUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -339,7 +340,6 @@
     <ItemGroup />
     <ItemGroup>
       <Folder Include="Core\" />
-      <Folder Include="Core\Utilities\" />
       <Folder Include="Core\Compatibility\" />
       <Folder Include="Core\Optimizations\" />
       <Folder Include="Core\Collections\" />

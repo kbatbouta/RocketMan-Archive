@@ -16,7 +16,6 @@ using UnityEngine.Assertions.Must;
 
 namespace RocketMan
 {
-
     public struct CachedUnit<T>
     {
         public readonly int tick;

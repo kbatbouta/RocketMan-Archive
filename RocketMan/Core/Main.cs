@@ -20,28 +20,42 @@ namespace RocketMan
     [StaticConstructorOnStartup]
     public partial class Main : ModBase
     {
+        [AttributeUsage(System.AttributeTargets.Method)]
         public class OnDefsLoaded : Attribute
         {
         }
 
+        [AttributeUsage(System.AttributeTargets.Method)]
         public class OnTickLong : Attribute
         {
         }
 
+
+        [AttributeUsage(System.AttributeTargets.Method)]
         public class OnTick : Attribute
         {
         }
 
+        [AttributeUsage(System.AttributeTargets.Method)]
         public class OnEarlyInitialize : Attribute
         {
         }
 
+        [AttributeUsage(System.AttributeTargets.Method)]
         public class OnMapComponentsInitializing : Attribute
         {
         }
 
+        [AttributeUsage(System.AttributeTargets.Method)]
         public class OnClearCache : Attribute
         {
+        }
+
+        [Main.OnDefsLoaded]
+        public static void Initialization()
+        {
+            Finder.harmony.PatchAll();
+            Finder.rocket.PatchAll();
         }
 
         public static IEnumerable<Action> GetActions<T>() where T : Attribute

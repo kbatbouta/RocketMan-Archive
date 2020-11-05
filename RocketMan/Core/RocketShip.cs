@@ -17,6 +17,66 @@ namespace RocketMan
     public class RocketShip
     {
         [AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct)]
+        public class ConditionalHarmonyPatch : Attribute
+        {
+            public string targetMethod;
+            public MethodType methodType;
+
+            public Type targetType;
+            public Type[] methodArguments;
+            public Type[] genericsTypes;
+
+            private bool found = false;
+
+            private MethodInfo method;
+
+            public Func<bool> check;
+
+            public bool ShouldPatch => check();
+
+            public ConditionalHarmonyPatch(string check, Type type, string methodName, MethodType methodType = MethodType.Normal, Type[] methodArguments = null, Type[] genericsTypes = null)
+            {
+                this.targetMethod = methodName;
+                this.targetType = type;
+                this.methodType = methodType;
+                this.methodArguments = methodArguments;
+                this.genericsTypes = genericsTypes;
+                this.check = () => { return (bool)AccessTools.Method(check).Invoke(null, null); };
+            }
+
+            public MethodInfo GetMethodInfo()
+            {
+                if (found) return method;
+                if (this.methodType == MethodType.Constructor)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (this.methodType == MethodType.Normal)
+                {
+                    var m = AccessTools.Method(this.targetType, this.targetMethod, this.methodArguments, this.genericsTypes);
+                    if (m != null) found = true;
+                    method = m;
+                    return m;
+                }
+                else if (this.methodType == MethodType.Getter)
+                {
+                    var m = AccessTools.PropertyGetter(this.targetType, this.targetMethod);
+                    if (m != null) found = true;
+                    method = m;
+                    return m;
+                }
+                else if (this.methodType == MethodType.Setter)
+                {
+                    var m = AccessTools.PropertySetter(this.targetType, this.targetMethod);
+                    if (m != null) found = true;
+                    method = m;
+                    return m;
+                }
+                throw new NotImplementedException();
+            }
+        }
+
+        [AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct)]
         public class SkipperPatch : Attribute
         {
             public string targetMethod;
@@ -90,11 +150,60 @@ namespace RocketMan
 
             public void PatchAll()
             {
-                var types = GetSkipperTypes();
+                var types = GetSkipperPatchTypes();
                 foreach (Type t in types)
                 {
                     var patchInfo = t.TryGetAttribute<SkipperPatch>();
                     this.Patch(patchInfo.GetMethodInfo(), t);
+                }
+
+                types = GetCompatibilityPatchTypes();
+                foreach (Type t in types)
+                {
+                    var patchInfo = t.TryGetAttribute<ConditionalHarmonyPatch>();
+                    if (patchInfo.check())
+                    {
+                        this.Patch(patchInfo.GetMethodInfo(),
+                            AccessTools.Method(t, "Prefix"),
+                            AccessTools.Method(t, "Postfix"),
+                            AccessTools.Method(t, "Transpiler")
+                            );
+                    }
+                    else
+                    {
+                        Log.Message(string.Format("ROCKETMAN: skipped target {0}", patchInfo.targetMethod));
+                    }
+                }
+            }
+
+            public void Patch(MethodInfo target, MethodInfo prefix, MethodInfo postfix, MethodInfo transpiler)
+            {
+                lock (locker)
+                {
+                    try
+                    {
+                        HarmonyMethod mprefix = null;
+                        HarmonyMethod mpostfix = null;
+                        HarmonyMethod mtranspiler = null;
+                        if (prefix != null)
+                        {
+                            mprefix = new HarmonyMethod(prefix);
+                        }
+                        if (postfix != null)
+                        {
+                            mpostfix = new HarmonyMethod(postfix);
+                        }
+                        if (transpiler != null)
+                        {
+                            mtranspiler = new HarmonyMethod(transpiler);
+                        }
+                        this.harmony.Patch(target, mprefix, mpostfix, mtranspiler);
+                        Log.Message(string.Format("ROCKETMAN: Patched {0} with prefix:{1}, postfix:{2}, transpiler:{3}", target, prefix, postfix, transpiler));
+                    }
+                    catch (Exception er)
+                    {
+                        Log.Error(string.Format("ROCKETMAN: error in patching {2} with {3} with error {0} at {1}", er.Message, er.StackTrace, target, patchType));
+                    }
                 }
             }
 
@@ -117,7 +226,20 @@ namespace RocketMan
                 }
             }
 
-            public static IEnumerable<Type> GetSkipperTypes()
+            public static IEnumerable<Type> GetCompatibilityPatchTypes()
+            {
+                var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());
+                foreach (Type type in types)
+                {
+                    if (type.HasAttribute<ConditionalHarmonyPatch>())
+                    {
+                        Log.Message(string.Format("ROCKETMAN: found type {0} with compatibility patch attributes", type));
+                        yield return type;
+                    }
+                }
+            }
+
+            public static IEnumerable<Type> GetSkipperPatchTypes()
             {
                 var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());
                 foreach (Type type in types)
