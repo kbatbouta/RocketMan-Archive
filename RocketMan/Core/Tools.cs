@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using RimWorld;
+using RocketMan.Optimizations;
 using Verse;
 using static RocketMan.Main;
 
