@@ -49,7 +49,7 @@ namespace RocketMan
                 if (pawn != null)
                 {
                     StatPart_ApparelStatOffSet_Skipper_Patch.Dirty(pawn);
-                    StatWorker_GetValueUnfinalized_Hijacked_Patch.pawnsCleanupQueue.Add(pawn.thingIDNumber);
+                    StatWorker_GetValueUnfinalized_Hijacked_Patch.Dirty(pawn);
                     if (ThoughtUtility_NullifyingHediff_Patch.cachedKeys.TryGetValue(pawn, out var store))
                     {
                         foreach (var key in store)

@@ -54,40 +54,9 @@ namespace RocketMan.Optimizations
         internal static MethodBase m_GetValueUnfinalized_Replacemant = AccessTools.Method(typeof(StatWorker_GetValueUnfinalized_Hijacked_Patch), "Replacemant");
         internal static MethodBase m_GetValueUnfinalized_Transpiler = AccessTools.Method(typeof(StatWorker_GetValueUnfinalized_Hijacked_Patch), "Transpiler");
 
-        internal static Dictionary<int, Pair<float, int>> cache = new Dictionary<int, Pair<float, int>>(1000);
-        internal static Dictionary<int, List<int>> pawnCachedKeys = new Dictionary<int, List<int>>();
-
-        internal static List<int> pawnsCleanupQueue = new List<int>();
-
+        internal static Dictionary<int, int> signatures = new Dictionary<int, int>();
+        internal static Dictionary<int, Tuple<float, int, int>> cache = new Dictionary<int, Tuple<float, int, int>>(1000);
         internal static List<Tuple<int, int, float>> requests = new List<Tuple<int, int, float>>();
-
-        private static ThreadStart starter = new ThreadStart(OffMainThreadProcessing);
-        private static Thread worker = null;
-
-        private static object locker1 = new object();
-        private static object locker2 = new object();
-        private static object locker3 = new object();
-
-        [Main.OnDefsLoaded]
-        public static void Initialize()
-        {
-            worker = new Thread(starter);
-            worker.Start();
-        }
-
-        [Main.OnTick]
-        public static void FlushMessages()
-        {
-            if (!Finder.debug) return;
-            lock (locker3)
-            {
-                while (messages.Count != 0)
-                {
-                    Monitor.Wait(locker3);
-                    Log.Message(messages.Pop());
-                }
-            }
-        }
 
         internal static Dictionary<int, float> expiryCache = new Dictionary<int, float>();
         internal static List<string> messages = new List<string>();
@@ -97,88 +66,52 @@ namespace RocketMan.Optimizations
         internal static int cleanUps = 0;
         internal static int stage = 0;
 
-        internal static void OffMainThreadProcessing()
+        internal static void ProcessExpiryCache()
         {
-            while (true)
+            if (requests.Count == 0)
+                return;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            if (Finder.learning && !Find.TickManager.Paused && Find.TickManager.TickRateMultiplier <= 3f)
+                if (counter++ % 20 == 0 && expiryCache.Count != 0)
+                {
+                    foreach (var unit in expiryCache)
+                    {
+                        Finder.statExpiry[unit.Key] = (byte)Mathf.Clamp(unit.Value, 0f, 255f);
+                        cleanUps++;
+                    }
+                    expiryCache.Clear();
+                }
+            while (requests.Count > 0 && stopwatch.ElapsedMilliseconds <= 1)
             {
-                try
+                unsafe
                 {
-                    Thread.Sleep((int)Mathf.Clamp(15 - expiryCache.Count, 0, 15));
-                    if (Current.Game == null)
-                        continue;
-                    if (Find.TickManager.Paused)
-                        continue;
-                    stage = 1;
-                    if (Finder.learning)
-                    {
-                        if (counter++ % 20 == 0 && expiryCache.Count != 0)
-                        {
-                            foreach (var unit in expiryCache)
-                            {
-                                Finder.statExpiry[unit.Key] = (byte)Mathf.Clamp(unit.Value, 0f, 255f);
-                                cleanUps++;
-                            }
-                            expiryCache.Clear();
-                        }
-                        stage = 2;
-                        if (requests.Count > 0)
-                        {
-                            unsafe
-                            {
-                                Tuple<int, int, float> request;
-                                int timeout = 1024;
-                                lock (locker2)
-                                {
-                                    while (timeout-- > 0) Monitor.Wait(locker2);
-                                    if (timeout <= 0)
-                                    {
-                                        goto ExitBlock;
-                                    }
-                                    request = requests.Pop();
-                                }
-                                var statIndex = request.Item1;
+                    Tuple<int, int, float> request;
+                    request = requests.Pop();
+                    var statIndex = request.Item1;
 
-                                var deltaT = Mathf.Abs(request.Item2);
-                                var deltaX = Mathf.Abs(request.Item3);
+                    var deltaT = Mathf.Abs(request.Item2);
+                    var deltaX = Mathf.Abs(request.Item3);
 
-                                if (expiryCache.TryGetValue(statIndex, out float value))
-                                    expiryCache[statIndex] += Mathf.Clamp(Finder.learningRate * (deltaT / 100 - deltaX * deltaT), -5, 5);
-                                else
-                                    expiryCache[statIndex] = Finder.statExpiry[statIndex];
-                            }
-                        ExitBlock:
-                            continue;
-                        }
-                    }
-                    stage = 3;
-                    while (pawnsCleanupQueue.Count > 0)
-                    {
-                        lock (locker1)
-                        {
-                            var pawnIndex = pawnsCleanupQueue.Pop();
-                            if (pawnCachedKeys.ContainsKey(pawnIndex))
-                                foreach (var key in pawnCachedKeys[pawnIndex])
-                                {
-                                    cache.RemoveAll(u => u.Key == key);
-                                    cleanUps++;
-                                }
-                        }
-                    }
-                }
-                catch (Exception er)
-                {
-                    messages.Add(string.Format("ROCKETMAN: error off the main thread in stage {0} with error {1} at {2}", stage, er.Message, er.StackTrace));
-                }
-                finally
-                {
-                    if (ticker++ % 128 == 0 && Finder.debug)
-                        lock (locker3)
-                        {
-                            messages.Add(string.Format("ROCKETMAN: off the main thead cleaned {0} and counted {1}", cleanUps, counter));
-                            Monitor.Pulse(locker3);
-                        }
+                    if (expiryCache.TryGetValue(statIndex, out float value))
+                        expiryCache[statIndex] += Mathf.Clamp(Finder.learningRate * (deltaT / 100 - deltaX * deltaT), -5, 5);
+                    else
+                        expiryCache[statIndex] = Finder.statExpiry[statIndex];
                 }
             }
+        }
+
+        [Main.OnTickLong]
+        public static void CleanCache()
+        {
+            if (Find.TickManager.TickRateMultiplier <= 3f)
+                cache.Clear();
+        }
+
+        public static void Dirty(Pawn pawn)
+        {
+            signatures[pawn.thingIDNumber] = Rand.Int.GetHashCode();
+            if (Finder.debug) Log.Message(string.Format("ROCKETMAN: changed signature for pawn {0}", pawn));
         }
 
         internal static IEnumerable<MethodBase> TargetMethodsUnfinalized()
@@ -215,41 +148,28 @@ namespace RocketMan.Optimizations
             return methods;
         }
 
-        internal static float UpdateCache(int key, StatWorker statWorker, StatRequest req, bool applyPostProcess, int tick, Pair<float, int> store)
+        internal static float UpdateCache(int key, StatWorker statWorker, StatRequest req, bool applyPostProcess, int tick, Tuple<float, int, int> store)
         {
             var value = statWorker.GetValueUnfinalized(req, applyPostProcess);
-
             if (Finder.statLogging && !Finder.learning)
             {
-                Log.Message(string.Format("ROCKETMAN: state {0} for {1} took {2} with key {3}", statWorker.stat.defName, req.thingInt, tick - store.second, key));
+                Log.Message(string.Format("ROCKETMAN: state {0} for {1} took {2} with key {3}", statWorker.stat.defName, req.thingInt, tick - (store?.Item2 ?? 0), key));
             }
             else if (Finder.learning)
             {
-                lock (locker2)
+                requests.Add(new Tuple<int, int, float>(statWorker.stat.index, tick - (store?.Item2 ?? tick), Mathf.Abs(value - (store?.Item1 ?? value))));
+                if (Rand.Chance(0.1f))
                 {
-                    requests.Add(new Tuple<int, int, float>(statWorker.stat.index, tick - store.second, Mathf.Abs(value - store.first)));
-                    Monitor.Pulse(locker2);
+                    ProcessExpiryCache();
                 }
             }
-            if (req.HasThing && req.Thing is Pawn pawn && pawn != null)
+            int signature = -1;
+            if (req.HasThing && req.Thing is Pawn pawn && pawn != null && !signatures.TryGetValue(pawn.thingIDNumber, out signature))
             {
-                if (!pawnCachedKeys.TryGetValue(pawn.thingIDNumber, out List<int> keys))
-                {
-                    pawnCachedKeys[pawn.thingIDNumber] = (keys = new List<int>());
-                }
-                keys.Add(key);
+                signatures[pawn.thingIDNumber] = signature = Rand.Int.GetHashCode();
             }
-            cache[key] = new Pair<float, int>(value, tick);
+            cache[key] = new Tuple<float, int, int>(value, tick, signature);
             return value;
-        }
-
-        [Main.OnTick]
-        public static void CleanCache()
-        {
-            lock (locker1)
-            {
-                cache.Clear();
-            }
         }
 
         public static float Replacemant(StatWorker statWorker, StatRequest req, bool applyPostProcess)
@@ -262,19 +182,22 @@ namespace RocketMan.Optimizations
                 && tick >= 600)
             {
                 int key = Tools.GetKey(statWorker, req, applyPostProcess);
-                Pair<float, int> store;
-                lock (locker1)
+                int signature = -1;
+                if (req.HasThing && req.Thing is Pawn pawn && pawn != null && !signatures.TryGetValue(pawn.thingIDNumber, out signature))
                 {
-                    if (!cache.TryGetValue(key, out store))
-                    {
-                        return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
-                    }
-                    if (tick - store.Second > Finder.statExpiry[statWorker.stat.index])
-                    {
-                        return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
-                    }
+                    signatures[pawn.thingIDNumber] = signature = Rand.Int.GetHashCode();
+                    return UpdateCache(key, statWorker, req, applyPostProcess, tick, null);
                 }
-                return store.First;
+                if (!cache.TryGetValue(key, out var store))
+                {
+                    return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
+                }
+                if (tick - store.Item2 > Finder.statExpiry[statWorker.stat.index] || signature != store.Item3)
+                {
+                    if (Finder.debug && signature != store.Item3) Log.Message(string.Format("ROCKETMAN: Invalidated pawn cache with old sig:{0} and new {1}", store.Item3, signature));
+                    return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
+                }
+                return store.Item1;
             }
             else
             {
