@@ -64,6 +64,10 @@ namespace RocketMan.Optimizations
         private static ThreadStart starter = new ThreadStart(OffMainThreadProcessing);
         private static Thread worker = null;
 
+        private static object locker1 = new object();
+        private static object locker2 = new object();
+        private static object locker3 = new object();
+
         [Main.OnDefsLoaded]
         public static void Initialize()
         {
@@ -75,8 +79,14 @@ namespace RocketMan.Optimizations
         public static void FlushMessages()
         {
             if (!Finder.debug) return;
-            while (messages.Count > 0)
-                Log.Message(messages.Pop());
+            lock (locker3)
+            {
+                while (messages.Count != 0)
+                {
+                    Monitor.Wait(locker3);
+                    Log.Message(messages.Pop());
+                }
+            }
         }
 
         internal static Dictionary<int, float> expiryCache = new Dictionary<int, float>();
@@ -113,28 +123,46 @@ namespace RocketMan.Optimizations
                         stage = 2;
                         if (requests.Count > 0)
                         {
-                            var request = requests.Pop();
-                            var statIndex = request.Item1;
+                            unsafe
+                            {
+                                Tuple<int, int, float> request;
+                                int timeout = 1024;
+                                lock (locker2)
+                                {
+                                    while (timeout-- > 0) Monitor.Wait(locker2);
+                                    if (timeout <= 0)
+                                    {
+                                        goto ExitBlock;
+                                    }
+                                    request = requests.Pop();
+                                }
+                                var statIndex = request.Item1;
 
-                            var deltaT = Mathf.Abs(request.Item2);
-                            var deltaX = Mathf.Abs(request.Item3);
+                                var deltaT = Mathf.Abs(request.Item2);
+                                var deltaX = Mathf.Abs(request.Item3);
 
-                            if (expiryCache.TryGetValue(statIndex, out float value))
-                                expiryCache[statIndex] += Mathf.Clamp(Finder.learningRate * (deltaT / 100 - deltaX * deltaT), -5, 5);
-                            else
-                                expiryCache[statIndex] = Finder.statExpiry[statIndex];
+                                if (expiryCache.TryGetValue(statIndex, out float value))
+                                    expiryCache[statIndex] += Mathf.Clamp(Finder.learningRate * (deltaT / 100 - deltaX * deltaT), -5, 5);
+                                else
+                                    expiryCache[statIndex] = Finder.statExpiry[statIndex];
+                            }
+                        ExitBlock:
+                            continue;
                         }
                     }
                     stage = 3;
                     while (pawnsCleanupQueue.Count > 0)
                     {
-                        var pawnIndex = pawnsCleanupQueue.Pop();
-                        if (pawnCachedKeys.ContainsKey(pawnIndex))
-                            foreach (var key in pawnCachedKeys[pawnIndex])
-                            {
-                                cache.RemoveAll(u => u.Key == key);
-                                cleanUps++;
-                            }
+                        lock (locker1)
+                        {
+                            var pawnIndex = pawnsCleanupQueue.Pop();
+                            if (pawnCachedKeys.ContainsKey(pawnIndex))
+                                foreach (var key in pawnCachedKeys[pawnIndex])
+                                {
+                                    cache.RemoveAll(u => u.Key == key);
+                                    cleanUps++;
+                                }
+                        }
                     }
                 }
                 catch (Exception er)
@@ -144,7 +172,11 @@ namespace RocketMan.Optimizations
                 finally
                 {
                     if (ticker++ % 128 == 0 && Finder.debug)
-                        messages.Add(string.Format("ROCKETMAN: off the main thead cleaned {0} and counted {1}", cleanUps, counter));
+                        lock (locker3)
+                        {
+                            messages.Add(string.Format("ROCKETMAN: off the main thead cleaned {0} and counted {1}", cleanUps, counter));
+                            Monitor.Pulse(locker3);
+                        }
                 }
             }
         }
@@ -193,19 +225,20 @@ namespace RocketMan.Optimizations
             }
             else if (Finder.learning)
             {
-                requests.Add(new Tuple<int, int, float>(statWorker.stat.index, tick - store.second, Mathf.Abs(value - store.first)));
+                lock (locker2)
+                {
+                    requests.Add(new Tuple<int, int, float>(statWorker.stat.index, tick - store.second, Mathf.Abs(value - store.first)));
+                    Monitor.Pulse(locker2);
+                }
             }
-
             if (req.HasThing && req.Thing is Pawn pawn && pawn != null)
             {
                 if (!pawnCachedKeys.TryGetValue(pawn.thingIDNumber, out List<int> keys))
                 {
                     pawnCachedKeys[pawn.thingIDNumber] = (keys = new List<int>());
                 }
-
                 keys.Add(key);
             }
-
             cache[key] = new Pair<float, int>(value, tick);
             return value;
         }
@@ -213,7 +246,10 @@ namespace RocketMan.Optimizations
         [Main.OnTick]
         public static void CleanCache()
         {
-            cache.Clear();
+            lock (locker1)
+            {
+                cache.Clear();
+            }
         }
 
         public static float Replacemant(StatWorker statWorker, StatRequest req, bool applyPostProcess)
@@ -225,18 +261,19 @@ namespace RocketMan.Optimizations
                 && Current.Game != null
                 && tick >= 600)
             {
-                var key = Tools.GetKey(statWorker, req, applyPostProcess);
-
-                if (!cache.TryGetValue(key, out var store))
+                int key = Tools.GetKey(statWorker, req, applyPostProcess);
+                Pair<float, int> store;
+                lock (locker1)
                 {
-                    return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
+                    if (!cache.TryGetValue(key, out store))
+                    {
+                        return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
+                    }
+                    if (tick - store.Second > Finder.statExpiry[statWorker.stat.index])
+                    {
+                        return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
+                    }
                 }
-
-                if (tick - store.Second > Finder.statExpiry[statWorker.stat.index])
-                {
-                    return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
-                }
-
                 return store.First;
             }
             else
