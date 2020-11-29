@@ -1,27 +1,24 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Verse;
 
 namespace RocketMan
 {
     public class DubsPreformanceAnalyzerHelper : ModHelper
     {
-        private bool isLoaded = false;
-        private bool initialized = false;
+        private static DubsPreformanceAnalyzerHelper instance;
+        private bool initialized;
+        private bool isLoaded;
 
-        public override string PackageID
+        public override string PackageID => "Dubwise.DubsPerformanceAnalyzerButchered";
+
+        public override string Name => "Dubs Performance Analyzer - Wiri's Butchery";
+
+        public static DubsPreformanceAnalyzerHelper Instance
         {
             get
             {
-                return "Dubwise.DubsPerformanceAnalyzerButchered";
-            }
-        }
-
-        public override string Name
-        {
-            get
-            {
-                return "Dubs Performance Analyzer - Wiri's Butchery";
+                if (instance == null) instance = new DubsPreformanceAnalyzerHelper();
+                return instance;
             }
         }
 
@@ -31,24 +28,10 @@ namespace RocketMan
             initialized = true;
             isLoaded = LoadedModManager.RunningMods.Any(
                 m => m.Name == "Dubs Performance Analyzer - Wiri's Butchery"
-                || m.PackageId == "Dubwise.DubsPerformanceAnalyzerButchered"
-                || m.Name == "Dubs Performance Analyzer");
+                     || m.PackageId == "Dubwise.DubsPerformanceAnalyzerButchered"
+                     || m.Name == "Dubs Performance Analyzer");
             if (isLoaded) Log.Message(string.Format("ROCKETMAN: Rocketman detected {0}!", Name));
             return isLoaded;
-        }
-
-        private static DubsPreformanceAnalyzerHelper instance;
-
-        public static DubsPreformanceAnalyzerHelper Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new DubsPreformanceAnalyzerHelper();
-                }
-                return instance;
-            }
         }
     }
 }

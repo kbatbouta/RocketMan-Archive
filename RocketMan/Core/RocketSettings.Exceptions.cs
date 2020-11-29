@@ -1,5 +1,4 @@
-﻿using System;
-using RimWorld;
+﻿using RimWorld;
 using Verse;
 
 namespace RocketMan
@@ -10,7 +9,7 @@ namespace RocketMan
         [Main.OnDefsLoaded]
         public static void UpdateExceptions()
         {
-            DefDatabase<StatDef>.ResolveAllReferences(true);
+            DefDatabase<StatDef>.ResolveAllReferences();
             if (StatDefOf.MarketValue != null && StatDefOf.MarketValueIgnoreHp != null)
             {
                 Finder.statExpiry[StatDefOf.MarketValue.index] = 0;

@@ -1,50 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using HugsLib;
 using RimWorld;
 using UnityEngine;
-using UnityEngine.XR;
 using Verse;
 
 namespace RocketMan
 {
     public partial class RocketMod : Mod
     {
-        public static RocketModSettings settings;
-
-        public static int defaultValue = 0;
-
-        public static bool resetInitiated = false;
-
-        public static string defaultValueString = "5";
-
-        public static List<StatSettings> statsSettings = new List<StatSettings>();
-
-        public static string searchString = "";
-
-        public static Vector2 scroll = Vector2.zero;
-        public static Rect view = Rect.zero;
+        private static RocketModSettings settings;
+        private static readonly Listing_Standard standard = new Listing_Standard();
+        private static List<StatSettings> statsSettings = new List<StatSettings>();
+        private static string searchString = "";
+        private static Vector2 scroll = Vector2.zero;
+        private static Rect view = Rect.zero;
 
         public static RocketMod instance;
-
-        public class StatSettings : IExposable
-        {
-            public string stat;
-
-            public int expireAfter = 0;
-
-            public void ExposeData()
-            {
-                Scribe_Values.Look(ref stat, "statDef");
-                Scribe_Values.Look(ref expireAfter, "expiryTime", 5);
-            }
-        }
+        public static Vector2 scrollPositionStatSettings = Vector2.zero;
 
         public RocketMod(ModContentPack content) : base(content)
         {
-            RocketMod.instance = this;
-            RocketMod.settings = GetSettings<RocketModSettings>();
+            instance = this;
+            settings = GetSettings<RocketModSettings>();
             UpdateExceptions();
         }
 
@@ -53,7 +31,7 @@ namespace RocketMan
             return "RocketMan";
         }
 
-        public override void DoSettingsWindowContents(global::UnityEngine.Rect inRect)
+        public override void DoSettingsWindowContents(Rect inRect)
         {
             base.DoSettingsWindowContents(inRect);
             DoSettings(inRect);
@@ -70,143 +48,121 @@ namespace RocketMan
         {
             ReadStats();
 
-            var listRect = new Rect(inRect.x, inRect.y + 10f, inRect.width, inRect.height - 50f);
-            var contentRect = new Rect(0f, 0f, inRect.width - 20f, 50f * DefDatabase<StatDef>.AllDefs.Count() + 200);
-            if (!doStats)
-            {
-                contentRect = new Rect(0f, 0f, inRect.width - 20f, 500);
-            }
-
-            Widgets.BeginScrollView(listRect, ref scroll, contentRect, true);
-
-            var listing = new Listing_Standard();
-
-            listing.Begin(contentRect);
             var font = Text.Font;
-            Text.Font = GameFont.Medium;
-            listing.Label("RocketMan Settings:");
-            Text.Font = font;
-            listing.GapLine();
-            listing.CheckboxLabeled("Enabled", ref Finder.enabled);
-            listing.GapLine();
+            var anchor = Text.Anchor;
+            var style = Text.CurFontStyle.fontStyle;
 
+            var rightPart = inRect.RightHalf();
+            rightPart.xMin += 10;
+            var leftPart = inRect.LeftHalf();
+
+            standard.Begin(rightPart);
+            {
+                Text.Font = GameFont.Medium;
+                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                standard.Label("RocketMan 2:");
+                Text.Font = GameFont.Tiny;
+                Text.CurFontStyle.fontStyle = FontStyle.Normal;
+            }
+            {
+                standard.CheckboxLabeled("Enabled", ref Finder.enabled);
+            }
             if (Finder.enabled)
             {
-                Text.Font = GameFont.Tiny;
-                listing.CheckboxLabeled("Enable debuging", ref Finder.debug);
-
-                if (Finder.debug)
+                standard.GapLine();
                 {
-                    listing.CheckboxLabeled("Enable Stat Logging (will destroy performance!)", ref Finder.statLogging);
-                    listing.CheckboxLabeled("Enable globale grid refresh", ref Finder.enableGridRefresh);
-#if DEBUG
-                    listing.CheckboxLabeled("Enable glower cells flashing (will destroy performance!)", ref Finder.drawGlowerUpdates);
-#endif
+                    standard.CheckboxLabeled("Adaptive mod", ref Finder.learning, "Only enable for 30 minutes.");
+                    standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
+                        "Can cause bugs.");
+                    standard.CheckboxLabeled("Thought caching", ref Finder.thoughtsCaching,
+                        "Only enable for 30 minutes.");
+                    standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
+                    standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Experimental.");
                 }
-
-                listing.GapLine();
-
-                listing.CheckboxLabeled("Enable thoughts checks caching", ref Finder.thoughtsCaching);
-
-                listing.CheckboxLabeled("Enable adaptive mod", ref Finder.learning);
-
-                listing.GapLine();
-
-                listing.Label(string.Format("Clear all stored data in an interval of {0} ticks", Finder.universalCacheAge));
-                Finder.universalCacheAge = (int)listing.Slider(Finder.universalCacheAge, 500, Finder.debug ? 10000 : 2000);
-
-                listing.GapLine();
-
-                if (doStats)
+                standard.GapLine();
                 {
-                    listing.Label("Custom value");
-
-                    listing.TextFieldNumeric(ref defaultValue, ref defaultValueString, 0f, 15f);
-                    if (!resetInitiated && listing.ButtonText("Apply Custom value to all!"))
+                    GUI.color = Color.red;
+                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                    standard.Label("Advanced settings");
+                    Text.CurFontStyle.fontStyle = FontStyle.Normal;
+                    GUI.color = Color.white;
+                }
+                {
+                    standard.CheckboxLabeled("Debugging", ref Finder.debug, "Only for advanced users and modders");
+                    if (Finder.debug)
                     {
-                        resetInitiated = true;
+                        standard.CheckboxLabeled("Enable Stat Logging (Will kill performance)", ref Finder.statLogging);
+                        standard.CheckboxLabeled("Enable GlowGrid flashing", ref Finder.drawGlowerUpdates);
+                        standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);
+                        standard.CheckboxLabeled("Enable Dilation flashing dilated pawns",
+                            ref Finder.flashDilatedPawns);
+                        standard.CheckboxLabeled("Enable Simulate offscreen behavior", ref Finder.alwaysDilating);
                     }
-
-                    if (resetInitiated && listing.ButtonText("Cancel"))
-                    {
-                        resetInitiated = false;
-                    }
-
-                    if (resetInitiated && listing.ButtonText("Are you sure? YES!"))
-                    {
-                        RocketMod.resetInitiated = false;
-                        Reset();
-                    }
-
-                    listing.GapLine();
-                    DoStatSettings(listing);
-
-                    listing.GapLine();
                 }
             }
 
-            if (extras != null)
-            {
-                extras.Invoke(listing);
-            }
+            standard.End();
+            DoStatSettings(leftPart);
 
             Text.Font = font;
-
-            listing.End();
-            Widgets.EndScrollView();
+            Text.Anchor = anchor;
+            Text.CurFontStyle.fontStyle = style;
         }
 
-        public static void DoStatSettings(Listing_Standard listing)
+        public static void DoStatSettings(Rect rect)
         {
             UpdateStats();
 
             var counter = 0;
             var font = Text.Font;
+            var anchor = Text.Anchor;
 
             Text.Font = GameFont.Small;
+            searchString = Widgets
+                .TextArea(rect.TopPartPixels(25), searchString)
+                .ToLower();
 
-            listing.Gap();
-            listing.Label("Search:");
-
-            searchString = listing.TextEntry(searchString, 1).ToLower();
-
-            listing.Gap();
-
+            var scrollRect = rect;
+            rect.yMin += 35;
+            Widgets.BeginScrollView(rect, ref scrollPositionStatSettings,
+                new Rect(Vector2.zero, new Vector2(rect.width - 15, statsSettings.Count * 54)));
             Text.Font = GameFont.Tiny;
-
-            foreach (StatSettings settings in statsSettings)
-            {
+            var size = new Vector2(rect.width - 20, 54);
+            var curRect = new Rect(new Vector2(2, 2), size);
+            foreach (var settings in statsSettings)
                 if (false
                     || searchString.Trim() == ""
                     || settings.stat.ToLower().Contains(searchString))
                 {
-                    listing.Label(string.Format("{0}. {1} set to expire in {2} ticks", counter++, settings.stat, settings.expireAfter));
-                    settings.expireAfter = (int)listing.Slider(settings.expireAfter, 0, 255);
+                    var rowRect = curRect.ContractedBy(5);
+                    Text.Font = GameFont.Tiny;
+                    Text.Anchor = TextAnchor.MiddleLeft;
+                    Widgets.DrawMenuSection(curRect.ContractedBy(1));
+                    Widgets.Label(rowRect.TopHalf(), string.Format("{0}. {1} set to expire in {2} ticks", counter++,
+                        settings.stat,
+                        settings.expireAfter));
+                    settings.expireAfter =
+                        (byte) Widgets.HorizontalSlider(rowRect.BottomHalf(), settings.expireAfter, 0, 255);
+                    curRect.y += size.y;
                 }
-            }
 
+            Widgets.EndScrollView();
             Text.Font = font;
+            Text.Anchor = anchor;
 
-            foreach (StatSettings setting in statsSettings)
-            {
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
-            }
+            foreach (var setting in statsSettings)
+                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte) setting.expireAfter;
 
-            RocketMod.instance.WriteSettings();
-            RocketMod.UpdateExceptions();
+            instance.WriteSettings();
+            UpdateExceptions();
         }
 
         public static void ReadStats()
         {
-            if (statsSettings == null || statsSettings.Count == 0)
-            {
-                return;
-            }
+            if (statsSettings == null || statsSettings.Count == 0) return;
 
-            foreach (StatSettings setting in statsSettings)
-            {
+            foreach (var setting in statsSettings)
                 setting.expireAfter = Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index];
-            }
         }
 
         public static void Reset()
@@ -214,13 +170,12 @@ namespace RocketMan
             var defs = DefDatabase<StatDef>.AllDefs;
 
             statsSettings.Clear();
-            foreach (StatDef def in defs)
-            {
-                statsSettings.Add(new StatSettings() { stat = def.defName, expireAfter = def.defName.PredictValueFromString() + defaultValue });
-            }
+            foreach (var def in defs)
+                statsSettings.Add(new StatSettings
+                    {stat = def.defName, expireAfter = def.defName.PredictValueFromString()});
 
             var failed = false;
-            foreach (StatSettings setting in statsSettings)
+            foreach (var setting in statsSettings)
             {
                 if (setting?.stat == null)
                 {
@@ -228,7 +183,7 @@ namespace RocketMan
                     break;
                 }
 
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
+                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte) setting.expireAfter;
             }
 
             if (failed)
@@ -245,25 +200,19 @@ namespace RocketMan
         [Main.OnDefsLoaded]
         public static void UpdateStats()
         {
-            if (statsSettings == null)
-            {
-                statsSettings = new List<StatSettings>();
-            }
+            if (statsSettings == null) statsSettings = new List<StatSettings>();
 
             var defs = DefDatabase<StatDef>.AllDefs;
-
             if (statsSettings.Count != defs.Count())
             {
                 statsSettings.Clear();
-                foreach (StatDef def in defs)
-                {
-                    statsSettings.Add(new StatSettings() { stat = def.defName, expireAfter = def.defName.PredictValueFromString() + defaultValue });
-
-                }
+                foreach (var def in defs)
+                    statsSettings.Add(new StatSettings
+                        {stat = def.defName, expireAfter = def.defName.PredictValueFromString()});
             }
 
             var failed = false;
-            foreach (StatSettings setting in statsSettings)
+            foreach (var setting in statsSettings)
             {
                 if (setting?.stat == null)
                 {
@@ -271,7 +220,7 @@ namespace RocketMan
                     break;
                 }
 
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
+                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte) setting.expireAfter;
             }
 
             if (failed)
@@ -285,27 +234,34 @@ namespace RocketMan
             UpdateExceptions();
         }
 
+        public class StatSettings : IExposable
+        {
+            public int expireAfter;
+            public string stat;
+
+            public void ExposeData()
+            {
+                Scribe_Values.Look(ref stat, "statDef");
+                Scribe_Values.Look(ref expireAfter, "expiryTime", 5);
+            }
+        }
+
         public class RocketModSettings : ModSettings
         {
             public override void ExposeData()
             {
                 base.ExposeData();
-
-                if (Scribe.mode == LoadSaveMode.LoadingVars)
-                {
-                    ReadStats();
-                }
-
-                Scribe_Values.Look<bool>(ref Finder.enabled, "enabled", true);
-                Scribe_Values.Look<bool>(ref Finder.learning, "learning", false);
-                Scribe_Values.Look<bool>(ref Finder.debug, "debug", false);
-                Scribe_Values.Look<bool>(ref Finder.thoughtsCaching, "thoughtsCaching", true);
-
-                Scribe_Values.Look<int>(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache", 0);
-                Scribe_Values.Look<int>(ref Finder.universalCacheAge, "universalCacheAge", 0);
-
+                if (Scribe.mode == LoadSaveMode.LoadingVars) ReadStats();
+                Scribe_Values.Look(ref Finder.enabled, "enabled", true);
+                Scribe_Values.Look(ref Finder.statGearCachingEnabled, "statGearCachingEnabled", true);
+                Scribe_Values.Look(ref Finder.learning, "learning");
+                Scribe_Values.Look(ref Finder.debug, "debug");
+                Scribe_Values.Look(ref Finder.thoughtsCaching, "thoughtsCaching", true);
+                Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
+                Scribe_Values.Look(ref Finder.timeDilationWorldPawns, "timeDilationWorldPawns", true);
+                Scribe_Values.Look(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache");
+                Scribe_Values.Look(ref Finder.universalCacheAge, "universalCacheAge");
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
-
                 UpdateExceptions();
             }
         }

@@ -4,7 +4,6 @@ using System.Reflection;
 using RimWorld;
 using RocketMan.Optimizations;
 using Verse;
-using static RocketMan.Main;
 
 namespace RocketMan
 {
@@ -15,7 +14,7 @@ namespace RocketMan
             return string.Format("{0}:{1}", method.ReflectedType.Name, method.Name);
         }
 
-        public static byte PredictValueFromString(this String name)
+        public static byte PredictValueFromString(this string name)
         {
             if (false
                 || name.Contains("Combat")
@@ -23,9 +22,7 @@ namespace RocketMan
                 || name.Contains("Range")
                 || name.Contains("Ability")
                 || name.Contains("Gain"))
-            {
                 return 0;
-            }
             if (false
                 || name.Contains("Stuff")
                 || name.Contains("Cold")
@@ -36,9 +33,7 @@ namespace RocketMan
                 || name.Contains("Comfort")
                 || name.Contains("Max")
                 || name.Contains("Min"))
-            {
                 return 128;
-            }
             return 32;
         }
 
@@ -56,7 +51,6 @@ namespace RocketMan
                             ThoughtUtility_NullifyingHediff_Patch.cache.Remove(key);
                         store.Clear();
                     }
-
                 }
             }
             catch (Exception er)
@@ -73,7 +67,7 @@ namespace RocketMan
                 hash = HashUtility.HashOne(statWorker.stat.shortHash);
                 hash = HashUtility.HashOne(req.thingInt?.thingIDNumber ?? 0, hash);
                 hash = HashUtility.HashOne(req.stuffDefInt?.shortHash ?? 0, hash);
-                hash = HashUtility.HashOne((int)req.qualityCategoryInt, hash);
+                hash = HashUtility.HashOne((int) req.qualityCategoryInt, hash);
                 hash = HashUtility.HashOne(req.defInt?.shortHash ?? 0, hash);
                 hash = HashUtility.HashOne(req.faction?.loadID ?? 0, hash);
                 hash = HashUtility.HashOne(req.pawn?.thingIDNumber ?? 0, hash);
@@ -82,14 +76,27 @@ namespace RocketMan
             }
         }
 
+        public static int GetKey(TraverseParms traverseParms, LocalTargetInfo dest)
+        {
+            int hash;
+            unchecked
+            {
+                hash = traverseParms.pawn?.thingIDNumber.GetHashCode() ?? 0;
+                hash = hash ^ (dest.Cell.GetHashCode() << 1);
+            }
+
+            return hash;
+        }
+
         public static int GetKey(ThoughtDef def, Pawn pawn)
         {
-            int hash = 0;
+            var hash = 0;
             unchecked
             {
                 hash = HashUtility.HashOne(def.shortHash);
                 hash = HashUtility.HashOne(pawn.thingIDNumber.GetHashCode(), hash);
             }
+
             return hash;
         }
 
@@ -100,7 +107,7 @@ namespace RocketMan
                 int hash;
                 hash = HashUtility.HashOne(req.thingInt?.thingIDNumber ?? 0);
                 hash = HashUtility.HashOne(req.stuffDefInt?.shortHash ?? 0, hash);
-                hash = HashUtility.HashOne((int)req.qualityCategoryInt, hash);
+                hash = HashUtility.HashOne((int) req.qualityCategoryInt, hash);
                 hash = HashUtility.HashOne(req.defInt?.shortHash ?? 0, hash);
                 hash = HashUtility.HashOne(req.faction?.loadID ?? 0, hash);
                 hash = HashUtility.HashOne(req.pawn?.thingIDNumber ?? 0, hash);

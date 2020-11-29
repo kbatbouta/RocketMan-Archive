@@ -1,28 +1,35 @@
-﻿using System;
-using System.Linq;
-using RimWorld;
-using UnityEngine;
+﻿using UnityEngine;
 using Verse;
 
 namespace RocketMan
 {
     public class RocketWindow : Window
     {
+        public RocketWindow()
+        {
+            draggable = true;
+            absorbInputAroundWindow = false;
+            preventCameraMotion = false;
+            resizeable = true;
+            drawShadow = true;
+            doCloseButton = false;
+            doCloseX = true;
+            layer = WindowLayer.SubSuper;
+        }
+
+        public override Vector2 InitialSize => new Vector2(800, 450);
+
         public override void DoWindowContents(Rect inRect)
         {
             RocketMod.ReadStats();
-            RocketMod.DoSettings(inRect, doStats: false, extras: (Listing_Standard listing) =>
+            RocketMod.DoSettings(inRect, false, listing =>
             {
                 if (listing.ButtonText("Open StatsSettings"))
                 {
                     if (Find.WindowStack.WindowOfType<RocketStatWindow>() != null)
-                    {
                         Find.WindowStack.RemoveWindowsOfType(typeof(RocketStatWindow));
-                    }
                     else
-                    {
                         Find.WindowStack.Add(new RocketStatWindow());
-                    }
                 }
             });
         }
@@ -38,33 +45,21 @@ namespace RocketMan
         public static Vector2 scroll = Vector2.zero;
         public static Rect view = Rect.zero;
 
+        public RocketStatWindow()
+        {
+            draggable = true;
+            absorbInputAroundWindow = false;
+            preventCameraMotion = false;
+            resizeable = true;
+            drawShadow = true;
+            doCloseButton = false;
+            doCloseX = true;
+            layer = WindowLayer.Super;
+        }
+
         public override void DoWindowContents(Rect inRect)
         {
-            var listRect = new Rect(inRect.x, inRect.y + 10f, inRect.width, inRect.height - 50f);
-            var contentRect = new Rect(0f, 0f, inRect.width - 20f, 50f * DefDatabase<StatDef>.AllDefs.Count() + 200);
-
-            Widgets.BeginScrollView(listRect, ref scroll, contentRect, true);
-
-            var listing = new Listing_Standard();
-            listing.Begin(contentRect);
-
-            var font = Text.Font;
-
-            Text.Font = GameFont.Medium;
-            listing.Label("Stat Settings:");
-            Text.Font = GameFont.Small;
-
-            if (listing.ButtonText("Close"))
-            {
-                Close();
-            }
-            Text.Font = GameFont.Medium;
-            RocketMod.DoStatSettings(listing);
-
-            Text.Font = font;
-            listing.End();
-
-            Widgets.EndScrollView();
+            RocketMod.DoStatSettings(inRect);
         }
     }
 }

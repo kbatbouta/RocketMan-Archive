@@ -1,33 +1,17 @@
-﻿using System;
-namespace RocketMan
+﻿namespace RocketMan
 {
     public class RimWarHelper : ModHelper
     {
-        public override string PackageID
-        {
-            get
-            {
-                return "Torann.RimWar";
-            }
-        }
-        public override string Name
-        {
-            get
-            {
-                return "Rim War";
-            }
-        }
-
         private static RimWarHelper instance;
+        public override string PackageID => "Torann.RimWar";
+
+        public override string Name => "Rim War";
 
         public static RimWarHelper Instance
         {
             get
             {
-                if (instance == null)
-                {
-                    instance = new RimWarHelper();
-                }
+                if (instance == null) instance = new RimWarHelper();
                 return instance;
             }
         }

@@ -1,78 +1,59 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
-using HarmonyLib;
+﻿using HarmonyLib;
 using RimWorld;
+using UnityEngine;
 using Verse;
-using static RocketMan.RocketShip;
 
 namespace RocketMan.Optimizations
 {
-    [SkipperPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
+    [HarmonyPatch(typeof(StatPart_ApparelStatOffset), nameof(StatPart_ApparelStatOffset.TransformValue))]
     public static class StatPart_ApparelStatOffSet_Skipper_Patch
     {
-        public static CachedDict<int, Dictionary<int, float>> cache = new CachedDict<int, Dictionary<int, float>>();
+        private static float curValue;
+        private static int curKey = -1;
+        private static bool skip;
+        private static readonly CachedDict<int, Pair<float, int>> cache = new CachedDict<int, Pair<float, int>>();
 
-        public static bool Skipper(StatPart_ApparelStatOffset __instance, ref float __state, StatRequest req, ref float val)
+        public static bool Prefix(StatPart_ApparelStatOffset __instance, StatRequest req,
+            ref float val)
         {
-            if (Finder.enabled)
+            if (Finder.enabled && Finder.statGearCachingEnabled && req.HasThing && req.thingInt is Pawn pawn)
             {
-                if (!req.HasThing || req.thingInt == null || !(req.thingInt is Pawn))
-                    return false;
-
-                if (cache.TryGetValue(req.thingInt.thingIDNumber, out var store, expiry: 2500))
+                var stat = __instance.apparelStat ?? __instance.parentStat;
+                int key;
+                unchecked
                 {
-                    var sub = Tools.GetKey(req);
-                    var stat = __instance.apparelStat ?? __instance.parentStat;
-
-                    unchecked
-                    {
-                        sub = HashUtility.HashOne(val.GetHashCode(), sub);
-                        sub = HashUtility.HashOne(stat.index, sub);
-                    }
-
-                    if (store.TryGetValue(sub, out var value))
-                    {
-                        val = value;
-                        return false;
-                    }
+                    key = HashUtility.HashOne(__instance.includeWeapon ? 1 : 0);
+                    key = HashUtility.HashOne(stat.shortHash, key);
+                    key = HashUtility.HashOne(Tools.GetKey(req), key);
                 }
-                __state = val;
+
+                curKey = key;
+                curValue = val;
+                if (cache.TryGetValue(key, out var store, 2500) && store.second == pawn.GetSignature())
+                {
+                    val += store.first * (__instance.subtract ? -1 : 1);
+                    skip = true;
+                    return false;
+                }
+
+                skip = false;
+                return true;
             }
+
+            skip = true;
             return true;
         }
 
-        public static void Setter(StatPart_ApparelStatOffset __instance, ref float __state, StatRequest req, ref float val)
+        public static void Postfix(StatPart_ApparelStatOffset __instance, StatRequest req,
+            ref float val)
         {
-            if (Finder.enabled)
-            {
-                var key = req.thingInt.thingIDNumber;
-
-                var sub = Tools.GetKey(req);
-                var stat = __instance.apparelStat ?? __instance.parentStat;
-
-                unchecked
-                {
-                    sub = HashUtility.HashOne(__state.GetHashCode(), sub);
-                    sub = HashUtility.HashOne(stat.index, sub);
-                }
-
-                if (cache.TryGetValue(key, out var store))
-                {
-                    store[sub] = val;
-                }
-                else
-                {
-                    cache[key] = new Dictionary<int, float>();
-                    cache[key][sub] = val;
-                }
-            }
+            if (!skip && Finder.enabled && Finder.statGearCachingEnabled)
+                cache[curKey] = new Pair<float, int>(Mathf.Abs(val - curValue), (req.thingInt as Pawn).GetSignature());
         }
 
         public static void Dirty(Pawn pawn)
         {
-            cache.Remove(pawn.thingIDNumber);
+            pawn.GetSignature(true);
         }
     }
 }

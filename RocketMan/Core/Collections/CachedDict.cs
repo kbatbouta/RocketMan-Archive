@@ -1,18 +1,5 @@
-﻿using System;
-using HugsLib;
-using HarmonyLib;
-using RimWorld;
+﻿using System.Collections.Generic;
 using Verse;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEngine;
-using System.CodeDom;
-using System.Threading;
-using System.Diagnostics;
-using UnityEngine.Assertions.Must;
 
 namespace RocketMan
 {
@@ -24,7 +11,7 @@ namespace RocketMan
 
         public CachedUnit(T value)
         {
-            this.tick = GenTicks.TicksGame;
+            tick = GenTicks.TicksGame;
             this.value = value;
         }
 
@@ -38,7 +25,13 @@ namespace RocketMan
 
     public class CachedDict<A, B>
     {
-        private Dictionary<A, CachedUnit<B>> cache = new Dictionary<A, CachedUnit<B>>();
+        private readonly Dictionary<A, CachedUnit<B>> cache = new Dictionary<A, CachedUnit<B>>();
+
+        public B this[A key]
+        {
+            get => cache[key].value;
+            set => AddPair(key, value);
+        }
 
         public bool TryGetValue(A key, out B value, int expiry = 0)
         {
@@ -47,7 +40,8 @@ namespace RocketMan
                 value = store.value;
                 return true;
             }
-            value = default(B);
+
+            value = default;
             return false;
         }
 
@@ -59,17 +53,15 @@ namespace RocketMan
                 value = store.value;
                 return true;
             }
+
             failed = true;
-            value = default(B);
+            value = default;
             return false;
         }
 
-        public void AddPair(A key, B value) => cache[key] = new CachedUnit<B>(value);
-
-        public B this[A key]
+        public void AddPair(A key, B value)
         {
-            get => this.cache[key].value;
-            set => this.AddPair(key, value);
+            cache[key] = new CachedUnit<B>(value);
         }
 
         public void Remove(A key)

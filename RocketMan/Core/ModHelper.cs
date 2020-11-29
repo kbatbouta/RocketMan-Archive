@@ -1,13 +1,12 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Verse;
 
 namespace RocketMan
 {
     public abstract class ModHelper
     {
-        private bool initiated = false;
-        private bool isLoaded = false;
+        private bool initiated;
+        private bool isLoaded;
 
         public abstract string PackageID { get; }
         public abstract string Name { get; }
@@ -18,7 +17,7 @@ namespace RocketMan
             initiated = true;
             isLoaded = LoadedModManager.RunningMods.Any(
                 m => m.Name == Name || m.PackageId == PackageID
-                );
+            );
             if (isLoaded) Log.Message(string.Format("ROCKETMAN: Rocketman detected {0}!", Name));
             return isLoaded;
         }

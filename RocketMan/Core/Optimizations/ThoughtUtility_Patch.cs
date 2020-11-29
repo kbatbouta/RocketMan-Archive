@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
-using HarmonyLib;
+﻿using System.Collections.Generic;
 using RimWorld;
 using Verse;
 using static RocketMan.RocketShip;
@@ -21,12 +17,13 @@ namespace RocketMan.Optimizations
             {
                 result = null;
                 var key = Tools.GetKey(def, pawn);
-                if (cache.TryGetValue(key, out var value, expiry: 2500))
+                if (cache.TryGetValue(key, out var value, 2500))
                 {
                     result = value;
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -36,12 +33,10 @@ namespace RocketMan.Optimizations
             {
                 var key = Tools.GetKey(def, pawn);
                 cache[key] = result;
-                if (cachedKeys.TryGetValue(pawn, out List<int> store))
+                if (cachedKeys.TryGetValue(pawn, out var store))
                     store.Add(key);
                 else
-                {
-                    cachedKeys[pawn] = new List<int>() { key };
-                }
+                    cachedKeys[pawn] = new List<int> {key};
             }
         }
     }
@@ -56,21 +51,19 @@ namespace RocketMan.Optimizations
             if (Finder.enabled && Finder.thoughtsCaching)
             {
                 result = null;
-                if (cache.TryGetValue(Tools.GetKey(def, pawn), out var value, expiry: 2500))
+                if (cache.TryGetValue(Tools.GetKey(def, pawn), out var value, 2500))
                 {
                     result = value;
                     return false;
                 }
             }
+
             return true;
         }
 
         public static void Setter(ref Trait result, ThoughtDef def, Pawn pawn)
         {
-            if (Finder.enabled && Finder.thoughtsCaching)
-            {
-                cache[Tools.GetKey(def, pawn)] = result;
-            }
+            if (Finder.enabled && Finder.thoughtsCaching) cache[Tools.GetKey(def, pawn)] = result;
         }
     }
 }

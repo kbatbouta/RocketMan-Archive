@@ -301,6 +301,11 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Core\Gameplay\CorpsesTracker.cs" />
+        <Compile Include="Core\Optimizations\GraphicConsts_Patch.cs" />
+        <Compile Include="Core\Optimizations\PlayLog_Patch.cs" />
+        <Compile Include="Core\SignatureUtility.cs" />
+        <Compile Include="Core\TranspilerUtility.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Core\Finder.cs" />
         <Compile Include="Core\RocketSettings.cs" />
@@ -323,6 +328,7 @@
         <Compile Include="Core\ModHelper.cs" />
         <Compile Include="Core\Compatibility\RimWarHelper.cs" />
         <Compile Include="Core\HashUtility.cs" />
+        <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -336,6 +342,7 @@
         <None Include="Legacy\Model\GridTempModel.cs" />
         <None Include="Legacy\HarmonyPatches\HarmonyUtility.cs" />
         <None Include="Legacy\HarmonyPatches\zStatExtension_Patch.cs" />
+        <None Include="Core\Optimizations\Obsolete\Pawn_Patch.cs" />
     </ItemGroup>
     <ItemGroup />
     <ItemGroup>
@@ -344,6 +351,7 @@
       <Folder Include="Core\Optimizations\" />
       <Folder Include="Core\Collections\" />
       <Folder Include="Core\Patches\" />
+      <Folder Include="Core\Optimizations\Obsolete\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Target Name="Publicise" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOsPlatform(OSX))">

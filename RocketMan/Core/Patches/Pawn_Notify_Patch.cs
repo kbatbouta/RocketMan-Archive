@@ -1,5 +1,4 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 using RimWorld;
 using Verse;
 
@@ -18,6 +17,34 @@ namespace RocketMan.Patches
         [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_ApparelRemoved))]
         [HarmonyPostfix]
         public static void Notify_ApparelRemoved_Postfix(Pawn_ApparelTracker __instance, Apparel apparel)
+        {
+            __instance.pawn.Notify_Dirty();
+        }
+
+        [HarmonyPatch(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Notify_EquipmentAdded))]
+        [HarmonyPostfix]
+        public static void Notify_EquipmentAdded_Postfix(Pawn_EquipmentTracker __instance, ThingWithComps eq)
+        {
+            __instance.pawn.Notify_Dirty();
+        }
+
+        [HarmonyPatch(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Notify_EquipmentAdded))]
+        [HarmonyPostfix]
+        public static void Notify_EquipmentRemoved_Postfix(Pawn_EquipmentTracker __instance, ThingWithComps eq)
+        {
+            __instance.pawn.Notify_Dirty();
+        }
+
+        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Wear))]
+        [HarmonyPostfix]
+        public static void Wear_Postfix(Pawn_ApparelTracker __instance)
+        {
+            __instance.pawn.Notify_Dirty();
+        }
+
+        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Remove))]
+        [HarmonyPostfix]
+        public static void Remove_Postfix(Pawn_ApparelTracker __instance)
         {
             __instance.pawn.Notify_Dirty();
         }
