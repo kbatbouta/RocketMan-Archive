@@ -12,6 +12,7 @@ namespace RocketMan
         private static RocketModSettings settings;
         private static readonly Listing_Standard standard = new Listing_Standard();
         private static List<StatSettings> statsSettings = new List<StatSettings>();
+        private static List<DilationSettings> dilationSettings = new List<DilationSettings>();
         private static string searchString = "";
         private static Vector2 scroll = Vector2.zero;
         private static Rect view = Rect.zero;
@@ -40,6 +41,7 @@ namespace RocketMan
         public override void WriteSettings()
         {
             UpdateStats();
+            UpdateDilationDefs();
             UpdateExceptions();
             base.WriteSettings();
         }
@@ -47,66 +49,41 @@ namespace RocketMan
         public static void DoSettings(Rect inRect, bool doStats = true, Action<Listing_Standard> extras = null)
         {
             ReadStats();
-
+            ReadDilationSettings();
+            
             var font = Text.Font;
             var anchor = Text.Anchor;
             var style = Text.CurFontStyle.fontStyle;
 
-            var rightPart = inRect.RightHalf();
-            rightPart.xMin += 10;
-            var leftPart = inRect.LeftHalf();
+            var rect = inRect;
+            rect.xMin += 10;
 
-            standard.Begin(rightPart);
-            {
-                Text.Font = GameFont.Medium;
-                Text.CurFontStyle.fontStyle = FontStyle.Bold;
-                standard.Label("RocketMan 2:");
-                Text.Font = GameFont.Tiny;
-                Text.CurFontStyle.fontStyle = FontStyle.Normal;
-            }
-            {
-                standard.CheckboxLabeled("Enabled", ref Finder.enabled);
-            }
+            standard.Begin(rect);
+            
+            Text.Font = GameFont.Medium;
+            Text.CurFontStyle.fontStyle = FontStyle.Bold;
+            standard.Label("RocketMan 2:");
+            Text.Font = GameFont.Tiny;
+            Text.CurFontStyle.fontStyle = FontStyle.Normal;
+            
+            standard.CheckboxLabeled("Enabled", ref Finder.enabled);
+            
             if (Finder.enabled)
             {
                 standard.GapLine();
-                {
-                    standard.CheckboxLabeled("Adaptive mod", ref Finder.learning, "Only enable for 30 minutes.");
-                    standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
-                        "Can cause bugs.");
-                    standard.CheckboxLabeled("Thought caching", ref Finder.thoughtsCaching,
-                        "Only enable for 30 minutes.");
-                    standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
-                    standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Experimental.");
-                }
-                standard.GapLine();
-                {
-                    GUI.color = Color.red;
-                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
-                    standard.Label("Advanced settings");
-                    Text.CurFontStyle.fontStyle = FontStyle.Normal;
-                    GUI.color = Color.white;
-                }
-                {
-                    standard.CheckboxLabeled("Debugging", ref Finder.debug, "Only for advanced users and modders");
-                    if (Finder.debug)
-                    {
-                        standard.CheckboxLabeled("Enable Stat Logging (Will kill performance)", ref Finder.statLogging);
-                        standard.CheckboxLabeled("Enable GlowGrid flashing", ref Finder.drawGlowerUpdates);
-                        standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);
-                        standard.CheckboxLabeled("Enable Dilation flashing dilated pawns",
-                            ref Finder.flashDilatedPawns);
-                        standard.CheckboxLabeled("Enable Simulate offscreen behavior", ref Finder.alwaysDilating);
-                    }
-                }
+                standard.CheckboxLabeled("Adaptive mod", ref Finder.learning, "Only enable for 30 minutes.");
+                standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
+                    "Can cause bugs.");
             }
+            
+            standard.GapLine();
+            standard.CheckboxLabeled("Debugging", ref Finder.debug, "Only for advanced users and modders");
 
             standard.End();
-            DoStatSettings(leftPart);
 
             Text.Font = font;
             Text.Anchor = anchor;
-            Text.CurFontStyle.fontStyle = style;
+            Text.CurFontStyle.fontStyle = FontStyle.Normal;
         }
 
         public static void DoStatSettings(Rect rect)
@@ -164,9 +141,56 @@ namespace RocketMan
             foreach (var setting in statsSettings)
                 setting.expireAfter = Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index];
         }
+        
+        public static void ReadDilationSettings()
+        {
+            if (dilationSettings == null || dilationSettings.Count == 0) return;
+            
+            foreach (var setting in dilationSettings)
+                setting.dilated = Finder.dilatedDefs[DefDatabase<ThingDef>.defsByName[setting.def].index];
+        }
+
+        [Main.OnDefsLoaded]
+        public static void UpdateDilationDefs()
+        {
+            if (dilationSettings == null) dilationSettings = new List<DilationSettings>();
+            
+            var defs = DefDatabase<ThingDef>.AllDefs.Where(
+                d => d.race != null).ToList();
+            if (statsSettings.Count != defs.Count())
+            {
+                dilationSettings.Clear();
+                foreach (var def in defs)
+                    dilationSettings.Add(new DilationSettings()
+                    {
+                        def = def.defName, 
+                        dilated = def.race.Animal && !def.race.IsMechanoid && !def.race.Humanlike
+                    });
+            }
+
+            var failed = false;
+            foreach (var setting in dilationSettings)
+            {
+                if (setting?.def == null)
+                {
+                    failed = true;
+                    break;
+                }
+                Finder.dilatedDefs[DefDatabase<ThingDef>.defsByName[setting.def].index] = setting.dilated;
+            }
+
+            if (failed)
+            {
+                Log.Warning("Failed to reindex the ThingDef database");
+                statsSettings.Clear();
+
+                UpdateStats();
+            }
+        }
 
         public static void Reset()
         {
+
             var defs = DefDatabase<StatDef>.AllDefs;
 
             statsSettings.Clear();
@@ -193,7 +217,8 @@ namespace RocketMan
 
                 UpdateStats();
             }
-
+            dilationSettings.Clear();
+            UpdateDilationDefs();
             UpdateExceptions();
         }
 
@@ -246,6 +271,18 @@ namespace RocketMan
             }
         }
 
+        public class DilationSettings : IExposable
+        {
+            public bool dilated = true;
+            public string def;
+            
+            public void ExposeData()
+            {
+                Scribe_Values.Look(ref def, "def");
+                Scribe_Values.Look(ref dilated, "dilated");
+            } 
+        }
+
         public class RocketModSettings : ModSettings
         {
             public override void ExposeData()
@@ -256,12 +293,12 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.statGearCachingEnabled, "statGearCachingEnabled", true);
                 Scribe_Values.Look(ref Finder.learning, "learning");
                 Scribe_Values.Look(ref Finder.debug, "debug");
-                Scribe_Values.Look(ref Finder.thoughtsCaching, "thoughtsCaching", true);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
                 Scribe_Values.Look(ref Finder.timeDilationWorldPawns, "timeDilationWorldPawns", true);
                 Scribe_Values.Look(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache");
                 Scribe_Values.Look(ref Finder.universalCacheAge, "universalCacheAge");
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
+                Scribe_Collections.Look(ref dilationSettings, "dilationSettings", LookMode.Deep);
                 UpdateExceptions();
             }
         }

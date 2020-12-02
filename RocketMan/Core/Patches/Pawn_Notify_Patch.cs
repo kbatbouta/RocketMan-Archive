@@ -1,94 +1,82 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 
 namespace RocketMan.Patches
 {
-    [HarmonyPatch]
     public static class Pawn_Notify_Dirty
     {
-        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_ApparelAdded))]
-        [HarmonyPostfix]
-        public static void Notify_ApparelAdded_Postfix(Pawn_ApparelTracker __instance, Apparel apparel)
+        [RocketPatch]
+        public static class Pawn_ApparelTracker_Dirty
         {
-            __instance.pawn.Notify_Dirty();
+            public static IEnumerable<MethodBase> TargetMethods()
+            {
+                yield return AccessTools.Method(typeof(Pawn_ApparelTracker),
+                    nameof(Pawn_ApparelTracker.Notify_ApparelAdded));
+                yield return AccessTools.Method(typeof(Pawn_ApparelTracker),
+                    nameof(Pawn_ApparelTracker.Notify_ApparelRemoved));
+                yield return AccessTools.Method(typeof(Pawn_ApparelTracker),
+                    nameof(Pawn_ApparelTracker.Notify_LostBodyPart));
+                yield return AccessTools.Method(typeof(Pawn_ApparelTracker),
+                    nameof(Pawn_ApparelTracker.ApparelChanged));
+                yield return AccessTools.Method(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Wear));
+                yield return AccessTools.Method(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Remove));
+            }
+            
+            public static void Postfix(Pawn_ApparelTracker __instance)
+            {
+                __instance.pawn.Notify_Dirty();
+            }
         }
-
-        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_ApparelRemoved))]
-        [HarmonyPostfix]
-        public static void Notify_ApparelRemoved_Postfix(Pawn_ApparelTracker __instance, Apparel apparel)
+        
+        [RocketPatch]
+        public static class Pawn_EquipmentTracker_Dirty
         {
-            __instance.pawn.Notify_Dirty();
+            public static IEnumerable<MethodBase> TargetMethods()
+            {
+                yield return AccessTools.Method(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Notify_EquipmentAdded)); 
+                yield return AccessTools.Method(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Notify_EquipmentRemoved));
+            }
+            
+            public static void Postfix(Pawn_EquipmentTracker __instance)
+            {
+                __instance.pawn.Notify_Dirty();
+            }
         }
-
-        [HarmonyPatch(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Notify_EquipmentAdded))]
-        [HarmonyPostfix]
-        public static void Notify_EquipmentAdded_Postfix(Pawn_EquipmentTracker __instance, ThingWithComps eq)
+        
+        [RocketPatch]
+        public static class Pawn_Dirty
         {
-            __instance.pawn.Notify_Dirty();
+            public static IEnumerable<MethodBase> TargetMethods()
+            {
+                yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Destroy));
+                yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Notify_Equipped));
+                yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Notify_Teleported));
+                yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Notify_UsedWeapon));
+                yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Notify_BulletImpactNearby));
+            }
+            
+            public static void Postfix(Pawn __instance)
+            {
+                __instance.Notify_Dirty();
+            }
         }
-
-        [HarmonyPatch(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Notify_EquipmentAdded))]
-        [HarmonyPostfix]
-        public static void Notify_EquipmentRemoved_Postfix(Pawn_EquipmentTracker __instance, ThingWithComps eq)
+        
+        [RocketPatch]
+        public static class Pawn_HealthTracker_Dirty
         {
-            __instance.pawn.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Wear))]
-        [HarmonyPostfix]
-        public static void Wear_Postfix(Pawn_ApparelTracker __instance)
-        {
-            __instance.pawn.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Remove))]
-        [HarmonyPostfix]
-        public static void Remove_Postfix(Pawn_ApparelTracker __instance)
-        {
-            __instance.pawn.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn), nameof(Pawn.Destroy))]
-        [HarmonyPostfix]
-        public static void Destroy_Postfix(Pawn __instance)
-        {
-            __instance.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.Notify_LostBodyPart))]
-        [HarmonyPostfix]
-        public static void Notify_LostBodyPart_Postfix(Pawn_ApparelTracker __instance)
-        {
-            __instance.pawn.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn_ApparelTracker), nameof(Pawn_ApparelTracker.ApparelChanged))]
-        [HarmonyPostfix]
-        public static void Notify_ApparelChanged_Postfix(Pawn_ApparelTracker __instance)
-        {
-            __instance.pawn.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn), nameof(Pawn.Notify_BulletImpactNearby))]
-        [HarmonyPostfix]
-        public static void Notify_BulletImpactNearby_Postfix(Pawn __instance)
-        {
-            __instance.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_HediffChanged))]
-        [HarmonyPostfix]
-        public static void Notify_HediffChanged_Postfix(Pawn_HealthTracker __instance)
-        {
-            __instance.pawn.Notify_Dirty();
-        }
-
-        [HarmonyPatch(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_UsedVerb))]
-        [HarmonyPostfix]
-        public static void Notify_UsedVerb_Postfix(Pawn_HealthTracker __instance)
-        {
-            __instance.pawn.Notify_Dirty();
+            public static IEnumerable<MethodBase> TargetMethods()
+            {
+                yield return AccessTools.Method(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_HediffChanged));
+                yield return AccessTools.Method(typeof(Pawn_HealthTracker), nameof(Pawn_HealthTracker.Notify_UsedVerb));
+            }
+            
+            public static void Postfix(Pawn_HealthTracker __instance)
+            {
+                __instance.pawn.Notify_Dirty();
+            }
         }
     }
 }

@@ -45,12 +45,6 @@ namespace RocketMan
                 {
                     StatPart_ApparelStatOffSet_Skipper_Patch.Dirty(pawn);
                     StatWorker_GetValueUnfinalized_Hijacked_Patch.Dirty(pawn);
-                    if (ThoughtUtility_NullifyingHediff_Patch.cachedKeys.TryGetValue(pawn, out var store))
-                    {
-                        foreach (var key in store)
-                            ThoughtUtility_NullifyingHediff_Patch.cache.Remove(key);
-                        store.Clear();
-                    }
                 }
             }
             catch (Exception er)

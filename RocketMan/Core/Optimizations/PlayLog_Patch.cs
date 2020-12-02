@@ -4,7 +4,7 @@ using Verse;
 
 namespace RocketMan.Optimizations
 {
-    [HarmonyPatch(typeof(PlayLog), nameof(PlayLog.ReduceToCapacity))]
+    [RocketPatch(typeof(PlayLog), nameof(PlayLog.ReduceToCapacity))]
     public class PlayLog_ReduceToCapacity_Patch
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)

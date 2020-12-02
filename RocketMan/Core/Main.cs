@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using HugsLib;
 using Verse;
 
@@ -42,7 +43,7 @@ namespace RocketMan
         {
             base.DefsLoaded();
             {
-                Finder.harmony.PatchAll();
+                RocketPatcher.PatchAll();
                 Finder.rocket.PatchAll();
             }
             for (var i = 0; i < onDefsLoaded.Count; i++) onDefsLoaded[i].Invoke();

@@ -301,16 +301,32 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Core\GUI\Tabs\TabContent_Debug.cs" />
+        <Compile Include="Core\GUI\Tabs\TabContent_Settings.cs" />
+        <Compile Include="Core\GUI\Tabs\TabContent_Soyuz.cs" />
+        <Compile Include="Core\GUI\Tabs\TabContent_Stats.cs" />
         <Compile Include="Core\Gameplay\CorpsesTracker.cs" />
+        <Compile Include="Core\GUI\Selectors\ISelector.cs" />
+        <Compile Include="Core\GUI\Selectors\ISelector_GenericSelection.cs" />
+        <Compile Include="Core\GUI\Selectors\Selector_AreaSelection.cs" />
+        <Compile Include="Core\GUI\Selectors\Selector_DefSelection.cs" />
+        <Compile Include="Core\GUI\Selectors\Selector_PawnSelection.cs" />
+        <Compile Include="Core\GUI\Selectors\Selector_TypeSelection.cs" />
+        <Compile Include="Core\GUI\Tabs\ITabContent.cs" />
+        <Compile Include="Core\GUI\Tabs\TabHolder.cs" />
         <Compile Include="Core\Optimizations\GraphicConsts_Patch.cs" />
         <Compile Include="Core\Optimizations\PlayLog_Patch.cs" />
-        <Compile Include="Core\SignatureUtility.cs" />
-        <Compile Include="Core\TranspilerUtility.cs" />
+        <Compile Include="Core\Patches\TickManager_Patch.cs" />
+        <Compile Include="Core\Patches\TimeSlower_Patch.cs" />
+        <Compile Include="Core\RocketPatcher.cs" />
+        <Compile Include="Core\Others\HashUtility.cs" />
+        <Compile Include="Core\Others\SignatureUtility.cs" />
+        <Compile Include="Core\Others\Tools.cs" />
+        <Compile Include="Core\Others\TranspilerUtility.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Core\Finder.cs" />
         <Compile Include="Core\RocketSettings.cs" />
         <Compile Include="Core\Main.cs" />
-        <Compile Include="Core\Tools.cs" />
         <Compile Include="Core\MainButton_Toggle.cs" />
         <Compile Include="Core\RocketWindow.cs" />
         <Compile Include="Core\RocketShip.cs" />
@@ -319,7 +335,6 @@
         <Compile Include="Core\Compatibility\RimWarThreadedHelper.cs" />
         <Compile Include="Core\Optimizations\GlowGrid_Patch.cs" />
         <Compile Include="Core\Optimizations\StatPart_ApparelStatOffSet_Patch.cs" />
-        <Compile Include="Core\Optimizations\ThoughtUtility_Patch.cs" />
         <Compile Include="Core\Collections\CachedDict.cs" />
         <Compile Include="Core\Optimizations\WorldReachability_Patch.cs" />
         <Compile Include="Core\Optimizations\StatWorker_Patch.cs" />
@@ -327,7 +342,6 @@
         <Compile Include="Core\Patches\Pawn_TimetableTracker_Patch.cs" />
         <Compile Include="Core\ModHelper.cs" />
         <Compile Include="Core\Compatibility\RimWarHelper.cs" />
-        <Compile Include="Core\HashUtility.cs" />
         <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
     </ItemGroup>
     <ItemGroup>

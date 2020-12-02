@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using Verse;
@@ -6,8 +7,9 @@ using Verse.AI;
 
 namespace RocketMan.Optimizations
 {
-    [HarmonyPatch(typeof(PathFinder), nameof(PathFinder.FindPath), typeof(IntVec3), typeof(LocalTargetInfo),
-        typeof(TraverseParms), typeof(PathEndMode))]
+    [RocketPatch(typeof(PathFinder), nameof(PathFinder.FindPath), 
+        parameters: new []{typeof(IntVec3), typeof(LocalTargetInfo),
+        typeof(TraverseParms), typeof(PathEndMode)})]
     public class PathFinder_FindPath_Patch
     {
         private const int MAX_FAILS = 4;

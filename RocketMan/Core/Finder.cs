@@ -21,12 +21,15 @@ namespace RocketMan
         public static bool enableGridRefresh = false;
         public static bool drawGlowerUpdates = false;
         public static bool statGearCachingEnabled = false;
+        public static bool debug150MTPS = false;
+        
         public static float learningRate = 0.05f;
 
         public static int universalCacheAge = 2500;
         public static int ageOfGetValueUnfinalizedCache = 0;
 
         public static byte[] statExpiry = new byte[ushort.MaxValue];
+        public static bool[] dilatedDefs = new bool[ushort.MaxValue];
 
         public static readonly string HarmonyID = "NotooShabby.RocketMan";
 

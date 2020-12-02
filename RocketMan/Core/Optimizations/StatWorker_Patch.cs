@@ -11,7 +11,7 @@ using Verse;
 
 namespace RocketMan.Optimizations
 {
-    [HarmonyPatch(typeof(StatWorker), "GetValueUnfinalized", typeof(StatRequest), typeof(bool))]
+    [RocketPatch(typeof(StatWorker), "GetValueUnfinalized", parameters= new []{typeof(StatRequest), typeof(bool)})]
     internal static class StatWorker_GetValueUnfinalized_Interrupt_Patch
     {
         public static HashSet<MethodBase> callingMethods = new HashSet<MethodBase>();
@@ -46,7 +46,7 @@ namespace RocketMan.Optimizations
         }
     }
 
-    [HarmonyPatch]
+    [RocketPatch()]
     internal static class StatWorker_GetValueUnfinalized_Hijacked_Patch
     {
         internal static MethodBase m_GetValueUnfinalized = AccessTools.Method(typeof(StatWorker), "GetValueUnfinalized",
@@ -142,17 +142,18 @@ namespace RocketMan.Optimizations
             }
         }
 
-        internal static IEnumerable<MethodBase> TargetMethods()
+        public static IEnumerable<MethodBase> TargetMethods()
         {
             var methods = TargetMethodsUnfinalized().Where(m => true
                                                                 && m != null
                                                                 && !m.IsAbstract
+                                                                && m.HasMethodBody()
                                                                 && !m.DeclaringType.IsAbstract).ToHashSet();
 
             return methods;
         }
 
-        internal static float UpdateCache(int key, StatWorker statWorker, StatRequest req, bool applyPostProcess,
+        public static float UpdateCache(int key, StatWorker statWorker, StatRequest req, bool applyPostProcess,
             int tick, Tuple<float, int, int> store)
         {
             var value = statWorker.GetValueUnfinalized(req, applyPostProcess);
@@ -170,7 +171,6 @@ namespace RocketMan.Optimizations
         public static float Replacemant(StatWorker statWorker, StatRequest req, bool applyPostProcess)
         {
             var tick = GenTicks.TicksGame;
-
             if (true
                 && Finder.enabled
                 && Current.Game != null
@@ -186,7 +186,6 @@ namespace RocketMan.Optimizations
                     return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
                 return store.Item1;
             }
-
             return statWorker.GetValueUnfinalized(req, applyPostProcess);
         }
 

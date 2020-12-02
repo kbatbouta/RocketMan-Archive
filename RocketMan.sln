@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketMan", "RocketMan\Rock
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soyuz", "..\..\Soyuz\Source\Soyuz\Soyuz.csproj", "{1C665C01-C92E-470E-B8E5-7734F76A0CBD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manager2", "..\..\ColonyManager2\Source\ColonyManager2\Manager2.csproj", "{02D71FDD-2B73-4582-B725-70840C426AEC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{1C665C01-C92E-470E-B8E5-7734F76A0CBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C665C01-C92E-470E-B8E5-7734F76A0CBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C665C01-C92E-470E-B8E5-7734F76A0CBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02D71FDD-2B73-4582-B725-70840C426AEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02D71FDD-2B73-4582-B725-70840C426AEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02D71FDD-2B73-4582-B725-70840C426AEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02D71FDD-2B73-4582-B725-70840C426AEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
