@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using RocketMan.Tabs;
 using UnityEngine;
 using Verse;
@@ -26,10 +28,17 @@ namespace RocketMan
 
         public override void DoWindowContents(Rect inRect)
         {
+            Finder.lastFrame = Time.frameCount;
             RocketMod.ReadStats();
             var debuggingOld = Finder.debug;
             tabs.DoContent(inRect);
             if (debuggingOld != Finder.debug || Rand.Chance(0.05f)) DebuggingChanged();
+        }
+
+        public override void Close(bool doCloseSound = true)
+        {
+            base.Close(doCloseSound);
+            Finder.logData = false;
         }
 
         private void DebuggingChanged()
@@ -53,7 +62,7 @@ namespace RocketMan
                 new TabContent_Settings(){Selected = true},
                 new TabContent_Stats(){Selected = false},
             }, useSidebar: true);
-            if (LoadedModManager.runningMods.Any(m => m.Name.ToLower().Contains("soyuz")))
+            if (Finder.soyuzLoaded)
                 tabs.AddTab(new TabContent_Soyuz(){Selected = false});
         }
     }

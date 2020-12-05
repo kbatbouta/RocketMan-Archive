@@ -10,12 +10,13 @@ namespace RocketMan.Tabs
         
         public override void DoContent(Rect rect)
         {
-            standard.Begin(rect.TopPartPixels(60 + (Finder.debug ? 54 : 0)));
+            standard.Begin(rect.TopPartPixels(80 + (Finder.debug ? 54 : 0)));
             var font = Text.Font;
             Text.Font = GameFont.Tiny;
             standard.Gap();
             standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
             standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Experimental.");
+            standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "Experimental.");
             if (Finder.debug)
             {
                 standard.GapLine();
@@ -26,7 +27,7 @@ namespace RocketMan.Tabs
             Text.Font = font;
             standard.GapLine();
             standard.End();
-            rect.yMin += 64 + (Finder.debug ? 54 : 0);
+            rect.yMin += 74 + (Finder.debug ? 54 : 0);
             DoExtras(rect);
         }
 

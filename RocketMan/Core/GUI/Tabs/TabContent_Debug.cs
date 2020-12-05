@@ -22,13 +22,19 @@ namespace RocketMan.Tabs
             
             standard.CheckboxLabeled("Enable Stat Logging (Will kill performance)", ref Finder.statLogging);
             standard.CheckboxLabeled("Enable GlowGrid flashing", ref Finder.drawGlowerUpdates);
-            standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);
-            
+            standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);            
             standard.GapLine();
             standard.CheckboxLabeled("Set tick multiplier to 150", ref Finder.debug150MTPS,  "Dangerous!");
-            
+            standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "Experimental.");
+            standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
             Text.Font = font;
             standard.End();
+            rect.yMin += 165;
+            DoExtras(rect);
+        }
+
+        public void DoExtras(Rect rect)
+        {
         }
 
         public override void OnSelect()

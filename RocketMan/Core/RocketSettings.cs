@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -17,14 +19,50 @@ namespace RocketMan
         private static Vector2 scroll = Vector2.zero;
         private static Rect view = Rect.zero;
 
+        private const string PluginDir = "Plugins";
+        
         public static RocketMod instance;
         public static Vector2 scrollPositionStatSettings = Vector2.zero;
 
         public RocketMod(ModContentPack content) : base(content)
         {
-            instance = this;
-            settings = GetSettings<RocketModSettings>();
-            UpdateExceptions();
+            try
+            {
+                // LoadPlugins(content, "Soyuz.dll");
+            }
+            catch (Exception er)
+            {
+                Log.Error($"ROCKETMAN: loading plugin failed {er.Message}:{er.StackTrace}");
+            }
+            finally
+            {
+                instance = this;
+                settings = GetSettings<RocketModSettings>();
+                UpdateExceptions();
+            }
+        }
+
+        private static void LoadPlugins(ModContentPack content, string pluginAssemblyName)
+        {
+            var pluginsPath = Path.Combine(content.RootDir, PluginDir);
+            if (File.Exists(Path.Combine(pluginsPath, pluginAssemblyName)) &&
+                !LoadedModManager.runningMods.Any(m => m.Name.Contains("Soyuz")))
+            {
+                Log.Message($"{Path.Combine(pluginsPath, pluginAssemblyName)}");
+                byte[] rawAssembly = File.ReadAllBytes(Path.Combine(pluginsPath, pluginAssemblyName));
+                
+                Assembly asm;
+                if (AppDomain.CurrentDomain.GetAssemblies().All(a => a.GetName().Name != ""))
+                {
+                    asm = AppDomain.CurrentDomain.Load(rawAssembly);
+                    Log.Message(asm.GetName().Name);
+                }
+                else
+                {
+                    asm = AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name == "");
+                }
+                content.assemblies.loadedAssemblies.Add(asm);
+            }
         }
 
         public override string SettingsCategory()
@@ -83,7 +121,7 @@ namespace RocketMan
 
             Text.Font = font;
             Text.Anchor = anchor;
-            Text.CurFontStyle.fontStyle = FontStyle.Normal;
+            Text.CurFontStyle.fontStyle = style;
         }
 
         public static void DoStatSettings(Rect rect)

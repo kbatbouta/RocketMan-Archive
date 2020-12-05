@@ -18,6 +18,8 @@ namespace RocketMan
         private readonly List<Action> onTick = GetActions<OnTick>().ToList();
         private readonly List<Action> onTickLong = GetActions<OnTickLong>().ToList();
 
+        private static List<Action> onStaticConstructors;
+
         public static IEnumerable<Action> GetActions<T>() where T : Attribute
         {
             foreach (var method in AppDomain.CurrentDomain.GetAssemblies()
@@ -32,10 +34,16 @@ namespace RocketMan
             }
         }
 
+        static Main()
+        {
+            onStaticConstructors = GetActions<OnStaticConstructor>().ToList();
+            for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();   
+        }
+
         public override void MapComponentsInitializing(Map map)
         {
             base.MapComponentsInitializing(map);
-
+            
             for (var i = 0; i < onMapComponentsInitializing.Count; i++) onMapComponentsInitializing[i].Invoke();
         }
 
@@ -102,6 +110,10 @@ namespace RocketMan
 
         [AttributeUsage(AttributeTargets.Method)]
         public class OnClearCache : Attribute
+        {
+        }
+        [AttributeUsage(AttributeTargets.Method)]
+        public class OnStaticConstructor : Attribute
         {
         }
     }

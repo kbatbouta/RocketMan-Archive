@@ -21,8 +21,12 @@ namespace RocketMan
         public static bool enableGridRefresh = false;
         public static bool drawGlowerUpdates = false;
         public static bool statGearCachingEnabled = false;
+        public static bool logData = false;
         public static bool debug150MTPS = false;
+
+        public static bool soyuzLoaded = false;
         
+        public static int lastFrame;
         public static float learningRate = 0.05f;
 
         public static int universalCacheAge = 2500;

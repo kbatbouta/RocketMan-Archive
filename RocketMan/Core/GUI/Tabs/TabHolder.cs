@@ -38,6 +38,25 @@ namespace RocketMan.Tabs
 
         public void DoContent(Rect inRect)
         {
+            var selectedFound = false;
+            var counter = 0;
+            foreach (var tab in tabs)
+            {
+                if (tab.Selected)
+                {
+                    selectedFound = true;
+                    curTabIndex = counter;
+                    continue;
+                }
+                if (tab.Selected && selectedFound)
+                    tab.Selected = false;
+                counter++;
+            }
+            if (selectedFound == false)
+            {
+                curTabIndex = 0;
+                tabs[0].Selected = true;
+            }
             var font = Text.Font;
             var anchor = Text.Anchor;
             curTab = tabs[curTabIndex];
