@@ -349,13 +349,6 @@
         <None Include="..\..\About\About.xml">
             <Link>About\About.xml</Link>
         </None>
-        <None Include="Legacy\Cacheable.cs" />
-        <None Include="Legacy\Model\AbstractStatRequestModel.cs" />
-        <None Include="Legacy\Model\StatRequestModel.cs" />
-        <None Include="Legacy\Model\StatRequestModelComparer.cs" />
-        <None Include="Legacy\Model\GridTempModel.cs" />
-        <None Include="Legacy\HarmonyPatches\HarmonyUtility.cs" />
-        <None Include="Legacy\HarmonyPatches\zStatExtension_Patch.cs" />
         <None Include="Core\Optimizations\Obsolete\Pawn_Patch.cs" />
     </ItemGroup>
     <ItemGroup />

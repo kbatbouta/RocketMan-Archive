@@ -1,0 +1,5 @@
+
+packages/*
+RocketMan/obj/*
+.git/*
+.vs/*
