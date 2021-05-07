@@ -13,7 +13,7 @@ namespace RocketMan
         normal = 0,
         empty = 1
     }
-    
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class RocketPatch : Attribute
     {
@@ -30,7 +30,7 @@ namespace RocketMan
             this.patchType = PatchType.empty;
         }
 
-        public RocketPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null )
+        public RocketPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null)
         {
             this.patchType = PatchType.normal;
             this.targetType = targetType;
@@ -80,8 +80,8 @@ namespace RocketMan
                 }
                 else if (patchType == PatchType.empty)
                 {
-                    
-                        targets = (type.GetMethod("TargetMethods").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
+
+                    targets = (type.GetMethod("TargetMethods").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
                 }
             }
             catch (Exception er)
@@ -99,10 +99,9 @@ namespace RocketMan
 
         public void Patch(Harmony harmony)
         {
-            if (prepare != null && !((bool) prepare.Invoke(null, null)))
+            if (prepare != null && !((bool)prepare.Invoke(null, null)))
             {
-                Log.Message(
-                    $"ROCKETMAN: Prepare failed for {attribute.targetType.Name ?? null}:{attribute.targetMethod ?? null}");
+                if (Finder.debug) Log.Message($"ROCKETMAN: Prepare failed for {attribute.targetType.Name ?? null}:{attribute.targetMethod ?? null}");
                 return;
             }
 
@@ -110,7 +109,7 @@ namespace RocketMan
             {
                 if (target == null || target.IsAbstract || !target.HasMethodBody())
                 {
-                    Log.Warning($"ROCKETMAN: patching {target?.DeclaringType?.Name}:{target} is not possible!");
+                    if (Finder.debug) Log.Warning($"ROCKETMAN: patching {target?.DeclaringType?.Name}:{target} is not possible!");
                     continue;
                 }
                 try
@@ -138,7 +137,7 @@ namespace RocketMan
         {
             foreach (var patch in patches)
                 patch.Patch(Finder.harmony);
-            Log.Message($"ROCKETMAN: Patching finished");
+            if (Finder.debug) Log.Message($"ROCKETMAN: Patching finished");
         }
 
         static RocketPatcher()
@@ -149,11 +148,11 @@ namespace RocketMan
             {
                 var patch = new RocketPatchInfo(type);
                 patchList.Add(patch);
-                Log.Message($"ROCKETMAN: Found patch in {type} and is {(patch.IsValid ? "valid" : "invalid") }");
+                if (Finder.debug) Log.Message($"ROCKETMAN: Found patch in {type} and is {(patch.IsValid ? "valid" : "invalid") }");
             }
             patches = patchList.Where(p => p.IsValid).ToArray();
-        } 
-        
+        }
+
         private static IEnumerable<Type> GetSoyuzPatches()
         {
             return typeof(RocketPatcher).Assembly.GetTypes().Where(

@@ -104,7 +104,7 @@ namespace RocketMan
                         harmony.Patch(target, transpiler: new HarmonyMethod(mTranspiler));
                         patchedMethods.Add(target);
                         patches.Add(target, patchType);
-                        Log.Message(string.Format("ROCKETMAN: patched target {0}", target));
+                        if (Finder.debug) Log.Message(string.Format("ROCKETMAN: patched target {0}", target));
                     }
                     catch (Exception er)
                     {
@@ -120,7 +120,7 @@ namespace RocketMan
                 foreach (var type in types)
                     if (type.HasAttribute<SkipperPatch>())
                     {
-                        Log.Message(string.Format("ROCKETMAN: found type {0} with skipper patch attributes", type));
+                        if (Finder.debug) Log.Message(string.Format("ROCKETMAN: found type {0} with skipper patch attributes", type));
                         yield return type;
                     }
             }

@@ -247,8 +247,7 @@ namespace RocketMan.Optimizations
                     return;
                 }
 
-                if (Finder.debug)
-                    Log.Message(string.Format("ROCKETMAN: Recalculationg for removed with {0} queued for removal",
+                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for removed with {0} queued for removal",
                         removedProps[mapIndex].Count));
                 foreach (var prop in removedProps[mapIndex])
                 {
@@ -257,8 +256,7 @@ namespace RocketMan.Optimizations
                     props.Remove(prop.glower);
                 }
 
-                if (Finder.debug)
-                    Log.Message(string.Format("ROCKETMAN: Recalculationg for changes with {0} queued for changes",
+                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for changes with {0} queued for changes",
                         changedProps[mapIndex].Count));
                 if (changedProps[mapIndex].Count != 0)
                 {
@@ -328,26 +326,26 @@ namespace RocketMan.Optimizations
                 }
 
                 foreach (var prop in changedProps[mapIndex])
-                foreach (var index in prop.indices)
-                {
-                    instance.glowGrid[index] = new Color32(0, 0, 0, 0);
+                    foreach (var index in prop.indices)
+                    {
+                        instance.glowGrid[index] = new Color32(0, 0, 0, 0);
 #if DEBUG
-                    if (Finder.drawGlowerUpdates)
-                        map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "000", 10);
+                        if (Finder.drawGlowerUpdates)
+                            map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "000", 10);
 #endif
-                }
+                    }
 
                 foreach (var prop in changedProps[mapIndex])
                     FloodGlow(prop, tBufferedGrid, map, map.glowFlooder);
                 foreach (var prop in changedProps[mapIndex])
-                foreach (var index in prop.indices)
-                {
-                    instance.glowGrid[index] = tBufferedGrid[index];
+                    foreach (var index in prop.indices)
+                    {
+                        instance.glowGrid[index] = tBufferedGrid[index];
 #if DEBUG
-                    if (Finder.drawGlowerUpdates)
-                        map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "1__");
+                        if (Finder.drawGlowerUpdates)
+                            map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "1__");
 #endif
-                }
+                    }
             }
 
             private static void FixRemovedGlowers(GlowGrid instance, GlowerPorperties prop)

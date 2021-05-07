@@ -10,19 +10,21 @@ namespace RocketMan
     [StaticConstructorOnStartup]
     public class Main : ModBase
     {
-        private readonly List<Action> onClearCache = GetActions<OnClearCache>().ToList();
-        private readonly List<Action> onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
-        private readonly List<Action> onEarlyInitialize = GetActions<OnEarlyInitialize>().ToList();
+        private static List<Action> onClearCache = GetActions<OnClearCache>().ToList();
+        private static List<Action> onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
 
-        private readonly List<Action> onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
-        private readonly List<Action> onTick = GetActions<OnTick>().ToList();
-        private readonly List<Action> onTickLong = GetActions<OnTickLong>().ToList();
+        private static List<Action> onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
+        private static List<Action> onTick = GetActions<OnTick>().ToList();
+        private static List<Action> onTickLong = GetActions<OnTickLong>().ToList();
 
-        private static List<Action> onStaticConstructors;
+        public static List<Action> onStaticConstructors;
+        public static List<Action> onInitialization;
+        public static List<Action> onScribe;
 
         public static IEnumerable<Action> GetActions<T>() where T : Attribute
         {
             foreach (var method in AppDomain.CurrentDomain.GetAssemblies()
+                .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetTypes())
                 .SelectMany(t => t.GetMethods())
                 .Where(m => m.TryGetAttribute<T>(out var _))
@@ -34,16 +36,25 @@ namespace RocketMan
             }
         }
 
+        public static void ReloadActions()
+        {
+            onClearCache = GetActions<OnClearCache>().ToList();
+            onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
+            onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
+            onTick = GetActions<OnTick>().ToList();
+            onTickLong = GetActions<OnTickLong>().ToList();
+        }
+
         static Main()
         {
             onStaticConstructors = GetActions<OnStaticConstructor>().ToList();
-            for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();   
+            for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
         }
 
         public override void MapComponentsInitializing(Map map)
         {
             base.MapComponentsInitializing(map);
-            
+
             for (var i = 0; i < onMapComponentsInitializing.Count; i++) onMapComponentsInitializing[i].Invoke();
         }
 
@@ -70,13 +81,6 @@ namespace RocketMan
             for (var i = 0; i < onTickLong.Count; i++) onTickLong[i].Invoke();
         }
 
-        public override void EarlyInitialize()
-        {
-            base.EarlyInitialize();
-
-            for (var i = 0; i < onEarlyInitialize.Count; i++) onEarlyInitialize[i].Invoke();
-        }
-
         public void ClearCache()
         {
             for (var i = 0; i < onClearCache.Count; i++) onClearCache[i].Invoke();
@@ -99,11 +103,6 @@ namespace RocketMan
         }
 
         [AttributeUsage(AttributeTargets.Method)]
-        public class OnEarlyInitialize : Attribute
-        {
-        }
-
-        [AttributeUsage(AttributeTargets.Method)]
         public class OnMapComponentsInitializing : Attribute
         {
         }
@@ -112,8 +111,19 @@ namespace RocketMan
         public class OnClearCache : Attribute
         {
         }
+
         [AttributeUsage(AttributeTargets.Method)]
         public class OnStaticConstructor : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method)]
+        public class OnScribe : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method)]
+        public class OnInitialization : Attribute
         {
         }
     }

@@ -14,7 +14,7 @@ namespace RocketMan.Optimizations
             return !RimWarThreadedHelper.Instance.IsLoaded() && !RimWarHelper.Instance.IsLoaded();
         }
 
-        [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach),parameters =new []{ typeof(int), typeof(int)})]
+        [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), parameters = new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
             internal static HashSet<int> visitedTiles;
@@ -52,8 +52,11 @@ namespace RocketMan.Optimizations
                     }
                     catch (Exception er)
                     {
-                        messages.Add(string.Format("ROCKETMAN: Error in island generation with message {0} at {1}",
-                            er.Message, er.StackTrace));
+                        if (Finder.debug)
+                        {
+                            messages.Add(string.Format("ROCKETMAN: Error in island generation with message {0} at {1}",
+                                er.Message, er.StackTrace));
+                        }
                     }
                 }
             }
@@ -159,7 +162,7 @@ namespace RocketMan.Optimizations
                     if (message.ToLower().Contains("error"))
                         Log.Error(message);
                     else
-                        Log.Message(message);
+                        if (Finder.debug) Log.Message(message);
                 }
             }
 
@@ -196,13 +199,15 @@ namespace RocketMan.Optimizations
                 {
                     if (world != Find.World)
                     {
-                        Log.Message("ROCKETMAN: Creating world map cache");
+                        if (Finder.debug)
+                            Log.Message("ROCKETMAN: Creating world map cache");
                         Initialize();
                     }
 
                     if (!finished)
                     {
-                        Log.Warning("ROCKETMAN: Tried to call WorldReachability while still processing");
+                        if (Finder.debug)
+                            Log.Warning("ROCKETMAN: Tried to call WorldReachability while still processing");
                         return true;
                     }
 

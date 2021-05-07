@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Reflection;
 using RimWorld;
-using RocketMan.Optimizations;
+using RocketLite.Optimizations;
 using Verse;
 
-namespace RocketMan
+namespace RocketLite
 {
     public static class Tools
     {
@@ -49,7 +49,7 @@ namespace RocketMan
             }
             catch (Exception er)
             {
-                if (Finder.debug) Log.Warning(string.Format("ROCKETMAN: Notify_Dirty error of {0} at {1}",
+                Log.Warning(string.Format("ROCKETLITE: Notify_Dirty error of {0} at {1}",
                         er.Message, er.StackTrace));
             }
         }

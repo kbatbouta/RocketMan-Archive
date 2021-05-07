@@ -16,19 +16,18 @@ namespace RocketMan
         private static List<StatSettings> statsSettings = new List<StatSettings>();
         private static List<DilationSettings> dilationSettings = new List<DilationSettings>();
         private static string searchString = "";
-        private static Vector2 scroll = Vector2.zero;
-        private static Rect view = Rect.zero;
 
         private const string PluginDir = "Plugins";
-        
+
         public static RocketMod instance;
         public static Vector2 scrollPositionStatSettings = Vector2.zero;
 
         public RocketMod(ModContentPack content) : base(content)
         {
+            Finder.rocketMod = this;
             try
             {
-                // LoadPlugins(content, "Soyuz.dll");
+                LoadPlugins(content, "Soyuz.dll", "Soyuz");
             }
             catch (Exception er)
             {
@@ -36,30 +35,37 @@ namespace RocketMan
             }
             finally
             {
+                Main.ReloadActions();
+                Main.onScribe = Main.GetActions<Main.OnScribe>().ToList();
+                Main.onStaticConstructors = Main.GetActions<Main.OnStaticConstructor>().ToList();
+                Main.onInitialization = Main.GetActions<Main.OnInitialization>().ToList();
+                foreach (var action in Main.onInitialization)
+                    action.Invoke();
+
                 instance = this;
                 settings = GetSettings<RocketModSettings>();
                 UpdateExceptions();
             }
         }
 
-        private static void LoadPlugins(ModContentPack content, string pluginAssemblyName)
+        private static void LoadPlugins(ModContentPack content, string pluginAssemblyName, string name)
         {
             var pluginsPath = Path.Combine(content.RootDir, PluginDir);
             if (File.Exists(Path.Combine(pluginsPath, pluginAssemblyName)) &&
-                !LoadedModManager.runningMods.Any(m => m.Name.Contains("Soyuz")))
+                !LoadedModManager.runningMods.Any(m => m.Name.Contains(name)))
             {
                 Log.Message($"{Path.Combine(pluginsPath, pluginAssemblyName)}");
                 byte[] rawAssembly = File.ReadAllBytes(Path.Combine(pluginsPath, pluginAssemblyName));
-                
+
                 Assembly asm;
-                if (AppDomain.CurrentDomain.GetAssemblies().All(a => a.GetName().Name != ""))
+                if (AppDomain.CurrentDomain.GetAssemblies().All(a => a.GetName().Name != name))
                 {
                     asm = AppDomain.CurrentDomain.Load(rawAssembly);
                     Log.Message(asm.GetName().Name);
                 }
                 else
                 {
-                    asm = AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name == "");
+                    asm = AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name == name);
                 }
                 content.assemblies.loadedAssemblies.Add(asm);
             }
@@ -88,7 +94,7 @@ namespace RocketMan
         {
             ReadStats();
             ReadDilationSettings();
-            
+
             var font = Text.Font;
             var anchor = Text.Anchor;
             var style = Text.CurFontStyle.fontStyle;
@@ -97,15 +103,16 @@ namespace RocketMan
             rect.xMin += 10;
 
             standard.Begin(rect);
-            
+
             Text.Font = GameFont.Medium;
             Text.CurFontStyle.fontStyle = FontStyle.Bold;
             standard.Label("RocketMan 2:");
+            Text.CurFontStyle.fontStyle = style;
             Text.Font = GameFont.Tiny;
             Text.CurFontStyle.fontStyle = FontStyle.Normal;
-            
+
             standard.CheckboxLabeled("Enabled", ref Finder.enabled);
-            
+
             if (Finder.enabled)
             {
                 standard.GapLine();
@@ -113,7 +120,7 @@ namespace RocketMan
                 standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
                     "Can cause bugs.");
             }
-            
+
             standard.GapLine();
             standard.CheckboxLabeled("Debugging", ref Finder.debug, "Only for advanced users and modders");
 
@@ -157,7 +164,7 @@ namespace RocketMan
                         settings.stat,
                         settings.expireAfter));
                     settings.expireAfter =
-                        (byte) Widgets.HorizontalSlider(rowRect.BottomHalf(), settings.expireAfter, 0, 255);
+                        (byte)Widgets.HorizontalSlider(rowRect.BottomHalf(), settings.expireAfter, 0, 255);
                     curRect.y += size.y;
                 }
 
@@ -166,7 +173,7 @@ namespace RocketMan
             Text.Anchor = anchor;
 
             foreach (var setting in statsSettings)
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte) setting.expireAfter;
+                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
 
             instance.WriteSettings();
             UpdateExceptions();
@@ -179,20 +186,29 @@ namespace RocketMan
             foreach (var setting in statsSettings)
                 setting.expireAfter = Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index];
         }
-        
+
         public static void ReadDilationSettings()
         {
             if (dilationSettings == null || dilationSettings.Count == 0) return;
-            
+
             foreach (var setting in dilationSettings)
-                setting.dilated = Finder.dilatedDefs[DefDatabase<ThingDef>.defsByName[setting.def].index];
+            {
+                if (DefDatabase<ThingDef>.defsByName.TryGetValue(setting.def, out var td))
+                {
+                    setting.dilated = Finder.dilatedDefs[td.index];
+                }
+                else
+                {
+                    Log.Warning("ROCKETMAN: Failed to find stat upon reloading!");
+                }
+            }
         }
 
         [Main.OnDefsLoaded]
         public static void UpdateDilationDefs()
         {
             if (dilationSettings == null) dilationSettings = new List<DilationSettings>();
-            
+
             var defs = DefDatabase<ThingDef>.AllDefs.Where(
                 d => d.race != null).ToList();
             if (statsSettings.Count != defs.Count())
@@ -201,7 +217,7 @@ namespace RocketMan
                 foreach (var def in defs)
                     dilationSettings.Add(new DilationSettings()
                     {
-                        def = def.defName, 
+                        def = def.defName,
                         dilated = def.race.Animal && !def.race.IsMechanoid && !def.race.Humanlike
                     });
             }
@@ -234,7 +250,7 @@ namespace RocketMan
             statsSettings.Clear();
             foreach (var def in defs)
                 statsSettings.Add(new StatSettings
-                    {stat = def.defName, expireAfter = def.defName.PredictValueFromString()});
+                { stat = def.defName, expireAfter = def.defName.PredictValueFromString() });
 
             var failed = false;
             foreach (var setting in statsSettings)
@@ -245,7 +261,7 @@ namespace RocketMan
                     break;
                 }
 
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte) setting.expireAfter;
+                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
             }
 
             if (failed)
@@ -271,7 +287,7 @@ namespace RocketMan
                 statsSettings.Clear();
                 foreach (var def in defs)
                     statsSettings.Add(new StatSettings
-                        {stat = def.defName, expireAfter = def.defName.PredictValueFromString()});
+                    { stat = def.defName, expireAfter = def.defName.PredictValueFromString() });
             }
 
             var failed = false;
@@ -283,7 +299,7 @@ namespace RocketMan
                     break;
                 }
 
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte) setting.expireAfter;
+                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
             }
 
             if (failed)
@@ -313,12 +329,12 @@ namespace RocketMan
         {
             public bool dilated = true;
             public string def;
-            
+
             public void ExposeData()
             {
                 Scribe_Values.Look(ref def, "def");
                 Scribe_Values.Look(ref dilated, "dilated");
-            } 
+            }
         }
 
         public class RocketModSettings : ModSettings
@@ -333,10 +349,14 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.debug, "debug");
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
                 Scribe_Values.Look(ref Finder.timeDilationWorldPawns, "timeDilationWorldPawns", true);
+                Scribe_Values.Look(ref Finder.timeDilationColonyAnimals, "timeDialationColonyAnimals", true);
+                Scribe_Values.Look(ref Finder.timeDilationCriticalHediffs, "timeDilationCriticalHediffs", true);
                 Scribe_Values.Look(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache");
                 Scribe_Values.Look(ref Finder.universalCacheAge, "universalCacheAge");
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
                 Scribe_Collections.Look(ref dilationSettings, "dilationSettings", LookMode.Deep);
+                foreach (var action in Main.onScribe)
+                    action.Invoke();
                 UpdateExceptions();
             }
         }

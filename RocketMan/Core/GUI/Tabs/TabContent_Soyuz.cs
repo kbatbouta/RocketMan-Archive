@@ -7,7 +7,7 @@ namespace RocketMan.Tabs
     {
         private Listing_Standard standard = new Listing_Standard();
         public override string Label => "Soyuz";
-        
+
         public override void DoContent(Rect rect)
         {
             standard.Begin(rect.TopPartPixels(80 + (Finder.debug ? 54 : 0)));
@@ -16,6 +16,7 @@ namespace RocketMan.Tabs
             standard.Gap();
             standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
             standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Experimental.");
+            standard.CheckboxLabeled("Enable time dilation for pawns with critical hediffs", ref Finder.timeDilationCriticalHediffs, "This will enable dilation for pawns with critical hediffs such as pregnant pawns or bleeding pawns. (Disable this in case of a hediff problem)");
             standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "Experimental.");
             if (Finder.debug)
             {

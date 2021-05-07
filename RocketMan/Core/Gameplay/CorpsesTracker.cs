@@ -66,21 +66,22 @@ namespace RocketMan.Gameplay
             removalList.Clear();
             stopwatch.Restart();
             while (destroyList.Count > 0 && stopwatch.ElapsedMilliseconds <= 10)
+            {
                 try
                 {
                     var record = destroyList.Pop();
-                    Log.Message($"ROCKETMAN: removed thing {record.thing} with total removed {removedThingsCount + 1}");
+                    if (Finder.debug) Log.Message($"ROCKETMAN: removed thing {record.thing} with total removed {removedThingsCount + 1}");
                     if (!record.thing.Destroyed) record.thing.Destroy();
                 }
                 catch (Exception er)
                 {
-                    Log.Error($"ROCKETMAN: Error in GC while destroying thing {er}");
+                    if (Finder.debug) Log.Error($"ROCKETMAN: Error in GC while destroying thing {er}");
                 }
                 finally
                 {
                     removedThingsCount++;
                 }
-
+            }
             stopwatch.Stop();
             removalList.Clear();
         }

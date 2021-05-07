@@ -9,7 +9,7 @@ namespace RocketMan
 {
     public static class HarmonyUtility
     {
-        public const string HarmonyID = "NotooShabby.RocketMan";
+        public const string HarmonyID = "Krkr.RocketMan";
 
         public static Harmony Instance = new Harmony(HarmonyID);
     }

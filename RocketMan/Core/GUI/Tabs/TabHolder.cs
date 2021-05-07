@@ -58,6 +58,7 @@ namespace RocketMan.Tabs
                 tabs[0].Selected = true;
             }
             var font = Text.Font;
+            var style = Text.CurFontStyle.fontStyle;
             var anchor = Text.Anchor;
             curTab = tabs[curTabIndex];
             if (useSidebar)
@@ -81,6 +82,7 @@ namespace RocketMan.Tabs
 
             Text.Anchor = anchor;
             Text.Font = font;
+            Text.CurFontStyle.fontStyle = style;
         }
 
         public void AddTab(ITabContent newTab)

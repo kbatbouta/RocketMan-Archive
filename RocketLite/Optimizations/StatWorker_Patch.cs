@@ -9,44 +9,8 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 
-namespace RocketMan.Optimizations
+namespace RocketLite.Optimizations
 {
-    [RocketPatch(typeof(StatWorker), "GetValueUnfinalized", parameters = new[] { typeof(StatRequest), typeof(bool) })]
-    internal static class StatWorker_GetValueUnfinalized_Interrupt_Patch
-    {
-        public static HashSet<MethodBase> callingMethods = new HashSet<MethodBase>();
-
-        public static MethodBase m_Interrupt =
-            AccessTools.Method(typeof(StatWorker_GetValueUnfinalized_Interrupt_Patch), "Interrupt");
-
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            yield return new CodeInstruction(OpCodes.Ldarg_0);
-            yield return new CodeInstruction(OpCodes.Ldarg_1);
-            yield return new CodeInstruction(OpCodes.Ldarg_2);
-            yield return new CodeInstruction(OpCodes.Call, m_Interrupt);
-
-            foreach (var code in instructions)
-                yield return code;
-        }
-
-        public static void Interrupt(StatWorker statWorker, StatRequest req, bool applyPostProcess)
-        {
-            if (Finder.learning && Finder.statLogging)
-            {
-                var trace = new StackTrace();
-                var frame = trace.GetFrame(2);
-                var method = frame.GetMethod();
-
-                var handler = method.GetStringHandler();
-
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: called stats.GetUnfinalizedValue from {0}", handler));
-                callingMethods.Add(method);
-            }
-        }
-    }
-
-    [RocketPatch()]
     internal static class StatWorker_GetValueUnfinalized_Hijacked_Patch
     {
         internal static MethodBase m_GetValueUnfinalized = AccessTools.Method(typeof(StatWorker), "GetValueUnfinalized",
@@ -79,48 +43,18 @@ namespace RocketMan.Optimizations
                 return;
             expiryStopWatch.Reset();
             expiryStopWatch.Start();
-            if (Finder.learning && !Find.TickManager.Paused && Find.TickManager.TickRateMultiplier <= 3f)
-                if (counter++ % 20 == 0 && expiryCache.Count != 0)
-                {
-                    foreach (var unit in expiryCache)
-                    {
-                        Finder.statExpiry[unit.Key] = (byte)Mathf.Clamp(unit.Value, 0f, 255f);
-                        cleanUps++;
-                    }
-                    expiryCache.Clear();
-                }
 
             while (requests.Count > 0 && expiryStopWatch.ElapsedMilliseconds <= 1)
             {
                 Tuple<int, int, float> request;
-                request = requests.Pop();
-                var statIndex = request.Item1;
-
-                var deltaT = Mathf.Abs(request.Item2);
-                var deltaX = Mathf.Abs(request.Item3);
-
-                if (expiryCache.TryGetValue(statIndex, out var value))
-                    expiryCache[statIndex] +=
-                        Mathf.Clamp(Finder.learningRate * (deltaT / 100 - deltaX * deltaT), -5, 5);
-                else
-                    expiryCache[statIndex] = Finder.statExpiry[statIndex];
+                requests.Pop();
             }
             expiryStopWatch.Stop();
-        }
-
-        [Main.OnTickLong]
-        public static void CleanCache()
-        {
-            if (Find.TickManager.TickRateMultiplier <= 3f)
-                cache.Clear();
         }
 
         public static void Dirty(Pawn pawn)
         {
             var signature = pawn.GetSignature(true);
-#if DEBUG
-            if (Finder.debug) Log.Message(string.Format("ROCKETMAN: changed signature for pawn {0} to {1}", pawn, signature));
-#endif
         }
 
         internal static IEnumerable<MethodBase> TargetMethodsUnfinalized()
@@ -143,7 +77,7 @@ namespace RocketMan.Optimizations
             }
         }
 
-        public static IEnumerable<MethodBase> TargetMethods()
+        public static IEnumerable<MethodBase> GetTargetMethods()
         {
             var methods = TargetMethodsUnfinalized().Where(m => true
                                                                 && m != null
@@ -158,13 +92,6 @@ namespace RocketMan.Optimizations
             int tick, Tuple<float, int, int> store)
         {
             var value = statWorker.GetValueUnfinalized(req, applyPostProcess);
-            if (Finder.learning)
-            {
-                requests.Add(new Tuple<int, int, float>(statWorker.stat.index, tick - (store?.Item2 ?? tick),
-                    Mathf.Abs(value - (store?.Item1 ?? value))));
-                if (Rand.Chance(0.1f)) ProcessExpiryCache();
-            }
-
             cache[key] = new Tuple<float, int, int>(value, tick, req.thingInt?.GetSignature() ?? -1);
             return value;
         }
@@ -173,7 +100,6 @@ namespace RocketMan.Optimizations
         {
             var tick = GenTicks.TicksGame;
             if (true
-                && Finder.enabled
                 && Current.Game != null
                 && tick >= 600)
             {
@@ -183,7 +109,7 @@ namespace RocketMan.Optimizations
                 if (!cache.TryGetValue(key, out var store))
                     return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
 
-                if (tick - store.Item2 - 1 > Finder.statExpiry[statWorker.stat.index] || signature != store.Item3)
+                if (tick - store.Item2 - 1 > 5 || signature != store.Item3)
                     return UpdateCache(key, statWorker, req, applyPostProcess, tick, store);
                 return store.Item1;
             }
