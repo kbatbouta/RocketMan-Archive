@@ -10,7 +10,7 @@ namespace RocketMan
     public class RocketWindow : Window
     {
         private TabHolder tabs;
-        
+
         public RocketWindow()
         {
             draggable = true;
@@ -23,16 +23,18 @@ namespace RocketMan
             layer = WindowLayer.SubSuper;
             CreateTabs();
         }
-        
+
         public override Vector2 InitialSize => new Vector2(650, 450);
 
         public override void DoWindowContents(Rect inRect)
         {
+            if (Finder.debug) Log.Message("ROCKETMAN: UI DoWindowContents 0");
             Finder.lastFrame = Time.frameCount;
-            RocketMod.ReadStats();
             var debuggingOld = Finder.debug;
+            if (Finder.debug) Log.Message("ROCKETMAN: UI DoWindowContents 1");
             tabs.DoContent(inRect);
             if (debuggingOld != Finder.debug || Rand.Chance(0.05f)) DebuggingChanged();
+            if (Finder.debug) Log.Message("ROCKETMAN: UI DoWindowContents 2");
         }
 
         public override void Close(bool doCloseSound = true)
@@ -63,7 +65,10 @@ namespace RocketMan
                 new TabContent_Stats(){Selected = false},
             }, useSidebar: true);
             if (Finder.soyuzLoaded)
-                tabs.AddTab(new TabContent_Soyuz(){Selected = false});
+                tabs.AddTab(new TabContent_Soyuz() { Selected = false });
+            if (Finder.protonLoaded)
+                tabs.AddTab(new TabContent_Proton() { Selected = false });
+            for (var i = 0; i < Main.yieldTabContent.Count; i++) tabs.AddTab(Main.yieldTabContent[i].Invoke());
         }
     }
 }

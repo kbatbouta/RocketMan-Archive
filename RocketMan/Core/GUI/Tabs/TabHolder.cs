@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -38,51 +39,58 @@ namespace RocketMan.Tabs
 
         public void DoContent(Rect inRect)
         {
-            var selectedFound = false;
-            var counter = 0;
-            foreach (var tab in tabs)
+            try
             {
-                if (tab.Selected)
+                var selectedFound = false;
+                var counter = 0;
+                foreach (var tab in tabs)
                 {
-                    selectedFound = true;
-                    curTabIndex = counter;
-                    continue;
+                    if (tab.Selected)
+                    {
+                        selectedFound = true;
+                        curTabIndex = counter;
+                        continue;
+                    }
+                    if (tab.Selected && selectedFound)
+                        tab.Selected = false;
+                    counter++;
                 }
-                if (tab.Selected && selectedFound)
-                    tab.Selected = false;
-                counter++;
-            }
-            if (selectedFound == false)
-            {
-                curTabIndex = 0;
-                tabs[0].Selected = true;
-            }
-            var font = Text.Font;
-            var style = Text.CurFontStyle.fontStyle;
-            var anchor = Text.Anchor;
-            curTab = tabs[curTabIndex];
-            if (useSidebar)
-            {
-                var tabsRect = inRect.LeftPartPixels(170);
-                var contentRect = new Rect(inRect);
-                contentRect.xMin += 180;
-                DoSidebar(tabsRect);
-                curTab.DoContent(contentRect);
-            }
-            else
-            {
-                inRect.yMin += 40;
-                var tabRect = new Rect(inRect);
-                tabRect.height = 0;
+                if (selectedFound == false)
+                {
+                    curTabIndex = 0;
+                    tabs[0].Selected = true;
+                }
+                var font = Text.Font;
+                var style = Text.CurFontStyle.fontStyle;
+                var anchor = Text.Anchor;
+                curTab = tabs[curTabIndex];
+                if (useSidebar)
+                {
+                    var tabsRect = inRect.LeftPartPixels(170);
+                    var contentRect = new Rect(inRect);
+                    contentRect.xMin += 180;
+                    DoSidebar(tabsRect);
+                    curTab.DoContent(contentRect);
+                }
+                else
+                {
+                    inRect.yMin += 40;
+                    var tabRect = new Rect(inRect);
+                    tabRect.height = 0;
 
-                MakeRecords();
-                TabDrawer.DrawTabs(tabRect, tabsRecord);
-                curTab.DoContent(inRect);
-            }
+                    MakeRecords();
+                    TabDrawer.DrawTabs(tabRect, tabsRecord);
+                    curTab.DoContent(inRect);
+                }
 
-            Text.Anchor = anchor;
-            Text.Font = font;
-            Text.CurFontStyle.fontStyle = style;
+                Text.Anchor = anchor;
+                Text.Font = font;
+                Text.CurFontStyle.fontStyle = style;
+            }
+            catch (Exception er)
+            {
+                Log.Error($"ROCKETMAN: FATAL UI ERROR! {er}");
+            }
         }
 
         public void AddTab(ITabContent newTab)

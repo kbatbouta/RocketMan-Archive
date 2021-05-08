@@ -23,7 +23,7 @@ namespace Soyuz.Core
         public HediffTracker(Pawn pawn)
         {
             this.pawn = pawn;
-            if (this.pawn.health.hediffSet.HasHediff(HediffDefOf.Pregnant))
+            if (this.pawn?.health?.hediffSet?.HasHediff(HediffDefOf.Pregnant) ?? false)
             {
                 this.pregnant = true;
             }

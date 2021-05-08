@@ -46,6 +46,10 @@ namespace RocketMan
 
         public static bool soyuzLoaded = false;
 
+        public static bool protonLoaded = false;
+
+        public static bool rocketeerLoaded = false;
+
         public static int lastFrame;
 
         public static float learningRate = 0.05f;

@@ -28,6 +28,8 @@ namespace RocketMan
             try
             {
                 LoadPlugins(content, "Soyuz.dll", "Soyuz");
+                LoadPlugins(content, "Proton.dll", "Proton");
+                LoadPlugins(content, "Rocketeer.dll", "Rocketeer");
             }
             catch (Exception er)
             {
@@ -208,34 +210,39 @@ namespace RocketMan
         public static void UpdateDilationDefs()
         {
             if (dilationSettings == null) dilationSettings = new List<DilationSettings>();
-
+            var failed = false;
             var defs = DefDatabase<ThingDef>.AllDefs.Where(
                 d => d.race != null).ToList();
-            if (statsSettings.Count != defs.Count())
+            try
             {
-                dilationSettings.Clear();
-                foreach (var def in defs)
-                    dilationSettings.Add(new DilationSettings()
-                    {
-                        def = def.defName,
-                        dilated = def.race.Animal && !def.race.IsMechanoid && !def.race.Humanlike
-                    });
-            }
-
-            var failed = false;
-            foreach (var setting in dilationSettings)
-            {
-                if (setting?.def == null)
+                if (statsSettings.Count != defs.Count())
                 {
-                    failed = true;
-                    break;
+                    dilationSettings.Clear();
+                    foreach (var def in defs)
+                        dilationSettings.Add(new DilationSettings()
+                        {
+                            def = def.defName,
+                            dilated = def.race.Animal && !def.race.IsMechanoid && !def.race.Humanlike
+                        });
                 }
-                Finder.dilatedDefs[DefDatabase<ThingDef>.defsByName[setting.def].index] = setting.dilated;
-            }
 
+                foreach (var setting in dilationSettings)
+                {
+                    if (setting?.def == null)
+                    {
+                        failed = true;
+                        break;
+                    }
+                    Finder.dilatedDefs[DefDatabase<ThingDef>.defsByName[setting.def].index] = setting.dilated;
+                }
+            }
+            catch (Exception er)
+            {
+                Log.Error($"SOYUZ: {er}");
+            }
             if (failed)
             {
-                Log.Warning("Failed to reindex the ThingDef database");
+                Log.Warning("SOYUZ: Failed to reindex the ThingDef database");
                 statsSettings.Clear();
 
                 UpdateStats();
@@ -266,7 +273,7 @@ namespace RocketMan
 
             if (failed)
             {
-                Log.Warning("Failed to reindex the statDef database");
+                Log.Warning("SOYUZ: Failed to reindex the statDef database");
                 statsSettings.Clear();
 
                 UpdateStats();
@@ -346,7 +353,7 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.enabled, "enabled", true);
                 Scribe_Values.Look(ref Finder.statGearCachingEnabled, "statGearCachingEnabled", true);
                 Scribe_Values.Look(ref Finder.learning, "learning");
-                Scribe_Values.Look(ref Finder.debug, "debug");
+                Scribe_Values.Look(ref Finder.debug, "debug", false);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
                 Scribe_Values.Look(ref Finder.timeDilationWorldPawns, "timeDilationWorldPawns", true);
                 Scribe_Values.Look(ref Finder.timeDilationColonyAnimals, "timeDialationColonyAnimals", true);

@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using System.Runtime.InteropServices;
 using HarmonyLib;
 using RimWorld;
 using RocketMan;
@@ -97,41 +99,44 @@ namespace Soyuz
 
         private static void DoContent(Rect rect)
         {
-            var pawn = Find.Selector.selected.First() as Pawn;
-            var needs = pawn.needs.needs;
-            var hediffs = pawn.health.hediffSet.hediffs;
-            var curRect = rect;
-            curRect.ContractedBy(5);
-            curRect.yMin += 5;
-            curRect.width -= 5;
-            Widgets.BeginScrollView(curRect, ref scrollPosition, new Rect(Vector2.zero, new Vector2(rect.width - 15, (120 + 20) * (hediffs.Count + needs.Count()))));
-            var elementRect = new Rect(5, 5, rect.width - 25, 87);
-            var needsModel = pawn.GetNeedModels();
-            foreach (var need in needs)
-            {
-                if (needsModel.TryGetValue(need.GetType(), out var model))
-                {
-                    model.DrawGraph(elementRect.BottomPartPixels(70));
-                    Text.Font = GameFont.Tiny;
-                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
-                    Widgets.Label(elementRect.TopPartPixels(14), GenText.CapitalizeFirst(need.def.label));
-                    elementRect.y += elementRect.height + 20;
-                }
-            }
-            var hediffsModel = pawn.GetHediffModels();
-            foreach (var hediff in hediffs)
-            {
-                if (hediffsModel.TryGetValue(hediff, out var model))
-                {
-                    model.DrawGraph(elementRect.BottomPartPixels(70));
-                    Text.Font = GameFont.Tiny;
-                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
+            //    var pawn = Find.Selector.selected.First() as Pawn;
+            //    var needs = pawn.needs.needs;
+            //    var hediffs = pawn.health.hediffSet.hediffs;
+            //    var curRect = rect;
+            //    curRect.ContractedBy(5);
+            //    curRect.yMin += 5;
+            //    curRect.width -= 5;
+            //    Widgets.BeginScrollView(curRect, ref scrollPosition, new Rect(Vector2.zero, new Vector2(rect.width - 15, (120 + 20) * (hediffs.Count + needs.Count()))));
+            //    var elementRect = new Rect(5, 5, rect.width - 25, 87);
+            //    var needsModel = pawn.GetNeedModels();
+            //    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            //    {
+            //        foreach (var need in needs)
+            //        {
+            //            if (needsModel.TryGetValue(need.GetType(), out var model))
+            //            {
+            //                model.DrawGraph(elementRect.BottomPartPixels(70));
+            //                Text.Font = GameFont.Tiny;
+            //                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+            //                Widgets.Label(elementRect.TopPartPixels(14), GenText.CapitalizeFirst(need.def.label));
+            //                elementRect.y += elementRect.height + 20;
+            //            }
+            //        }
+            //        var hediffsModel = pawn.GetHediffModels();
+            //        foreach (var hediff in hediffs)
+            //        {
+            //            if (hediffsModel.TryGetValue(hediff, out var model))
+            //            {
+            //                model.DrawGraph(elementRect.BottomPartPixels(70));
+            //                Text.Font = GameFont.Tiny;
+            //                Text.CurFontStyle.fontStyle = FontStyle.Bold;
 
-                    Widgets.Label(elementRect.TopPartPixels(14), GenText.CapitalizeFirst(hediff.def.label));
-                    elementRect.y += elementRect.height;
-                }
-            }
-            Widgets.EndScrollView();
+            //                Widgets.Label(elementRect.TopPartPixels(14), GenText.CapitalizeFirst(hediff.def.label));
+            //                elementRect.y += elementRect.height;
+            //            }
+            //        }
+            //        Widgets.EndScrollView();
+            //    }
         }
     }
 
@@ -146,96 +151,107 @@ namespace Soyuz
 
         public static void Postfix(Rect rect)
         {
-            Text.CurFontStyle.fontStyle = FontStyle.Bold;
-            Widgets.Label(rect.TopPartPixels(25), "Dilated races");
-            Text.CurFontStyle.fontStyle = FontStyle.Normal;
-            if (Context.settings == null || Find.Selector == null)
-            {
-                return;
-            }
-            var font = Text.Font;
-            var anchor = Text.Anchor;
-            Text.Font = GameFont.Tiny;
-            Text.Anchor = TextAnchor.MiddleLeft;
-            rect.yMin += 25;
-            var searchRect = rect.TopPartPixels(25);
-            searchString = Widgets.TextField(searchRect, searchString).ToLower().Trim();
-            rect.yMin += 30;
-            if (searchString == null)
-            {
-                searchString = string.Empty;
-            }
-            if (curSelection != null)
-            {
-                var height = 128;
-                var selectionRect = rect.TopPartPixels(height);
-                Widgets.DrawMenuSection(selectionRect);
-                Text.Font = GameFont.Tiny;
-                Widgets.DefLabelWithIcon(selectionRect.TopPartPixels(54), curSelection.pawnDef);
-                if (Widgets.ButtonImage(selectionRect.RightPartPixels(30).TopPartPixels(30).ContractedBy(5),
-                    TexButton.CloseXSmall))
-                {
-                    curSelection = null;
-                    return;
-                }
-                selectionRect.yMin += 54;
-                standard.Begin(selectionRect.ContractedBy(3));
-                Text.Font = GameFont.Tiny;
-                standard.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.dilated);
-                standard.CheckboxLabeled($"Enable dilation for all factions except Player", ref curSelection.ignoreFactions);
-                standard.CheckboxLabeled($"Enable dilation for Player faction", ref curSelection.ignorePlayerFaction);
-                standard.End();
-                rect.yMin += height + 8;
-            }
-            else if (Find.Selector.selected.Count == 1 && Find.Selector.selected.First() is Pawn pawn && pawn != null)
-            {
-                var height = 128;
-                var selectionRect = rect.TopPartPixels(height);
-                var model = pawn.GetPerformanceModel();
-                if (model != null)
-                {
-                    model.DrawGraph(selectionRect, 2000);
-                    rect.yMin += height + 8;
-                }
-            }
-            Widgets.DrawMenuSection(rect);
-            rect = rect.ContractedBy(2);
-            viewRect.size = rect.size;
-            viewRect.height = 60 * Context.settings.raceSettings.Count;
-            viewRect.width -= 15;
-            Widgets.BeginScrollView(rect, ref scrollPosition, viewRect.AtZero());
-            try
-            {
-                Rect curRect = viewRect.TopPartPixels(54);
-                curRect.width -= 15;
-                var counter = 0;
-                foreach (var element in Context.settings.raceSettings)
-                {
-                    if (element?.pawnDef?.label == null)
-                        continue;
-                    if (!element.pawnDef.label.ToLower().Contains(searchString))
-                        continue;
-                    counter++;
-                    if (counter % 2 == 0)
-                        Widgets.DrawBoxSolid(curRect, new Color(0.1f, 0.1f, 0.1f, 0.2f));
-                    Widgets.DrawHighlightIfMouseover(curRect);
-                    Widgets.DefLabelWithIcon(curRect.ContractedBy(3), element.pawnDef);
-                    if (Widgets.ButtonInvisible(curRect))
-                    {
-                        curSelection = element;
-                        break;
-                    }
-                    curRect.y += 58;
-                }
-            }
-            finally
-            {
-                Widgets.EndScrollView();
-            }
-            Text.Font = font;
-            Text.Anchor = anchor;
-            Finder.rocketMod.WriteSettings();
-            SoyuzSettingsUtility.CacheSettings();
+            //var stage = 0;
+            //Text.CurFontStyle.fontStyle = FontStyle.Bold;
+            //Widgets.Label(rect.TopPartPixels(25), "Dilated races");
+            //Text.CurFontStyle.fontStyle = FontStyle.Normal;
+            //if (Context.settings == null || Find.Selector == null)
+            //{
+            //    return;
+            //}
+            //var font = Text.Font;
+            //var anchor = Text.Anchor;
+            //Text.Font = GameFont.Tiny;
+            //Text.Anchor = TextAnchor.MiddleLeft;
+            //rect.yMin += 25;
+            //var searchRect = rect.TopPartPixels(25);
+            //searchString = Widgets.TextField(searchRect, searchString).ToLower().Trim();
+            //rect.yMin += 30;
+            //if (searchString == null)
+            //{
+            //    searchString = string.Empty;
+            //}
+            //if (curSelection != null)
+            //{
+            //    var height = 128;
+            //    var selectionRect = rect.TopPartPixels(height);
+            //    Widgets.DrawMenuSection(selectionRect);
+            //    Text.Font = GameFont.Tiny;
+            //    Widgets.DefLabelWithIcon(selectionRect.TopPartPixels(54), curSelection.pawnDef);
+            //    if (Widgets.ButtonImage(selectionRect.RightPartPixels(30).TopPartPixels(30).ContractedBy(5),
+            //        TexButton.CloseXSmall))
+            //    {
+            //        curSelection = null;
+            //        return;
+            //    }
+            //    if (Finder.debug) Log.Message($"SOYUZ: UI stage is {stage}:{1}");
+            //    selectionRect.yMin += 54;
+            //    standard.Begin(selectionRect.ContractedBy(3));
+            //    Text.Font = GameFont.Tiny;
+            //    standard.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.dilated);
+            //    standard.CheckboxLabeled($"Enable dilation for all factions except Player", ref curSelection.ignoreFactions);
+            //    standard.CheckboxLabeled($"Enable dilation for Player faction", ref curSelection.ignorePlayerFaction);
+            //    standard.End();
+            //    rect.yMin += height + 8;
+            //}
+            //else if (Find.Selector.selected.Count == 1 && Find.Selector.selected.First() is Pawn pawn && pawn != null && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            //{
+            //    var height = 128;
+            //    var selectionRect = rect.TopPartPixels(height);
+            //    var model = pawn.GetPerformanceModel();
+            //    if (model != null)
+            //    {
+            //        model.DrawGraph(selectionRect, 2000);
+            //        rect.yMin += height + 8;
+            //    }
+            //}
+            //Widgets.DrawMenuSection(rect);
+            //rect = rect.ContractedBy(2);
+            //viewRect.size = rect.size;
+            //viewRect.height = 60 * Context.settings.raceSettings.Count;
+            //viewRect.width -= 15;
+            //Widgets.BeginScrollView(rect, ref scrollPosition, viewRect.AtZero());
+            //try
+            //{
+            //    Rect curRect = viewRect.TopPartPixels(54);
+            //    curRect.width -= 15;
+            //    var counter = 0;
+            //    foreach (var element in Context.settings.raceSettings)
+            //    {
+            //        if (element?.pawnDef?.label == null)
+            //            continue;
+            //        if (!element.pawnDef.label.ToLower().Contains(searchString))
+            //            continue;
+            //        counter++;
+            //        if (counter % 2 == 0)
+            //            Widgets.DrawBoxSolid(curRect, new Color(0.1f, 0.1f, 0.1f, 0.2f));
+            //        Widgets.DrawHighlightIfMouseover(curRect);
+            //        Widgets.DefLabelWithIcon(curRect.ContractedBy(3), element.pawnDef);
+            //        if (Widgets.ButtonInvisible(curRect))
+            //        {
+            //            curSelection = element;
+            //            break;
+            //        }
+            //        curRect.y += 58;
+            //    }
+            //}
+            //finally
+            //{
+            //    Widgets.EndScrollView();
+            //}
+            //// stage 6..
+            //if (Finder.debug) Log.Message($"SOYUZ: UI stage is {stage++}");
+            //Text.Font = font;
+            //Text.Anchor = anchor;
+            //try
+            //{
+            //    Finder.rocketMod.WriteSettings();
+            //    SoyuzSettingsUtility.CacheSettings();
+            //}
+            //catch (Exception er)
+            //{
+            //    Log.Error($"SOYUZ: ERROR! {er}");
+            //}
         }
     }
 }

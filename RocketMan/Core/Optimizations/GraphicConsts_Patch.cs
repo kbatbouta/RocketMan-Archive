@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -6,6 +7,7 @@ using Verse;
 
 namespace RocketMan.Optimizations
 {
+#if !DEBUG
     [RocketPatch]
     public class GraphicConsts_Patch
     {
@@ -37,4 +39,5 @@ namespace RocketMan.Optimizations
             return TranspilerUtility.FixConsts(instructions);
         }
     }
+#endif
 }

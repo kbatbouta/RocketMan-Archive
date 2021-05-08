@@ -9,6 +9,7 @@ namespace RocketMan.Tabs
         public override string Label => "Statistics";
         public override void DoContent(Rect rect)
         {
+            RocketMod.ReadStats();
             standard.Begin(rect.TopPart(60));
             standard.Gap();
             var font = Text.Font;
