@@ -342,6 +342,7 @@
         <Compile Include="Core\ModHelper.cs" />
         <Compile Include="Core\Compatibility\RimWarHelper.cs" />
         <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
+        <Compile Include="Core\Others\PatchingUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

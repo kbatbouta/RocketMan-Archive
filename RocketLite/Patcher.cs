@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using HarmonyLib;
 using RimWorld;
 using RocketLite.Optimizations;
@@ -13,6 +14,7 @@ namespace RocketLite
         {
             foreach (var m in Pawn_Notify_Dirty.Pawn_ApparelTracker_Dirty.GetTargetMethods())
             {
+                if (!m.IsValidTarget()) continue;
                 try
                 {
                     Finder.harmony.Patch(m, postfix: new HarmonyMethod(AccessTools.Method(
@@ -26,6 +28,7 @@ namespace RocketLite
             }
             foreach (var m in Pawn_Notify_Dirty.Pawn_Dirty.GetTargetMethods())
             {
+                if (!m.IsValidTarget()) continue;
                 try
                 {
                     Finder.harmony.Patch(m, postfix: new HarmonyMethod(AccessTools.Method(
@@ -39,6 +42,7 @@ namespace RocketLite
             }
             foreach (var m in Pawn_Notify_Dirty.Pawn_EquipmentTracker_Dirty.GetTargetMethods())
             {
+                if (!m.IsValidTarget()) continue;
                 try
                 {
                     Finder.harmony.Patch(m, postfix: new HarmonyMethod(AccessTools.Method(
@@ -52,6 +56,7 @@ namespace RocketLite
             }
             foreach (var m in Pawn_Notify_Dirty.Pawn_HealthTracker_Dirty.GetTargetMethods())
             {
+                if (!m.IsValidTarget()) continue;
                 try
                 {
                     Finder.harmony.Patch(m, postfix: new HarmonyMethod(AccessTools.Method(
@@ -65,6 +70,7 @@ namespace RocketLite
             }
             foreach (var m in StatWorker_GetValueUnfinalized_Hijacked_Patch.GetTargetMethods())
             {
+                if (!m.IsValidTarget()) continue;
                 try
                 {
                     Finder.harmony.Patch(m, transpiler: new HarmonyMethod(AccessTools.Method(
@@ -78,9 +84,13 @@ namespace RocketLite
             }
             try
             {
-                Finder.harmony.Patch(StatPart_ApparelStatOffSet_Skipper_Patch.GetTargetMethod(), transpiler: new HarmonyMethod(AccessTools.Method(
-                    typeof(StatWorker_GetValueUnfinalized_Hijacked_Patch),
-                    nameof(StatWorker_GetValueUnfinalized_Hijacked_Patch.Transpiler))));
+                MethodBase targetMethod = StatPart_ApparelStatOffSet_Skipper_Patch.GetTargetMethod();
+                if (targetMethod.IsValidTarget())
+                {
+                    Finder.harmony.Patch(targetMethod, transpiler: new HarmonyMethod(AccessTools.Method(
+                        typeof(StatWorker_GetValueUnfinalized_Hijacked_Patch),
+                        nameof(StatWorker_GetValueUnfinalized_Hijacked_Patch.Transpiler))));
+                }
             }
             catch
             {

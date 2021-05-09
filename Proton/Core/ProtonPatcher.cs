@@ -99,7 +99,7 @@ namespace Proton
 
             foreach (var target in targets.ToHashSet())
             {
-                if (target == null || target.IsAbstract || !target.HasMethodBody())
+                if (!target.IsValidTarget())
                 {
                     if (Finder.debug) Log.Warning($"PROTON: patching {target?.DeclaringType?.Name}:{target} is not possible!");
                     continue;

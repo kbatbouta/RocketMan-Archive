@@ -35,6 +35,9 @@ namespace Rocketeer
             public string[] stackTrace;
             public string message;
             public string type;
+            public int lastInstructionIndex;
+            public int lastSectionIndex;
+            public int[] passes;
         }
 
         public int Id
@@ -179,14 +182,19 @@ namespace Rocketeer
             {
                 Flush(partial: false);
             }
+            RocketeerErrorReport errorReport = new RocketeerErrorReport()
+            {
+                methodPath = method.GetMethodPath(),
+                message = exception.Message,
+                type = exception.GetType().ToString(),
+                lastInstructionIndex = currentInstructionIndex,
+                lastSectionIndex = currentSection,
+                stackTrace = exception.GetStackTraceAsString(),
+            };
             if (allocatedRuns <= 0)
             {
                 Stop();
             }
-            RocketeerErrorReport errorReport = new RocketeerErrorReport()
-            {
-                message = exception.Message,
-            };
         }
 
         public void Stop()
@@ -200,7 +208,7 @@ namespace Rocketeer
             if (partial)
             {
                 for (int i = sectionsStartPosition[currentSection]; i < instructions.Count; i++)
-                    Verse.Log.Message($"ROCKETEER:[{methodPath}] Reached instruction for the { sectionsPasses[currentSection] }th time {instructions[i].opCode}:{instructions[i].operand}");
+                    Log.Message($"ROCKETEER:[{methodPath}] Reached instruction for the { sectionsPasses[currentSection] }th time {instructions[i].opCode}:{instructions[i].operand}");
                 return;
             }
         }

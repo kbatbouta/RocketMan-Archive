@@ -89,8 +89,10 @@ namespace RocketMan
                 var types = GetSkipperPatchTypes();
                 foreach (var t in types)
                 {
-                    var patchInfo = t.TryGetAttribute<SkipperPatch>();
-                    Patch(patchInfo.GetMethodInfo(), t);
+                    SkipperPatch patchInfo = t.TryGetAttribute<SkipperPatch>();
+                    MethodBase method = patchInfo.GetMethodInfo();
+                    if (method.IsValidTarget()) Patch(method as MethodInfo, t);
+                    else Log.Warning($"ROCKETMAN: skipper patch target is not valid {method.GetMethodPath()}!");
                 }
             }
 

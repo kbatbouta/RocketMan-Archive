@@ -34,12 +34,10 @@ namespace RocketMan.Optimizations
         {
             if (Finder.learning && Finder.statLogging)
             {
-                var trace = new StackTrace();
-                var frame = trace.GetFrame(2);
-                var method = frame.GetMethod();
-
-                var handler = method.GetStringHandler();
-
+                StackTrace trace = new StackTrace();
+                StackFrame frame = trace.GetFrame(2);
+                MethodBase method = frame.GetMethod();
+                string handler = method.GetMethodPath();
                 if (Finder.debug) Log.Message(string.Format("ROCKETMAN: called stats.GetUnfinalizedValue from {0}", handler));
                 callingMethods.Add(method);
             }

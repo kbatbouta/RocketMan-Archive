@@ -28,6 +28,14 @@ namespace Rocketeer
         public static RocketeerReport Patch(MethodBase method)
         {
             RocketeerReport report = null;
+            if (method.HasRocketeerPatch())
+            {
+                throw new InvalidOperationException($"ROCKETEER: target method is already patched! {method.IsValidTarget()}");
+            }
+            if (!method.IsValidTarget())
+            {
+                throw new InvalidOperationException($"ROCKETEER: target method is not valid! {method.IsValidTarget()}");
+            }
             try
             {
                 lock (Context.reportLocker)
@@ -40,10 +48,13 @@ namespace Rocketeer
                     Harmony.DEBUG = true;
                     Finder.harmony.Patch(method, transpiler: mDebugTranspiler, finalizer: mDebugFinalizer);
                 }
+                Context.patchedMethods.Add(method.GetUniqueMethodIdentifier());
             }
             catch (Exception er)
             {
                 Log.Error($"ROCKETEER: Patching {method.GetMethodPath()} FAILED with error {er}");
+                string methodId = method.GetUniqueMethodIdentifier();
+                Context.patchedMethods.RemoveWhere(m => m == methodId);
             }
             finally
             {
@@ -54,8 +65,10 @@ namespace Rocketeer
 
         public static void Unpatch(MethodBase method)
         {
+            string methodId = method.GetUniqueMethodIdentifier();
             Finder.harmony.Unpatch(method, mDebugTranspiler.method);
             Finder.harmony.Unpatch(method, mDebugFinalizer.method);
+            Context.patchedMethods.RemoveWhere(m => m == methodId);
         }
 
         private static void Notify_Started(int reportId)

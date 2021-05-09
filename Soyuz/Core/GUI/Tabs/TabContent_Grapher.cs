@@ -59,7 +59,6 @@ namespace Soyuz.Tabs
 
         private void DoExtras_Internal(Rect rect)
         {
-            //if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return;
             var pawn = Find.Selector.selected.First() as Pawn;
             var needs = pawn.needs.needs;
             var hediffs = pawn.health.hediffSet.hediffs;
@@ -76,7 +75,7 @@ namespace Soyuz.Tabs
                 {
                     model.DrawGraph(elementRect.BottomPartPixels(70));
                     Text.Font = GameFont.Tiny;
-                    //Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
                     Widgets.Label(elementRect.TopPartPixels(14), GenText.CapitalizeFirst(need.def.label));
                     elementRect.y += elementRect.height + 20;
                 }
@@ -88,8 +87,7 @@ namespace Soyuz.Tabs
                 {
                     model.DrawGraph(elementRect.BottomPartPixels(70));
                     Text.Font = GameFont.Tiny;
-                    //Text.CurFontStyle.fontStyle = FontStyle.Bold;
-
+                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
                     Widgets.Label(elementRect.TopPartPixels(14), GenText.CapitalizeFirst(hediff.def.label));
                     elementRect.y += elementRect.height;
                 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using HarmonyLib;
 using RimWorld;
 using RocketMan.Optimizations;
 using Verse;
@@ -9,11 +10,6 @@ namespace RocketMan
 {
     public static class Tools
     {
-        public static string GetStringHandler(this MethodBase method)
-        {
-            return string.Format("{0}:{1}", method.ReflectedType.Name, method.Name);
-        }
-
         public static byte PredictValueFromString(this string name)
         {
             if (false

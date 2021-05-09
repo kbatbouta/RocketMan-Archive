@@ -16,6 +16,8 @@ namespace RocketMan
         private static List<Action> onClearCache = GetActions<OnClearCache>().ToList();
         private static List<Action> onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
 
+        private static List<Action> onWorldLoaded = GetActions<OnWorldLoaded>().ToList();
+        private static List<Action> onMapLoaded = GetActions<OnMapLoaded>().ToList();
         private static List<Action> onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
         private static List<Action> onTick = GetActions<OnTick>().ToList();
         private static List<Action> onTickLong = GetActions<OnTickLong>().ToList();
@@ -62,6 +64,8 @@ namespace RocketMan
         {
             onClearCache = GetActions<OnClearCache>().ToList();
             onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
+            onWorldLoaded = GetActions<OnWorldLoaded>().ToList();
+            onMapLoaded = GetActions<OnMapLoaded>().ToList();
             onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
             onTick = GetActions<OnTick>().ToList();
             onDebugginEnabled = GetActions<OnDebugginEnabled>().ToList();
@@ -76,10 +80,24 @@ namespace RocketMan
             for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
         }
 
+        public override void MapLoaded(Map map)
+        {
+            base.MapLoaded(map);
+            ReloadActions();
+            for (var i = 0; i < onMapLoaded.Count; i++) onMapLoaded[i].Invoke();
+        }
+
+        public override void WorldLoaded()
+        {
+            base.WorldLoaded();
+            ReloadActions();
+            for (var i = 0; i < onWorldLoaded.Count; i++) onWorldLoaded[i].Invoke();
+        }
+
         public override void MapComponentsInitializing(Map map)
         {
             base.MapComponentsInitializing(map);
-
+            ReloadActions();
             for (var i = 0; i < onMapComponentsInitializing.Count; i++) onMapComponentsInitializing[i].Invoke();
         }
 
@@ -160,6 +178,16 @@ namespace RocketMan
 
         [AttributeUsage(AttributeTargets.Method)]
         public class OnTick : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method)]
+        public class OnWorldLoaded : Attribute
+        {
+        }
+
+        [AttributeUsage(AttributeTargets.Method)]
+        public class OnMapLoaded : Attribute
         {
         }
 

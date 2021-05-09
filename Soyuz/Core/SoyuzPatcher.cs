@@ -80,7 +80,6 @@ namespace Soyuz
             {
                 targets = (type.GetMethod("TargetMethods").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
             }
-
             prepare = type.GetMethod("Prepare");
             prefix = type.GetMethod("Prefix");
             postfix = type.GetMethod("Postfix");
@@ -99,7 +98,7 @@ namespace Soyuz
 
             foreach (var target in targets.ToHashSet())
             {
-                if (target == null || target.IsAbstract || !target.HasMethodBody())
+                if (!target.IsValidTarget())
                 {
                     if (Finder.debug) Log.Warning($"SOYUZ:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} is not possible! Patch attempt skipped!");
                     continue;
