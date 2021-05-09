@@ -9,18 +9,19 @@ namespace RocketMan.Tabs
     public class TabHolder
     {
         public ITabContent curTab;
-        private int curTabIndex;
+        public List<ITabContent> tabs;
 
+        private int curTabIndex;
         private Vector2 scrollPosition = Vector2.zero;
         private Rect tabBarRect;
-        public List<ITabContent> tabs;
-        private readonly List<TabRecord> tabsRecord;
 
+        private readonly List<TabRecord> tabsRecord;
         private readonly bool useSidebar = true;
 
         public TabHolder(List<ITabContent> tabs, bool useSidebar = false)
         {
             this.useSidebar = useSidebar;
+            this.tabs = tabs;
             if (tabs.Any(i => i.Selected))
             {
                 curTab = tabs.First(i => i.Selected);
@@ -31,66 +32,61 @@ namespace RocketMan.Tabs
                 curTab = tabs[0];
                 curTab.Selected = true;
             }
-
             tabsRecord = new List<TabRecord>();
-            this.tabs = tabs;
             MakeRecords();
         }
 
         public void DoContent(Rect inRect)
         {
-            try
-            {
-                var selectedFound = false;
-                var counter = 0;
-                foreach (var tab in tabs)
-                {
-                    if (tab.Selected)
-                    {
-                        selectedFound = true;
-                        curTabIndex = counter;
-                        continue;
-                    }
-                    if (tab.Selected && selectedFound)
-                        tab.Selected = false;
-                    counter++;
-                }
-                if (selectedFound == false)
-                {
-                    curTabIndex = 0;
-                    tabs[0].Selected = true;
-                }
-                var font = Text.Font;
-                var style = Text.CurFontStyle.fontStyle;
-                var anchor = Text.Anchor;
-                curTab = tabs[curTabIndex];
-                if (useSidebar)
-                {
-                    var tabsRect = inRect.LeftPartPixels(170);
-                    var contentRect = new Rect(inRect);
-                    contentRect.xMin += 180;
-                    DoSidebar(tabsRect);
-                    curTab.DoContent(contentRect);
-                }
-                else
-                {
-                    inRect.yMin += 40;
-                    var tabRect = new Rect(inRect);
-                    tabRect.height = 0;
+            var selectedFound = false;
+            var counter = 0;
 
-                    MakeRecords();
-                    TabDrawer.DrawTabs(tabRect, tabsRecord);
-                    curTab.DoContent(inRect);
-                }
-
-                Text.Anchor = anchor;
-                Text.Font = font;
-                Text.CurFontStyle.fontStyle = style;
-            }
-            catch (Exception er)
+            foreach (var tab in tabs)
             {
-                Log.Error($"ROCKETMAN: FATAL UI ERROR! {er}");
+                if (tab.Selected && tab.ShouldShow)
+                {
+                    selectedFound = true;
+                    curTabIndex = counter;
+                    continue;
+                }
+                if ((tab.Selected && selectedFound) || !tab.ShouldShow)
+                    tab.Selected = false;
+                counter++;
             }
+            if (selectedFound == false)
+            {
+                curTabIndex = 0;
+                tabs[0].Selected = true;
+            }
+
+            var font = Text.Font;
+            var style = Text.CurFontStyle.fontStyle;
+            var anchor = Text.Anchor;
+
+            curTab = tabs[curTabIndex];
+            if (useSidebar)
+            {
+                var tabsRect = inRect.LeftPartPixels(170);
+                var contentRect = new Rect(inRect);
+                contentRect.xMin += 180;
+                DoSidebar(tabsRect);
+                curTab.DoContent(contentRect);
+            }
+            else
+            {
+                // TODO fix this API                
+                // inRect.yMin += 40;
+                // var tabRect = new Rect(inRect);
+                // tabRect.height = 0;                
+                // MakeRecords();
+                // TabDrawer.DrawTabs(tabRect, tabsRecord);
+                // curTab.DoContent(inRect);
+                // -----------------------
+                throw new InvalidOperationException("ROCKETMAN: this is an outdated API!");
+            }
+            Text.Anchor = anchor;
+            Text.Font = font;
+            Text.CurFontStyle.fontStyle = style;
         }
 
         public void AddTab(ITabContent newTab)
@@ -140,7 +136,7 @@ namespace RocketMan.Tabs
         {
             tabBarRect = rect;
             tabBarRect.width -= 2;
-            tabBarRect.height = 30 * tabs.Count;
+            tabBarRect.height = 30 * tabs.Count(t => t.ShouldShow);
             Widgets.DrawMenuSection(rect);
             Widgets.BeginScrollView(rect, ref scrollPosition, tabBarRect);
             Text.Anchor = TextAnchor.MiddleLeft;
@@ -149,8 +145,15 @@ namespace RocketMan.Tabs
             var counter = 0;
             foreach (var tab in tabs)
             {
+                if (!tab.ShouldShow)
+                {
+                    counter++;
+                    continue;
+                }
                 if (tab.Selected)
+                {
                     Widgets.DrawWindowBackgroundTutor(curRect);
+                }
                 Widgets.DrawHighlightIfMouseover(curRect);
                 var textRect = new Rect(curRect);
                 textRect.xMin += 10;

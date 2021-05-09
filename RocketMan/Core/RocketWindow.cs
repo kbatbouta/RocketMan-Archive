@@ -10,6 +10,9 @@ namespace RocketMan
     public class RocketWindow : Window
     {
         private TabHolder tabs;
+        private int _errors = 0;
+
+        public override Vector2 InitialSize => new Vector2(650, 450);
 
         public RocketWindow()
         {
@@ -21,54 +24,42 @@ namespace RocketMan
             doCloseButton = false;
             doCloseX = true;
             layer = WindowLayer.SubSuper;
-            CreateTabs();
+            tabs = new TabHolder(new List<ITabContent>()
+            {
+                new TabContent_Settings(){ Selected = true },
+                new TabContent_Stats(){ Selected = false },
+                new TabContent_Debug(){ Selected = false }
+            }, useSidebar: true);
+            for (var i = 0; i < Main.yieldTabContent.Count; i++) tabs.AddTab(Main.yieldTabContent[i].Invoke());
         }
-
-        public override Vector2 InitialSize => new Vector2(650, 450);
 
         public override void DoWindowContents(Rect inRect)
         {
-            if (Finder.debug) Log.Message("ROCKETMAN: UI DoWindowContents 0");
-            Finder.lastFrame = Time.frameCount;
-            var debuggingOld = Finder.debug;
-            if (Finder.debug) Log.Message("ROCKETMAN: UI DoWindowContents 1");
-            tabs.DoContent(inRect);
-            if (debuggingOld != Finder.debug || Rand.Chance(0.05f)) DebuggingChanged();
-            if (Finder.debug) Log.Message("ROCKETMAN: UI DoWindowContents 2");
+            try
+            {
+                // TODO fix this mess
+                // For profiling reasons...
+                Finder.lastFrame = Time.frameCount;
+                // For Stat settings reason...
+                RocketMod.ReadStats();
+                // Actual work
+                tabs.DoContent(inRect);
+                // Reduce the error counter
+                _errors = Math.Max(_errors - 1, 0);
+            }
+            catch (Exception er)
+            {
+                if (_errors <= 60 && _errors % 2 == 0) Log.Warning($"ROCKETMAN: UI Minor error:{er}\n{er.StackTrace}\nError count:{_errors}");
+                else if (_errors <= 60) Log.Warning($"ROCKETMAN: UI error:{er}\n{er.StackTrace}\nError count:{_errors}");
+                else Log.Error($"ROCKETMAN: UI Major error:{er}\n{er.StackTrace}\nError count:{_errors}");
+                _errors += 3;
+            }
         }
 
         public override void Close(bool doCloseSound = true)
         {
             base.Close(doCloseSound);
             Finder.logData = false;
-        }
-
-        private void DebuggingChanged()
-        {
-            if (Finder.debug && !tabs.tabs.Any(t => t.GetType() == typeof(TabContent_Debug)))
-            {
-                tabs.tabs.Add(new TabContent_Debug());
-            }
-            else if (!Finder.debug && tabs.tabs.Any(t => t.GetType() == typeof(TabContent_Debug)))
-            {
-                tabs.tabs.RemoveAll(t => t.GetType() == typeof(TabContent_Debug));
-                foreach (var tab in tabs.tabs) tab.Selected = false;
-                tabs.tabs.RandomElement().Selected = true;
-            }
-        }
-
-        private void CreateTabs()
-        {
-            tabs = new TabHolder(new List<ITabContent>()
-            {
-                new TabContent_Settings(){Selected = true},
-                new TabContent_Stats(){Selected = false},
-            }, useSidebar: true);
-            if (Finder.soyuzLoaded)
-                tabs.AddTab(new TabContent_Soyuz() { Selected = false });
-            if (Finder.protonLoaded)
-                tabs.AddTab(new TabContent_Proton() { Selected = false });
-            for (var i = 0; i < Main.yieldTabContent.Count; i++) tabs.AddTab(Main.yieldTabContent[i].Invoke());
         }
     }
 }

@@ -7,7 +7,10 @@ namespace RocketMan.Tabs
     public class TabContent_Debug : ITabContent
     {
         private Listing_Standard standard = new Listing_Standard();
-        public override string Label => "Debugging";
+        public override string Label => "Advanced settings";
+
+        public override bool ShouldShow => Finder.debug;
+
         public override void DoContent(Rect rect)
         {
             standard.Begin(rect);
@@ -25,17 +28,17 @@ namespace RocketMan.Tabs
             standard.CheckboxLabeled("Enable GlowGrid flashing", ref Finder.drawGlowerUpdates);
             standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);
             standard.GapLine();
-            standard.CheckboxLabeled("Set tick multiplier to 150", ref Finder.debug150MTPS, "Dangerous!");
-            standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "Experimental.");
-            standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
+            if (standard.ButtonText("Disable debugging related stuff"))
+            {
+                Finder.debug = false;
+                Finder.debug150MTPS = false;
+                Finder.logData = false;
+                Finder.statLogging = false;
+                Finder.flashDilatedPawns = false;
+            }
             Text.Font = font;
             standard.End();
             rect.yMin += 165;
-            DoExtras(rect);
-        }
-
-        public void DoExtras(Rect rect)
-        {
         }
 
         public override void OnSelect()

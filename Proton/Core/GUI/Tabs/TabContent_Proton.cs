@@ -4,18 +4,21 @@ using RocketMan.Tabs;
 using UnityEngine;
 using Verse;
 
-namespace Rocketeer.Tabs
+namespace Proton.GUI
 {
-    public class TabContent_Patcher : ITabContent
+    public class TabContent_Proton : ITabContent
     {
         private Listing_Standard standard = new Listing_Standard();
-        public override string Label => "Patcher";
+
+        public override string Label => "Proton";
+        public override bool ShouldShow => true;
 
         public override void DoContent(Rect rect)
         {
+
         }
 
-        public override void OnDeselect()
+        public void DoExtras(Rect rect)
         {
         }
 
@@ -23,7 +26,11 @@ namespace Rocketeer.Tabs
         {
         }
 
+        public override void OnDeselect()
+        {
+        }
+
         [Main.YieldTabContent]
-        public static ITabContent YieldTab() => new TabContent_Patcher();
+        private ITabContent YieldTab() => new TabContent_Proton();
     }
 }

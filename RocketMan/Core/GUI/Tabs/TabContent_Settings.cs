@@ -4,8 +4,9 @@ namespace RocketMan.Tabs
 {
     public class TabContent_Settings : ITabContent
     {
-        public override string Label => "Settings";
-        
+        public override string Label => "Home";
+        public override bool ShouldShow => true;
+
         public override void DoContent(Rect rect)
         {
             RocketMod.DoSettings(rect);

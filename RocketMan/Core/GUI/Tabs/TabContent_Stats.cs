@@ -6,10 +6,12 @@ namespace RocketMan.Tabs
     public class TabContent_Stats : ITabContent
     {
         private Listing_Standard standard = new Listing_Standard();
+
         public override string Label => "Statistics";
+        public override bool ShouldShow => true;
+
         public override void DoContent(Rect rect)
         {
-            RocketMod.ReadStats();
             standard.Begin(rect.TopPart(60));
             standard.Gap();
             var font = Text.Font;
@@ -21,6 +23,8 @@ namespace RocketMan.Tabs
             Text.Font = font;
             standard.End();
             rect.yMin += 64;
+
+            // TODO: rework this.
             RocketMod.DoStatSettings(rect);
         }
 

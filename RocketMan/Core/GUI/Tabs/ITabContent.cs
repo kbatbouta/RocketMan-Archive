@@ -18,6 +18,8 @@ namespace RocketMan.Tabs
             }
         }
 
+        public abstract bool ShouldShow { get; }
+
         public virtual float LabelWidth => Text.CalcSize(Label).x;
         public abstract string Label { get; }
 

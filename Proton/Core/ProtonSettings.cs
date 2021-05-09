@@ -57,12 +57,4 @@ namespace Proton
             if (thingDefSettings == null) thingDefSettings = new List<ThingDefSettings>();
         }
     }
-
-    [ProtonPatch(typeof(TabContent_Proton), nameof(TabContent_Proton.DoExtras))]
-    public static class ProtonSettingsGUIUtility
-    {
-        public static void Postfix()
-        {
-        }
-    }
 }
