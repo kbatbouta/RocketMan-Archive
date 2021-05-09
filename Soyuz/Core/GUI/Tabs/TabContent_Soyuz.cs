@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using RocketMan;
 using RocketMan.Tabs;
 using UnityEngine;
@@ -46,6 +47,7 @@ namespace Soyuz.Tabs
 
         public void DoExtras(Rect rect)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return;
             var stage = 0;
             Text.CurFontStyle.fontStyle = FontStyle.Bold;
             Widgets.Label(rect.TopPartPixels(25), "Dilated races");

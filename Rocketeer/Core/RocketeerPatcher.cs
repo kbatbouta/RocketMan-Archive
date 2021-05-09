@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -22,37 +23,79 @@ namespace Rocketeer
         private static MethodBase mNotify_Finished = AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Notify_Finished));
         private static MethodBase mNotify_Started = AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Notify_Started));
 
+        private static RocketeerReport current;
+
+        public static RocketeerReport Patch(MethodBase method)
+        {
+            RocketeerReport report = null;
+            try
+            {
+                lock (Context.reportLocker)
+                {
+                    Context.reportIdCounter++;
+                    report = new RocketeerReport(method, Context.reportIdCounter);
+                    Context.reports[Context.reportIdCounter] = report;
+                    Context.reportsByMethodPath[method.GetMethodPath()] = report;
+                    current = report;
+                    Harmony.DEBUG = true;
+                    Finder.harmony.Patch(method, transpiler: mDebugTranspiler, finalizer: mDebugFinalizer);
+                }
+            }
+            catch (Exception er)
+            {
+                Log.Error($"ROCKETEER: Patching {method.GetMethodPath()} FAILED with error {er}");
+            }
+            finally
+            {
+                current = null;
+            }
+            return report;
+        }
+
+        public static void Unpatch(MethodBase method)
+        {
+            Finder.harmony.Unpatch(method, mDebugTranspiler.method);
+            Finder.harmony.Unpatch(method, mDebugFinalizer.method);
+        }
+
         private static void Notify_Started(int reportId)
         {
-            Tools.GetReport(reportId).OnStart();
+            Tools.GetReportById(reportId).OnStart();
         }
 
         private static void Notify_Call(int index, int reportId)
         {
-            Tools.GetReport(reportId).OnCheckPoint(index);
+            Tools.GetReportById(reportId).OnCall(index);
         }
 
-        private static void Notify_CheckPoint(int position, int reportId)
+        private static void Notify_CheckPoint(int checkPointIndex, int reportId)
         {
-            Tools.GetReport(reportId).OnCheckPoint(position);
-
+            Tools.GetReportById(reportId).OnCheckPoint(checkPointIndex);
         }
 
         private static void Notify_Finished(int reportId)
         {
-            Tools.GetReport(reportId).OnFinished();
+            Tools.GetReportById(reportId).OnFinished();
         }
 
         private static Exception Debug_Finalizer(Exception __exception)
         {
+            if (__exception != null)
+            {
+                var method = new StackTrace(__exception).GetFrame(0).GetMethod();
+                Context.reportsByMethodPath[method.GetMethodPath()].OnError(__exception);
+            }
             return __exception;
         }
 
         private static IEnumerable<CodeInstruction> Debug_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
-            int index = 0;
-            int counter = 0;
-            Tools.GetReport(index).SaveInstructions(instructions);
+            int callCounter = 0;
+            int instructionCounter = 0;
+            int checkPointCounter = 0;
+            yield return new CodeInstruction(OpCodes.Ldc_I4, Context.reportIdCounter);
+            yield return new CodeInstruction(OpCodes.Call, mNotify_Started);
+            if (current.Id != Context.reportIdCounter) throw new Exception("ROCKETEER: FATAL ERROR DURING PATCHING WHERE ID CHANGED!");
             foreach (var instruction in instructions)
             {
                 if (instruction.opcode == OpCodes.Ret)
@@ -60,30 +103,40 @@ namespace Rocketeer
                     yield return new CodeInstruction(OpCodes.Ldc_I4, Context.reportIdCounter) { labels = instruction.labels };
                     yield return new CodeInstruction(OpCodes.Call, mNotify_Finished);
                     instruction.labels = new List<Label>();
+                    if (instructionCounter + 1 < instructions.Count())
+                    {
+                        current.PushInstruction(instruction, BreakPointTypes.None);
+                    }
                 }
                 else
                 {
-                    if (counter % 3 == 0 && counter != 0)
-                    {
-                        yield return new CodeInstruction(OpCodes.Ldc_I4, counter);
-                        yield return new CodeInstruction(OpCodes.Ldc_I4, Context.reportIdCounter);
-                        yield return new CodeInstruction(OpCodes.Call, mNotify_CheckPoint);
-                    }
                     if (instruction.opcode == OpCodes.Call || instruction.opcode == OpCodes.Calli || instruction.opcode == OpCodes.Callvirt)
                     {
-                        yield return new CodeInstruction(OpCodes.Ldc_I4, index++);
+                        current.PushInstruction(instruction, BreakPointTypes.Call);
+                        yield return new CodeInstruction(OpCodes.Ldc_I4, callCounter++);
                         yield return new CodeInstruction(OpCodes.Ldc_I4, Context.reportIdCounter);
                         yield return new CodeInstruction(OpCodes.Call, mNotify_Call);
                     }
-                    counter++;
+                    else if (instructionCounter % 3 == 0 && instructionCounter != 0)
+                    {
+                        current.PushInstruction(instruction, BreakPointTypes.CheckPoint);
+                        yield return new CodeInstruction(OpCodes.Ldc_I4, checkPointCounter++);
+                        yield return new CodeInstruction(OpCodes.Ldc_I4, Context.reportIdCounter);
+                        yield return new CodeInstruction(OpCodes.Call, mNotify_CheckPoint);
+                    }
+                    else
+                    {
+                        current.PushInstruction(instruction, BreakPointTypes.None);
+                    }
                 }
+                instructionCounter++;
                 yield return instruction;
             }
+            Log.Error($"{checkPointCounter}");
         }
 
         public RocketeerPatcher()
         {
-
         }
     }
 }

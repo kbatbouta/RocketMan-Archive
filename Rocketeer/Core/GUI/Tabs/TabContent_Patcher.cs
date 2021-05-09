@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using HarmonyLib;
 using RocketMan;
 using RocketMan.Tabs;
 using UnityEngine;
@@ -10,11 +12,27 @@ namespace Rocketeer.Tabs
     {
         private Listing_Standard standard = new Listing_Standard();
 
-        public override string Label => "Patcher";
+        public override string Label => "Debugger";
         public override bool ShouldShow => Finder.debug;
+
+        private RocketeerReport report;
+        private string target = string.Empty;
 
         public override void DoContent(Rect rect)
         {
+            standard.Begin(rect);
+            standard.Label("Method:");
+            target = standard.TextEntry(target);
+            if (standard.ButtonText("Patch") && AccessTools.Method(target) is MethodBase method && method != null)
+            {
+                report = RocketeerPatcher.Patch(method);
+            }
+            if (report == null)
+            {
+                standard.End();
+                return;
+            }
+            standard.End();
         }
 
         public override void OnDeselect()

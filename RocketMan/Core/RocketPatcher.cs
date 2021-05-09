@@ -109,7 +109,7 @@ namespace RocketMan
             {
                 if (target == null || target.IsAbstract || !target.HasMethodBody())
                 {
-                    if (Finder.debug) Log.Warning($"ROCKETMAN: patching {target?.DeclaringType?.Name}:{target} is not possible!");
+                    if (Finder.debug) Log.Warning($"ROCKETMAN:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} is not possible! Patch attempt skipped");
                     continue;
                 }
                 try

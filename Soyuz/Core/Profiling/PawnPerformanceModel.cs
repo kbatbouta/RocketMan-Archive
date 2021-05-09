@@ -36,7 +36,6 @@ namespace Soyuz.Profiling
 
         public void DrawGraph(Rect rect, int historyLength = 60, string unit = "ms")
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return;
             Widgets.DrawBoxSolid(rect, Color.white);
             rect = rect.ContractedBy(1);
             Widgets.DrawBoxSolid(rect, Color.black);
