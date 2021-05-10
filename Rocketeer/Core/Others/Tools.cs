@@ -1,36 +1,30 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using HarmonyLib;
+using RocketMan;
 
 namespace Rocketeer
 {
     public static class Tools
     {
-        public static bool HasRocketeerPatch(this MethodBase method)
+        public static bool IsPatched(this MethodBase method)
         {
-            return Context.patchedMethods.Contains(method.GetMethodPath());
+            return Context.patchedMethods.Contains(method.GetUniqueMethodIdentifier());
         }
 
-        public static string TrimMethodName(this string name)
+        public static bool TryGetRocketeerPatchTracker(this MethodBase method, out RocketeerPatchTracker report)
         {
-            if (name.StartsWith("get_")) name.Substring("get_".Length);
-            return name;
+            string id = method.GetUniqueMethodIdentifier();
+            return Context.patchByUniqueIdentifier.TryGetValue(id, out report);
         }
 
-        public static RocketeerReport GetReportById(int reportId)
-        {
-            RocketeerReport report;
-            lock (Context.reportDictLocker)
-                report = Context.reports[reportId];
-            return report;
-        }
-
-        public static string GetMethodPath(this MethodBase method)
+        public static string GetDeclaredTypeMethodPath(this MethodBase method)
         {
             var type = method.DeclaringType;
-            var space = type.Namespace;
-            return $"{space}.{type.Name}:{method.Name}";
+            return $"{type.Namespace}.{type.Name}:{method.Name}";
         }
 
         public static string GetReflectedTypeMethodPath(this MethodBase method)
@@ -41,8 +35,27 @@ namespace Rocketeer
 
         public static string GetUniqueMethodIdentifier(this MethodBase method)
         {
-            var type = method.ReflectedType;
-            return $"{method.GetMethodPath()}&{method.GetReflectedTypeMethodPath()}";
+            return $"{method.GetDeclaredTypeMethodPath()}&{method.GetReflectedTypeMethodPath()}";
+        }
+
+        public static bool IsValidMethodPath(this string methodPath)
+        {
+            methodPath = methodPath.Trim();
+            if (methodPath.Count(c => c == ' ' || c == '\t' || c == '\n') > 0)
+                return false;
+            try
+            {
+                if (AccessTools.Method(methodPath) is MethodBase method && method != null && method.IsValidTarget())
+                    return true;
+            }
+            catch { }
+            return false;
+        }
+
+        public static string TrimMethodName(this string name)
+        {
+            if (name.StartsWith("get_")) name.Substring("get_".Length);
+            return name;
         }
 
         public static string[] GetStackTraceAsString(this Exception exception)
@@ -53,7 +66,7 @@ namespace Rocketeer
             for (int i = 0; i < trace.FrameCount; i++)
             {
                 frame = trace.GetFrame(i);
-                frames[i] = $"method:{frame.GetMethod().GetMethodPath()}\t" +
+                frames[i] = $"method:{frame.GetMethod().GetDeclaredTypeMethodPath()}\t" +
                     $"file:{frame.GetFileName()}\t" +
                     $"line:{frame.GetFileLineNumber()}\t" +
                     $"offset:{frame.GetILOffset()}\t";

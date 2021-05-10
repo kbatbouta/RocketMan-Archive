@@ -18,9 +18,9 @@ namespace Rocketeer
         None = 2
     }
 
-    public class RocketeerReport
+    public class RocketeerPatchTracker
     {
-        private readonly int reportId;
+        private readonly int patchId;
         private readonly MethodBase method;
 
         public struct RocketeerInstruction
@@ -29,20 +29,9 @@ namespace Rocketeer
             public object operand;
         }
 
-        public struct RocketeerErrorReport
-        {
-            public string methodPath;
-            public string[] stackTrace;
-            public string message;
-            public string type;
-            public int lastInstructionIndex;
-            public int lastSectionIndex;
-            public int[] passes;
-        }
-
         public int Id
         {
-            get => reportId;
+            get => patchId;
         }
 
         public MethodBase Method
@@ -55,15 +44,20 @@ namespace Rocketeer
             get => successCounter + errorCounter;
         }
 
-        public bool flushImmediately = true;
-        public int allocatedRuns = 1;
+        public int Resolution
+        {
+            get => resolution;
+        }
+
+        public bool flushImmediately = false;
+        public int allocatedRuns = 128;
 
         private bool initialized = false;
-        private bool disabled = false;
+        private bool expired = false;
 
         private int successCounter = 0;
         private int errorCounter = 0;
-
+        private int resolution = 3;
         private int currentInstructionIndex = 0;
         private int currentSection = 0;
         private int t_currentSection = 0;
@@ -80,11 +74,11 @@ namespace Rocketeer
         private int[] sectionsStartPosition;
         private int[] sectionsPasses;
 
-        public RocketeerReport(MethodBase method, int reportId)
+        public RocketeerPatchTracker(MethodBase method, int patchId)
         {
-            this.reportId = reportId;
+            this.patchId = patchId;
             this.method = method;
-            this.methodPath = method.GetMethodPath();
+            this.methodPath = method.GetDeclaredTypeMethodPath();
         }
 
         public void PushInstruction(CodeInstruction instruction, BreakPointTypes pointTypes)
@@ -109,8 +103,21 @@ namespace Rocketeer
 
         public void OnStart()
         {
-            if (disabled)
-                return;
+            if (Context.__MARCO > 0)
+            {
+                Context.__MARCO -= 1;
+                Log.Warning($"ROCKETEER: PAULO:{Context.__MARCO}! from {method.GetDeclaredTypeMethodPath()}");
+            }
+            if (Context.__NUKE > 0)
+            {
+                Context.__NUKE -= 1;
+                throw new Exception($"ROCKETEER: Boom! Total_runs:{ExecutionRunsCounter}");
+            }
+            if (expired)
+            {
+                Log.Warning($"ROCKETEER:[{method.GetDeclaredTypeMethodPath()}&{patchId}] An expired Rocketeer patch is need unpatching!");
+                throw new Exception("ROCKETEER: This an expired rocketeer patch was caught active!");
+            }
             currentSection = 0;
             currentInstructionIndex = 0;
             if (initialized)
@@ -134,8 +141,6 @@ namespace Rocketeer
 
         public void OnCall(int callIndex)
         {
-            if (disabled)
-                return;
             currentInstructionIndex = callToPosition[callIndex];
             if (flushImmediately)
             {
@@ -145,8 +150,6 @@ namespace Rocketeer
 
         public void OnCheckPoint(int sectionIndex)
         {
-            if (disabled)
-                return;
             currentInstructionIndex = sectionsStartPosition[sectionIndex];
             currentSection = sectionIndex;
             sectionsPasses[currentSection]++;
@@ -158,8 +161,6 @@ namespace Rocketeer
 
         public void OnFinished()
         {
-            if (disabled)
-                return;
             allocatedRuns -= 1;
             successCounter++;
             if (flushImmediately)
@@ -174,23 +175,12 @@ namespace Rocketeer
 
         public void OnError(Exception exception)
         {
-            if (disabled)
-                return;
-            allocatedRuns -= 1;
-            errorCounter++;
+            allocatedRuns = Math.Max(allocatedRuns - 32, 0);
+            errorCounter += 1;
             if (flushImmediately)
             {
                 Flush(partial: false);
             }
-            RocketeerErrorReport errorReport = new RocketeerErrorReport()
-            {
-                methodPath = method.GetMethodPath(),
-                message = exception.Message,
-                type = exception.GetType().ToString(),
-                lastInstructionIndex = currentInstructionIndex,
-                lastSectionIndex = currentSection,
-                stackTrace = exception.GetStackTraceAsString(),
-            };
             if (allocatedRuns <= 0)
             {
                 Stop();
@@ -199,7 +189,7 @@ namespace Rocketeer
 
         public void Stop()
         {
-            disabled = true;
+            expired = true;
             RocketeerPatcher.Unpatch(method);
         }
 

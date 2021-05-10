@@ -5,13 +5,20 @@ namespace Rocketeer
 {
     public static class Context
     {
-        public static int reportIdCounter = 0;
+        public static int patchIDCounter = 0;
+
+        public static RocketeerPatchTracker[] patches = new RocketeerPatchTracker[100];
+
+        public static readonly Dictionary<string, RocketeerPatchTracker> patchByUniqueIdentifier = new Dictionary<string, RocketeerPatchTracker>();
+
         public static readonly HashSet<string> patchedMethods = new HashSet<string>();
 
-        public static readonly Dictionary<int, RocketeerReport> reports = new Dictionary<int, RocketeerReport>();
-        public static readonly Dictionary<string, RocketeerReport> reportsByMethodPath = new Dictionary<string, RocketeerReport>();
+        /* ----------------------------------------------------
+         * DEBUGGIN:                  
+         * This section contain special variables for debugging 
+        */
 
-        public static object reportDictLocker = new object();
-        public static object reportLocker = new object();
+        public static int __MARCO = 0; // Used to create a marko paulo ping
+        public static int __NUKE = 0; // Used to create a nuke new calls
     }
 }

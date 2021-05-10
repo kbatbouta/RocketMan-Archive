@@ -39,8 +39,8 @@ namespace RocketMan
                 .Where(m => m.TryGetAttribute<T>(out var _))
                 .ToArray())
             {
-                Log.Message(string.Format("ROCKETMAN: Found method with attribute {0}, {1}:{2}", typeof(T).Name,
-                    method.DeclaringType.Name, method.Name));
+                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Found action with attribute {0}, {1}:{2}", typeof(T).Name,
+                     method.DeclaringType.Name, method.Name));
                 yield return () => { method.Invoke(null, null); };
             }
         }
@@ -54,7 +54,7 @@ namespace RocketMan
                 .Where(m => m.TryGetAttribute<T>(out var _))
                 .ToArray())
             {
-                Log.Message(string.Format("ROCKETMAN: Found method with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return () => { return (P)method.Invoke(null, null); };
             }
@@ -83,21 +83,18 @@ namespace RocketMan
         public override void MapLoaded(Map map)
         {
             base.MapLoaded(map);
-            ReloadActions();
             for (var i = 0; i < onMapLoaded.Count; i++) onMapLoaded[i].Invoke();
         }
 
         public override void WorldLoaded()
         {
             base.WorldLoaded();
-            ReloadActions();
             for (var i = 0; i < onWorldLoaded.Count; i++) onWorldLoaded[i].Invoke();
         }
 
         public override void MapComponentsInitializing(Map map)
         {
             base.MapComponentsInitializing(map);
-            ReloadActions();
             for (var i = 0; i < onMapComponentsInitializing.Count; i++) onMapComponentsInitializing[i].Invoke();
         }
 

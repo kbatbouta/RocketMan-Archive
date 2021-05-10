@@ -127,7 +127,7 @@ namespace Soyuz
                 {
                     harmony.Unpatch(target, HarmonyPatchType.All, Finder.HarmonyID + ".Soyuz");
                 }
-                catch (Exception er)
+                catch (Exception)
                 {
                     if (Finder.debug) Log.Warning($"SOYUZ: Unpatching {target.DeclaringType.Name}:{target} is not possible!");
                 }

@@ -251,14 +251,11 @@ namespace RocketMan
 
         public static void Reset()
         {
-
             var defs = DefDatabase<StatDef>.AllDefs;
-
             statsSettings.Clear();
             foreach (var def in defs)
                 statsSettings.Add(new StatSettings
                 { stat = def.defName, expireAfter = def.defName.PredictValueFromString() });
-
             var failed = false;
             foreach (var setting in statsSettings)
             {
@@ -270,7 +267,6 @@ namespace RocketMan
 
                 Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
             }
-
             if (failed)
             {
                 Log.Warning("SOYUZ: Failed to reindex the statDef database");
