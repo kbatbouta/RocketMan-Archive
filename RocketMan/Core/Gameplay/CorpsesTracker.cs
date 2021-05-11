@@ -31,6 +31,7 @@ namespace RocketMan.Gameplay
         public override void MapComponentTick()
         {
             if (!Finder.enabled) return;
+            if (!Finder.corpsesRemovalEnabled) return;
             removalList.Clear();
             var counter = 0;
             if (tick % ScanInterval == 0) FindCorpses();

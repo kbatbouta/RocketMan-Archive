@@ -17,44 +17,71 @@ namespace Rocketeer
         private static readonly object _patchLocker = new object();
 
         private static HarmonyMethod mDebugTranspiler = new HarmonyMethod(AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Debug_Transpiler)));
+
         private static HarmonyMethod mDebugFinalizer = new HarmonyMethod(AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Debug_Finalizer)));
 
         private static MethodBase mNotify_Call = AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Notify_Call));
+
         private static MethodBase mNotify_CheckPoint = AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Notify_CheckPoint));
 
         private static MethodBase mNotify_Finished = AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Notify_Finished));
+
         private static MethodBase mNotify_Started = AccessTools.Method(typeof(RocketeerPatcher), nameof(RocketeerPatcher.Notify_Started));
 
-        private static RocketeerPatchTracker current;
+        private static RocketeerMethodTracker current;
 
-        public static RocketeerPatchTracker Patch(MethodBase method)
+        [Main.OnTickLong]
+        private static void RocketeerBomb()
         {
-            RocketeerPatchTracker tracker = null;
-            if (method.IsPatched())
+            if (Context.__NUKE <= 0) return;
+            Context.__NUKE = Math.Max(Context.__NUKE - 1, 0);
+            throw new Exception("ROCKETEER: BOOM!");
+        }
+
+        public static RocketeerMethodTracker GetRocketeerMethodTracker(this MethodBase method)
+        {
+            RocketeerMethodTracker tracker = null;
+            if (method.TryGetRocketeerMethodTracker(out tracker))
             {
-                throw new InvalidOperationException($"ROCKETEER: target method is already patched! {method.IsValidTarget()}");
+                return tracker;
             }
             if (!method.IsValidTarget())
             {
                 throw new InvalidOperationException($"ROCKETEER: target method is not valid! {method.IsValidTarget()}");
             }
+            lock (_patchPatchingLocker)
+            {
+                Context.patchIDCounter++;
+                tracker = new RocketeerMethodTracker(method, Context.patchIDCounter);
+                if (Context.patchIDCounter >= Context.trackers.Length)
+                {
+                    ExtentedTrackersCacheCapacity();
+                }
+                Context.trackers[Context.patchIDCounter] = tracker;
+                Context.trackerByUniqueIdentifier[method.GetUniqueMethodIdentifier()] = tracker;
+            }
+            return tracker;
+        }
+
+        public static void Patch(RocketeerMethodTracker tracker)
+        {
+            MethodBase method = tracker.Method;
+            if (method.IsPatched())
+            {
+                throw new InvalidOperationException($"ROCKETEER: target method is already patched! {method.IsValidTarget()}");
+            }
             try
             {
                 lock (_patchPatchingLocker)
                 {
-                    Context.patchIDCounter++;
-                    tracker = new RocketeerPatchTracker(method, Context.patchIDCounter);
-                    if (Context.patchIDCounter >= Context.patches.Length)
-                    {
-                        ExtentedTrackersCacheCapacity();
-                    }
-                    Context.patches[Context.patchIDCounter] = tracker;
-                    Context.patchByUniqueIdentifier[method.GetUniqueMethodIdentifier()] = tracker;
                     current = tracker;
-                    Harmony.DEBUG = true;
-                    Finder.harmony.Patch(method, transpiler: mDebugTranspiler, finalizer: mDebugFinalizer);
+                    Finder.harmony.Patch(
+                        method,
+                        transpiler: mDebugTranspiler,
+                        finalizer: mDebugFinalizer
+                    );
+                    Context.patchedMethods.Add(method.GetUniqueMethodIdentifier());
                 }
-                Context.patchedMethods.Add(method.GetUniqueMethodIdentifier());
             }
             catch (Exception er)
             {
@@ -62,19 +89,19 @@ namespace Rocketeer
                 string methodId = method.GetUniqueMethodIdentifier();
                 Context.patchedMethods.RemoveWhere(m => m == methodId);
             }
-            finally
-            {
-                current = null;
-            }
-            return tracker;
+        }
+
+        public static void Unpatch(RocketeerMethodTracker tracker)
+        {
+            Unpatch(tracker.Method);
         }
 
         public static void Unpatch(MethodBase method)
         {
             string methodId = method.GetUniqueMethodIdentifier();
-            RocketeerPatchTracker tracker = Context.patchByUniqueIdentifier[methodId];
-            Context.patches[tracker.Id] = null;
-            Context.patchByUniqueIdentifier.Remove(methodId);
+            RocketeerMethodTracker tracker = Context.trackerByUniqueIdentifier[methodId];
+            Context.trackers[tracker.Id] = null;
+            Context.trackerByUniqueIdentifier.Remove(methodId);
             Context.patchedMethods.RemoveWhere(m => m == methodId);
             Finder.harmony.Unpatch(method, mDebugTranspiler.method);
             Finder.harmony.Unpatch(method, mDebugFinalizer.method);
@@ -82,34 +109,34 @@ namespace Rocketeer
 
         private static void ExtentedTrackersCacheCapacity()
         {
-            RocketeerPatchTracker[] temp = new RocketeerPatchTracker[Context.patches.Length * 2 + 100];
-            for (int i = 0; i < Context.patches.Length; i++)
+            RocketeerMethodTracker[] temp = new RocketeerMethodTracker[Context.trackers.Length * 2 + 100];
+            for (int i = 0; i < Context.trackers.Length; i++)
             {
-                temp[i] = Context.patches[i];
-                Context.patches[i] = null;
+                temp[i] = Context.trackers[i];
+                Context.trackers[i] = null;
             }
-            Context.patches = temp;
+            Context.trackers = temp;
         }
 
 
-        private static void Notify_Started(int patchIndex)
+        private static void Notify_Started(int trackerIndex)
         {
-            Context.patches[patchIndex]?.OnStart();
+            Context.trackers[trackerIndex]?.OnStart();
         }
 
-        private static void Notify_Call(int index, int patchIndex)
+        private static void Notify_Call(int index, int trackerIndex)
         {
-            Context.patches[patchIndex]?.OnCall(index);
+            Context.trackers[trackerIndex]?.OnCall(index);
         }
 
-        private static void Notify_CheckPoint(int checkPointIndex, int patchIndex)
+        private static void Notify_CheckPoint(int checkPointIndex, int trackerIndex)
         {
-            Context.patches[patchIndex]?.OnCheckPoint(checkPointIndex);
+            Context.trackers[trackerIndex]?.OnCheckPoint(checkPointIndex);
         }
 
-        private static void Notify_Finished(int patchIndex)
+        private static void Notify_Finished(int trackerIndex)
         {
-            Context.patches[patchIndex]?.OnFinished();
+            Context.trackers[trackerIndex]?.OnFinished();
         }
 
         private static Exception Debug_Finalizer(Exception __exception)
@@ -117,7 +144,7 @@ namespace Rocketeer
             if (__exception != null)
             {
                 var method = new StackTrace(__exception).GetFrame(0).GetMethod();
-                Context.patchByUniqueIdentifier[method.GetUniqueMethodIdentifier()].OnError(__exception);
+                Context.trackerByUniqueIdentifier[method.GetUniqueMethodIdentifier()].OnError(__exception);
             }
             return __exception;
         }
@@ -128,14 +155,14 @@ namespace Rocketeer
             int instructionCounter = 0;
             int checkPointCounter = 0;
 
-            yield return new CodeInstruction(OpCodes.Ldc_I4, Context.patchIDCounter);
+            yield return new CodeInstruction(OpCodes.Ldc_I4, current.Id);
             yield return new CodeInstruction(OpCodes.Call, mNotify_Started);
             if (current.Id != Context.patchIDCounter) throw new Exception("ROCKETEER: FATAL ERROR DURING PATCHING WHERE ID CHANGED!");
             foreach (var instruction in instructions)
             {
                 if (instruction.opcode == OpCodes.Ret)
                 {
-                    yield return new CodeInstruction(OpCodes.Ldc_I4, Context.patchIDCounter) { labels = instruction.labels };
+                    yield return new CodeInstruction(OpCodes.Ldc_I4, current.Id) { labels = instruction.labels };
                     yield return new CodeInstruction(OpCodes.Call, mNotify_Finished);
                     instruction.labels = new List<Label>();
                     if (instructionCounter + 1 < instructions.Count())
@@ -151,7 +178,7 @@ namespace Rocketeer
                         yield return instruction;
                         current.PushInstruction(instruction, BreakPointTypes.Call);
                         yield return new CodeInstruction(OpCodes.Ldc_I4, callCounter++);
-                        yield return new CodeInstruction(OpCodes.Ldc_I4, Context.patchIDCounter);
+                        yield return new CodeInstruction(OpCodes.Ldc_I4, current.Id);
                         yield return new CodeInstruction(OpCodes.Call, mNotify_Call);
                         continue;
                     }
@@ -159,7 +186,7 @@ namespace Rocketeer
                     {
                         current.PushInstruction(instruction, BreakPointTypes.CheckPoint);
                         yield return new CodeInstruction(OpCodes.Ldc_I4, checkPointCounter++);
-                        yield return new CodeInstruction(OpCodes.Ldc_I4, Context.patchIDCounter);
+                        yield return new CodeInstruction(OpCodes.Ldc_I4, current.Id);
                         yield return new CodeInstruction(OpCodes.Call, mNotify_CheckPoint);
                     }
                     else

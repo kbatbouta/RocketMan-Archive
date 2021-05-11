@@ -166,7 +166,7 @@ namespace Soyuz
 
         private static IEnumerable<Type> GetSoyuzPatches()
         {
-            return typeof(SoyuzPatcher).Assembly.GetTypes().Where(
+            return typeof(SoyuzPatcher).Assembly.GetLoadableTypes().Where(
                 t => t.HasAttribute<SoyuzPatch>()
                 );
         }

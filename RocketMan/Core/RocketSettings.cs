@@ -38,9 +38,6 @@ namespace RocketMan
             finally
             {
                 Main.ReloadActions();
-                Main.onScribe = Main.GetActions<Main.OnScribe>().ToList();
-                Main.onStaticConstructors = Main.GetActions<Main.OnStaticConstructor>().ToList();
-                Main.onInitialization = Main.GetActions<Main.OnInitialization>().ToList();
                 foreach (var action in Main.onInitialization)
                     action.Invoke();
 
@@ -60,15 +57,21 @@ namespace RocketMan
                 byte[] rawAssembly = File.ReadAllBytes(Path.Combine(pluginsPath, pluginAssemblyName));
 
                 Assembly asm;
-                if (AppDomain.CurrentDomain.GetAssemblies().All(a => a.GetName().Name != name))
+                Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                if (assemblies.All(a => a != null && a.GetName().Name != name))
                 {
                     asm = AppDomain.CurrentDomain.Load(rawAssembly);
                     Log.Message(asm.GetName().Name);
                 }
                 else
                 {
-                    asm = AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name == name);
+                    asm = assemblies.First(a => a.GetName().Name == name);
                 }
+                if (content.assemblies.loadedAssemblies.Any(a => a.FullName == asm.FullName))
+                {
+                    return;
+                }
+                Finder.assemblies.Add(asm);
                 content.assemblies.loadedAssemblies.Add(asm);
             }
         }
@@ -121,6 +124,10 @@ namespace RocketMan
                 standard.CheckboxLabeled("Adaptive mod", ref Finder.learning, "Only enable for 30 minutes.");
                 standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
                     "Can cause bugs.");
+                standard.GapLine();
+                standard.CheckboxLabeled("Enable automatic corpses removal", ref Finder.corpsesRemovalEnabled,
+                    "This removes corpses that aren't in view for a while and that aren't near your base to avoid breaking the game balance.");
+
             }
 
             standard.GapLine();
@@ -356,6 +363,7 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.timeDilationCriticalHediffs, "timeDilationCriticalHediffs", true);
                 Scribe_Values.Look(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache");
                 Scribe_Values.Look(ref Finder.universalCacheAge, "universalCacheAge");
+                Scribe_Values.Look(ref Finder.corpsesRemovalEnabled, "corpsesRemovalEnabled", true);
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
                 Scribe_Collections.Look(ref dilationSettings, "dilationSettings", LookMode.Deep);
                 foreach (var action in Main.onScribe)

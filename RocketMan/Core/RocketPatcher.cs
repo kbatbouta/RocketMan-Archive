@@ -155,7 +155,7 @@ namespace RocketMan
 
         private static IEnumerable<Type> GetSoyuzPatches()
         {
-            return typeof(RocketPatcher).Assembly.GetTypes().Where(
+            return typeof(RocketPatcher).Assembly.GetLoadableTypes().Where(
                 t => t.HasAttribute<RocketPatch>()
                 );
         }

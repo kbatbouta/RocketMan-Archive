@@ -18,9 +18,9 @@ namespace Rocketeer
         None = 2
     }
 
-    public class RocketeerPatchTracker
+    public class RocketeerMethodTracker
     {
-        private readonly int patchId;
+        private readonly int trackerId;
         private readonly MethodBase method;
 
         public struct RocketeerInstruction
@@ -31,7 +31,7 @@ namespace Rocketeer
 
         public int Id
         {
-            get => patchId;
+            get => trackerId;
         }
 
         public MethodBase Method
@@ -55,8 +55,9 @@ namespace Rocketeer
         private bool initialized = false;
         private bool expired = false;
 
-        private int successCounter = 0;
-        private int errorCounter = 0;
+        public int successCounter = 0;
+        public int errorCounter = 0;
+
         private int resolution = 3;
         private int currentInstructionIndex = 0;
         private int currentSection = 0;
@@ -74,9 +75,9 @@ namespace Rocketeer
         private int[] sectionsStartPosition;
         private int[] sectionsPasses;
 
-        public RocketeerPatchTracker(MethodBase method, int patchId)
+        public RocketeerMethodTracker(MethodBase method, int trackerId)
         {
-            this.patchId = patchId;
+            this.trackerId = trackerId;
             this.method = method;
             this.methodPath = method.GetDeclaredTypeMethodPath();
         }
@@ -108,14 +109,9 @@ namespace Rocketeer
                 Context.__MARCO -= 1;
                 Log.Warning($"ROCKETEER: PAULO:{Context.__MARCO}! from {method.GetDeclaredTypeMethodPath()}");
             }
-            if (Context.__NUKE > 0)
-            {
-                Context.__NUKE -= 1;
-                throw new Exception($"ROCKETEER: Boom! Total_runs:{ExecutionRunsCounter}");
-            }
             if (expired)
             {
-                Log.Warning($"ROCKETEER:[{method.GetDeclaredTypeMethodPath()}&{patchId}] An expired Rocketeer patch is need unpatching!");
+                Log.Warning($"ROCKETEER:[{method.GetDeclaredTypeMethodPath()}&{trackerId}] An expired Rocketeer patch is need unpatching!");
                 throw new Exception("ROCKETEER: This an expired rocketeer patch was caught active!");
             }
             currentSection = 0;

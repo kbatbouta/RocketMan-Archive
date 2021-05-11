@@ -168,7 +168,7 @@ namespace Proton
 
         private static IEnumerable<Type> GetProtonPatches()
         {
-            return typeof(ProtonPatcher).Assembly.GetTypes().Where(
+            return typeof(ProtonPatcher).Assembly.GetLoadableTypes().Where(
                 t => t.HasAttribute<ProtonPatch>()
                 );
         }

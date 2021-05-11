@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
 using Verse;
 
 namespace RocketMan
@@ -40,6 +42,8 @@ namespace RocketMan
 
         public static bool statGearCachingEnabled = false;
 
+        public static bool corpsesRemovalEnabled = true;
+
         public static bool logData = false;
 
         public static bool debug150MTPS = false;
@@ -71,5 +75,18 @@ namespace RocketMan
         public static RocketShip.RocketPatcher rocket = new RocketShip.RocketPatcher(HarmonyID);
 
         public static object locker = new object();
+
+        public static readonly HashSet<Assembly> assemblies = new HashSet<Assembly>();
+
+        public static IEnumerable<Assembly> RocketManAssemblies
+        {
+            get
+            {
+                Assembly mainAssembly = typeof(Finder).Assembly;
+                if (!assemblies.Contains(mainAssembly))
+                    assemblies.Add(mainAssembly);
+                return assemblies;
+            }
+        }
     }
 }

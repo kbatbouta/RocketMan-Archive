@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using RocketMan;
+using Verse;
 
 namespace Rocketeer
 {
@@ -15,10 +17,10 @@ namespace Rocketeer
             return Context.patchedMethods.Contains(method.GetUniqueMethodIdentifier());
         }
 
-        public static bool TryGetRocketeerPatchTracker(this MethodBase method, out RocketeerPatchTracker report)
+        public static bool TryGetRocketeerMethodTracker(this MethodBase method, out RocketeerMethodTracker report)
         {
             string id = method.GetUniqueMethodIdentifier();
-            return Context.patchByUniqueIdentifier.TryGetValue(id, out report);
+            return Context.trackerByUniqueIdentifier.TryGetValue(id, out report);
         }
 
         public static string GetDeclaredTypeMethodPath(this MethodBase method)
@@ -72,6 +74,18 @@ namespace Rocketeer
                     $"offset:{frame.GetILOffset()}\t";
             }
             return frames;
+        }
+
+        private static readonly Dictionary<MethodBase, string> _packageIdCache = new Dictionary<MethodBase, string>();
+
+        public static string GetModPackageId(this MethodBase method)
+        {
+            if (!(method?.IsValidTarget() ?? false))
+                return null;
+            if (_packageIdCache.TryGetValue(method, out string value))
+                return value;
+            Assembly assembly = method.DeclaringType.Assembly;
+            return _packageIdCache[method] = LoadedModManager.RunningMods.First(m => m.assemblies?.loadedAssemblies?.Contains(assembly) ?? false)?.PackageId ?? null;
         }
     }
 }

@@ -118,7 +118,7 @@ namespace RocketMan
 
             public static IEnumerable<Type> GetSkipperPatchTypes()
             {
-                var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());
+                var types = Finder.RocketManAssemblies.SelectMany(x => x.GetLoadableTypes());
                 foreach (var type in types)
                     if (type.HasAttribute<SkipperPatch>())
                     {

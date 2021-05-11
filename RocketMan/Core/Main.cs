@@ -13,70 +13,43 @@ namespace RocketMan
     {
         private int debugging = 0;
 
-        private static List<Action> onClearCache = GetActions<OnClearCache>().ToList();
-        private static List<Action> onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
-
-        private static List<Action> onWorldLoaded = GetActions<OnWorldLoaded>().ToList();
-        private static List<Action> onMapLoaded = GetActions<OnMapLoaded>().ToList();
-        private static List<Action> onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
-        private static List<Action> onTick = GetActions<OnTick>().ToList();
-        private static List<Action> onTickLong = GetActions<OnTickLong>().ToList();
+        private static List<Action> onClearCache;
+        private static List<Action> onDefsLoaded;
+        private static List<Action> onWorldLoaded;
+        private static List<Action> onMapLoaded;
+        private static List<Action> onMapComponentsInitializing;
+        private static List<Action> onTick;
+        private static List<Action> onTickLong;
 
         public static List<Action> onStaticConstructors;
         public static List<Action> onInitialization;
         public static List<Action> onScribe;
+
         public static List<Func<ITabContent>> yieldTabContent;
 
         public static List<Action> onDebugginEnabled;
         public static List<Action> onDebugginDisabled;
 
-        public static IEnumerable<Action> GetActions<T>() where T : Attribute
-        {
-            foreach (var method in AppDomain.CurrentDomain.GetAssemblies()
-                .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
-                .SelectMany(a => a.GetTypes())
-                .SelectMany(t => t.GetMethods())
-                .Where(m => m.TryGetAttribute<T>(out var _))
-                .ToArray())
-            {
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Found action with attribute {0}, {1}:{2}", typeof(T).Name,
-                     method.DeclaringType.Name, method.Name));
-                yield return () => { method.Invoke(null, null); };
-            }
-        }
-
-        public static IEnumerable<Func<P>> GetFunctions<T, P>() where T : Attribute
-        {
-            foreach (var method in AppDomain.CurrentDomain.GetAssemblies()
-                .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
-                .SelectMany(a => a.GetTypes())
-                .SelectMany(t => t.GetMethods())
-                .Where(m => m.TryGetAttribute<T>(out var _))
-                .ToArray())
-            {
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
-                    method.DeclaringType.Name, method.Name));
-                yield return () => { return (P)method.Invoke(null, null); };
-            }
-        }
-
         public static void ReloadActions()
         {
-            onClearCache = GetActions<OnClearCache>().ToList();
-            onDefsLoaded = GetActions<OnDefsLoaded>().ToList();
-            onWorldLoaded = GetActions<OnWorldLoaded>().ToList();
-            onMapLoaded = GetActions<OnMapLoaded>().ToList();
-            onMapComponentsInitializing = GetActions<OnMapComponentsInitializing>().ToList();
-            onTick = GetActions<OnTick>().ToList();
-            onDebugginEnabled = GetActions<OnDebugginEnabled>().ToList();
-            onDebugginDisabled = GetActions<OnDebugginDisabled>().ToList();
-            onTickLong = GetActions<OnTickLong>().ToList();
-            yieldTabContent = GetFunctions<YieldTabContent, ITabContent>().ToList();
+            onClearCache = FunctionUtility.GetActions<OnClearCache>().ToList();
+            onDefsLoaded = FunctionUtility.GetActions<OnDefsLoaded>().ToList();
+            onWorldLoaded = FunctionUtility.GetActions<OnWorldLoaded>().ToList();
+            onMapLoaded = FunctionUtility.GetActions<OnMapLoaded>().ToList();
+            onMapComponentsInitializing = FunctionUtility.GetActions<OnMapComponentsInitializing>().ToList();
+            onTick = FunctionUtility.GetActions<OnTick>().ToList();
+            onDebugginEnabled = FunctionUtility.GetActions<OnDebugginEnabled>().ToList();
+            onDebugginDisabled = FunctionUtility.GetActions<OnDebugginDisabled>().ToList();
+            onTickLong = FunctionUtility.GetActions<OnTickLong>().ToList();
+            yieldTabContent = FunctionUtility.GetFunctions<YieldTabContent, ITabContent>().ToList();
+            onScribe = FunctionUtility.GetActions<Main.OnScribe>().ToList();
+            onStaticConstructors = FunctionUtility.GetActions<Main.OnStaticConstructor>().ToList();
+            onInitialization = FunctionUtility.GetActions<Main.OnInitialization>().ToList();
         }
 
         static Main()
         {
-            onStaticConstructors = GetActions<OnStaticConstructor>().ToList();
+            onStaticConstructors = FunctionUtility.GetActions<OnStaticConstructor>().ToList();
             for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
         }
 
