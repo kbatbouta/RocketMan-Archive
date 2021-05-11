@@ -30,7 +30,7 @@ namespace Rocketeer
 
         private static RocketeerMethodTracker current;
 
-        [Main.OnTickLong]
+        [Main.OnTick]
         private static void RocketeerBomb()
         {
             if (Context.__NUKE <= 0) return;

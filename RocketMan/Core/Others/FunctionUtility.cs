@@ -10,7 +10,7 @@ namespace RocketMan
     {
         public static Type[] GetLoadableTypes(this Assembly a)
         {
-            ICollection<Type> types = new List<Type>();
+            List<Type> types;
             try
             {
                 types = a.GetTypes().Where(i => i != null).ToList();
@@ -18,8 +18,7 @@ namespace RocketMan
             catch (ReflectionTypeLoadException e)
             {
                 Log.Warning($"<color=blue>[ROCKETMAN]</color>:[{a.FullName}] Gettypes fallback mod activated!");
-                // This is the last line of defense
-                // if this fails everything will
+                types = new List<Type>();
                 foreach (Type type in e.Types)
                 {
                     try
@@ -27,11 +26,8 @@ namespace RocketMan
                         if (type != null && type.Assembly == a)
                             types.Add(type);
                     }
-                    // This exception list is not exhaustive, modify to suit any reasons
-                    // you find for failure to parse a single assembly
                     catch (BadImageFormatException badImageFormatException)
                     {
-                        // Type not in this assembly - reference to elsewhere ignored
                         Log.Error($"ROCKETMAN:[{a.FullName}] {a.FullName} is a bad file! (corrupted):{badImageFormatException}");
                     }
                 }
