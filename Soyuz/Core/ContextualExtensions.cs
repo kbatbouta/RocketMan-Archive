@@ -11,7 +11,7 @@ using Verse;
 namespace Soyuz
 {
 
-    public static class ContextualExtensions
+    public static partial class ContextualExtensions
     {
         private static Pawn _pawnTick;
         private static Pawn _pawnScreen;
@@ -25,6 +25,7 @@ namespace Soyuz
 
         private static readonly int[] _transformationCache = new int[TransformationCacheSize];
         private static readonly Dictionary<int, int> timers = new Dictionary<int, int>();
+        private static readonly Dictionary<int, int> deltas = new Dictionary<int, int>();
         private static readonly Dictionary<int, Pair<bool, int>> bleeding = new Dictionary<int, Pair<bool, int>>();
 
         private static readonly Dictionary<Pawn, PawnPerformanceModel> pawnPerformanceModels =
@@ -56,6 +57,11 @@ namespace Soyuz
             }
         }
 
+        public static Pawn Current
+        {
+            get => _pawnTick;
+        }
+
         [Main.OnInitialization]
         public static void Initialize()
         {
@@ -82,17 +88,11 @@ namespace Soyuz
             return offScreen = true;
         }
 
-        private static bool _isSkippingPawn = false;
-        private static Pawn _skippingPawn = null;
         public static bool IsSkippingTicks(this Pawn pawn)
         {
             if (!Finder.timeDilation)
                 return false;
-            if (pawn == _skippingPawn)
-                return _isSkippingPawn;
-            _skippingPawn = pawn;
-            _isSkippingPawn = _pawnTick == pawn && IsSkippingTicksInternal(pawn);
-            return _isSkippingPawn;
+            return pawn.IsSkippingTicks_newtemp();
         }
 
         private static bool IsSkippingTicksInternal(Pawn pawn)
@@ -127,13 +127,6 @@ namespace Soyuz
             }
         }
 
-        private static void Skip(Pawn pawn)
-        {
-            _isValidPawn = false;
-            _isSkippingPawn = false;
-            _skippingPawn = pawn;
-        }
-
         public static void EndTick(this Pawn pawn)
         {
             if (Finder.logData && Time.frameCount - Finder.lastFrame < 60)
@@ -163,11 +156,15 @@ namespace Soyuz
             else Reset();
         }
 
+        private static void Skip(Pawn pawn)
+        {
+            _isValidPawn = false;
+        }
+
         private static void Reset()
         {
             _pawnScreen = null;
             _pawnTick = null;
-            _skippingPawn = null;
             _validPawn = null;
         }
 
@@ -192,39 +189,35 @@ namespace Soyuz
             return pawnHediffsModels[pawn] = new Dictionary<Hediff, PawnHediffModel>();
         }
 
-        public static bool ShouldTick(this Pawn pawn)
-        {
-            var tick = GenTicks.TicksGame;
-            shouldTick = ShouldTickInternal(pawn);
-            if (timers.TryGetValue(pawn.thingIDNumber, out var val)) curDelta = tick - val;
-            else curDelta = 1;
-            if (shouldTick) timers[pawn.thingIDNumber] = tick;
-            return shouldTick;
-        }
-
         public static bool IsCustomTickInterval(this Thing thing, int interval)
         {
             if (_pawnTick == thing && Finder.timeDilation && Finder.enabled)
             {
                 if (WorldPawnsTicker.isActive)
-                {
                     return WorldPawnsTicker.curCycle % WorldPawnsTicker.Transform(interval) == 0;
-                }
                 else if (((Pawn)thing).IsSkippingTicks())
-                {
                     return (thing.thingIDNumber + GenTicks.TicksGame) % RoundTransform(interval) == 0;
-                }
             }
             return thing.IsHashIntervalTick(interval);
         }
 
-        private static bool ShouldTickInternal(Pawn pawn)
+        public static void UpdateTimers(this Pawn pawn)
+        {
+            int tick = GenTicks.TicksGame;
+            curDelta = 1;
+            if (timers.TryGetValue(pawn.thingIDNumber, out var val))
+                curDelta = tick - val;
+            deltas[pawn.thingIDNumber] = curDelta;
+            timers[pawn.thingIDNumber] = GenTicks.TicksGame;
+        }
+
+        public static bool ShouldTick(this Pawn pawn)
         {
             if (!Finder.timeDilation || !Finder.enabled)
                 return true;
             if (WorldPawnsTicker.isActive && Finder.timeDilationWorldPawns)
                 return true;
-            var tick = GenTicks.TicksGame;
+            int tick = GenTicks.TicksGame;
             if (false
                 || (pawn.thingIDNumber + tick) % 30 == 0
                 || (tick % 250 == 0)
@@ -240,30 +233,33 @@ namespace Soyuz
 
         public static int GetDeltaT(this Thing thing)
         {
-            if (thing == _pawnTick)
+            if (thing == Current)
                 return curDelta;
-            if (timers.TryGetValue(thing.thingIDNumber, out var val))
-                return GenTicks.TicksGame - val;
-            throw new Exception();
+            if (deltas.TryGetValue(thing.thingIDNumber, out int delta))
+                return delta;
+            throw new Exception($"SOYUZ: Inconsistant timer data for pawn {thing}");
         }
 
         private static bool _isValidPawn = false;
         private static Pawn _validPawn = null;
         public static bool IsValidWildlifeOrWorldPawn(this Pawn pawn)
         {
-            if (_validPawn == pawn)
-                return _isValidPawn;
-            _validPawn = pawn;
-            return _isValidPawn = (_pawnTick == pawn && IsValidWildlifeOrWorldPawnInternal(pawn));
+            if (Current != pawn)
+                return false;
+            if (_validPawn != pawn)
+            {
+                _validPawn = pawn;
+                _isValidPawn = IsValidWildlifeOrWorldPawn_newtemp(pawn);
+            }
+            return _isValidPawn;
         }
 
         private static bool IsValidWildlifeOrWorldPawnInternal(Pawn pawn)
         {
             int pawnInt = pawn.AsInt();
             return (true
-                    && pawn.IsBleeding() == false
-                    && pawn.IsColonist == false
-                    //&& ((pawn.Spawned == true && pawn.Faction = Faction.OfPlayer) || WorldPawnsTicker.isActive)
+                    && !pawn.IsBleeding()
+                    && !pawn.IsColonist
                     && ((pawnInt == (pawnInt & Context.dilationInts[pawn.def.index])) || (WorldPawnsTicker.isActive && Finder.timeDilationWorldPawns)));
         }
 

@@ -358,6 +358,7 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.learning, "learning");
                 Scribe_Values.Look(ref Finder.debug, "debug", false);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
+                Scribe_Values.Look(ref Finder.timeDilationVisitors, "timeDilationVisitors", false);
                 Scribe_Values.Look(ref Finder.timeDilationWorldPawns, "timeDilationWorldPawns", true);
                 Scribe_Values.Look(ref Finder.timeDilationColonyAnimals, "timeDialationColonyAnimals", true);
                 Scribe_Values.Look(ref Finder.timeDilationCriticalHediffs, "timeDilationCriticalHediffs", true);

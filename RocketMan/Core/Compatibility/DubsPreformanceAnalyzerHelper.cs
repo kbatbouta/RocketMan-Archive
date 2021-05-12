@@ -33,5 +33,8 @@ namespace RocketMan
             if (isLoaded) Log.Message(string.Format("ROCKETMAN: Rocketman detected {0}!", Name));
             return isLoaded;
         }
+
+        [Main.OnInitialization]
+        private static void Initialize() => _ = Instance;
     }
 }

@@ -4,7 +4,7 @@ using RimWorld;
 
 namespace RocketMan.Patches
 {
-    [RocketPatch(typeof(Pawn_TimetableTracker), nameof(Pawn_TimetableTracker.GetAssignment))]
+    [RocketPatch(typeof(Pawn_TimetableTracker), nameof(Pawn_TimetableTracker.GetAssignment), modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
     public static class Pawn_TimetableTracker_GetAssignment_Patch
     {
         private static Exception Finalizer(Exception __exception, Pawn_TimetableTracker __instance, int hour,

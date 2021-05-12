@@ -17,20 +17,23 @@ namespace RocketMan
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class RocketPatch : Attribute
     {
-        public Type targetType;
         public string targetMethod;
+        public Type targetType;
         public Type[] parameters = null;
         public Type[] generics = null;
         public MethodType methodType;
 
         public readonly PatchType patchType;
+        public readonly Type[] modsCompatiblityHandlers;
 
-        public RocketPatch()
+
+        public RocketPatch(Type[] modsCompatiblityHandlers = null)
         {
             this.patchType = PatchType.empty;
+            this.modsCompatiblityHandlers = modsCompatiblityHandlers;
         }
 
-        public RocketPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null)
+        public RocketPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null, Type[] modsCompatiblityHandlers = null)
         {
             this.patchType = PatchType.normal;
             this.targetType = targetType;
@@ -38,6 +41,7 @@ namespace RocketMan
             this.methodType = methodType;
             this.parameters = parameters;
             this.generics = generics;
+            this.modsCompatiblityHandlers = modsCompatiblityHandlers;
         }
     }
 
@@ -80,7 +84,6 @@ namespace RocketMan
                 }
                 else if (patchType == PatchType.empty)
                 {
-
                     targets = (type.GetMethod("TargetMethods").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
                 }
             }
@@ -104,7 +107,6 @@ namespace RocketMan
                 if (Finder.debug) Log.Message($"ROCKETMAN: Prepare failed for {attribute.targetType.Name ?? null}:{attribute.targetMethod ?? null}");
                 return;
             }
-
             foreach (var target in targets.ToHashSet())
             {
                 if (!target.IsValidTarget())
@@ -142,7 +144,7 @@ namespace RocketMan
 
         static RocketPatcher()
         {
-            var flaggedTypes = GetSoyuzPatches();
+            var flaggedTypes = GetRocketPatches();
             var patchList = new List<RocketPatchInfo>();
             foreach (var type in flaggedTypes)
             {
@@ -153,11 +155,9 @@ namespace RocketMan
             patches = patchList.Where(p => p.IsValid).ToArray();
         }
 
-        private static IEnumerable<Type> GetSoyuzPatches()
+        private static IEnumerable<Type> GetRocketPatches()
         {
-            return typeof(RocketPatcher).Assembly.GetLoadableTypes().Where(
-                t => t.HasAttribute<RocketPatch>()
-                );
+            return typeof(RocketPatcher).Assembly.GetLoadableTypes().Where(t => t.HasAttribute<RocketPatch>());
         }
     }
 }

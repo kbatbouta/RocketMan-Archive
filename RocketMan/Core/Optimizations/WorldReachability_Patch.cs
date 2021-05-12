@@ -14,7 +14,7 @@ namespace RocketMan.Optimizations
             return !RimWarThreadedHelper.Instance.IsLoaded() && !RimWarHelper.Instance.IsLoaded();
         }
 
-        [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), parameters = new[] { typeof(int), typeof(int) })]
+        [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) }, parameters = new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
             internal static HashSet<int> visitedTiles;

@@ -17,20 +17,22 @@ namespace Proton
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class ProtonPatch : Attribute
     {
-        public Type targetType;
         public string targetMethod;
+        public Type targetType;
         public Type[] parameters = null;
         public Type[] generics = null;
         public MethodType methodType;
 
         public readonly PatchType patchType;
+        public readonly Type[] modsCompatiblityHandlers;
 
-        public ProtonPatch()
+        public ProtonPatch(Type[] modsCompatiblityHandlers = null)
         {
             this.patchType = PatchType.empty;
+            this.modsCompatiblityHandlers = modsCompatiblityHandlers;
         }
 
-        public ProtonPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null)
+        public ProtonPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null, Type[] modsCompatiblityHandlers = null)
         {
             this.patchType = PatchType.normal;
             this.targetType = targetType;
@@ -38,6 +40,7 @@ namespace Proton
             this.methodType = methodType;
             this.parameters = parameters;
             this.generics = generics;
+            this.modsCompatiblityHandlers = modsCompatiblityHandlers;
         }
     }
 

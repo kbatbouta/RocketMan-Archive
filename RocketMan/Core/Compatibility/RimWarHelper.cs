@@ -15,5 +15,8 @@
                 return instance;
             }
         }
+
+        [Main.OnInitialization]
+        private static void Initialize() => _ = Instance;
     }
 }

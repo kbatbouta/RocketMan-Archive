@@ -73,12 +73,12 @@ namespace RocketMan
 
         public override void DefsLoaded()
         {
+            for (var i = 0; i < onDefsLoaded.Count; i++) onDefsLoaded[i].Invoke();
             base.DefsLoaded();
             {
                 RocketPatcher.PatchAll();
                 Finder.rocket.PatchAll();
             }
-            for (var i = 0; i < onDefsLoaded.Count; i++) onDefsLoaded[i].Invoke();
         }
 
         public override void Tick(int currentTick)

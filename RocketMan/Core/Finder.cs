@@ -24,6 +24,8 @@ namespace RocketMan
 
         public static bool timeDilationWorldPawns = true;
 
+        public static bool timeDilationVisitors = false;
+
         public static bool flashDilatedPawns = false;
 
         public static bool alwaysDilating = false;
@@ -72,7 +74,7 @@ namespace RocketMan
 
         public static Harmony harmony = new Harmony(HarmonyID);
 
-        public static RocketShip.RocketPatcher rocket = new RocketShip.RocketPatcher(HarmonyID);
+        public static RocketShip.SkipperPatcher rocket = new RocketShip.SkipperPatcher(HarmonyID);
 
         public static object locker = new object();
 

@@ -17,20 +17,22 @@ namespace Soyuz
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class SoyuzPatch : Attribute
     {
-        public Type targetType;
         public string targetMethod;
+        public Type targetType;
         public Type[] parameters = null;
         public Type[] generics = null;
         public MethodType methodType;
 
         public readonly PatchType patchType;
+        public readonly Type[] modsCompatiblityHandlers;
 
-        public SoyuzPatch()
+        public SoyuzPatch(Type[] modsCompatiblityHandlers = null)
         {
             this.patchType = PatchType.empty;
+            this.modsCompatiblityHandlers = modsCompatiblityHandlers;
         }
 
-        public SoyuzPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null)
+        public SoyuzPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null, Type[] modsCompatiblityHandlers = null)
         {
             this.patchType = PatchType.normal;
             this.targetType = targetType;
@@ -38,6 +40,7 @@ namespace Soyuz
             this.methodType = methodType;
             this.parameters = parameters;
             this.generics = generics;
+            this.modsCompatiblityHandlers = modsCompatiblityHandlers;
         }
     }
 

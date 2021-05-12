@@ -344,6 +344,8 @@
         <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
         <Compile Include="Core\Others\PatchingUtility.cs" />
         <Compile Include="Core\Others\FunctionUtility.cs" />
+        <Compile Include="Core\Compatibility\MultiplayerHelper.cs" />
+        <Compile Include="Core\Others\CompatibilityUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
