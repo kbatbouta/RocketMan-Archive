@@ -18,6 +18,7 @@ namespace RocketMan
         private static string searchString = "";
 
         private const string PluginDir = "Plugins";
+        private static int frameCounter = 0;
 
         public static RocketMod instance;
         public static Vector2 scrollPositionStatSettings = Vector2.zero;
@@ -110,6 +111,19 @@ namespace RocketMan
             Text.CurFontStyle.fontStyle = FontStyle.Normal;
             bool enabled = Finder.enabled;
             standard.CheckboxLabeled("Enabled", ref Finder.enabled);
+            bool mainButtonToggle = Finder.mainButtonToggle;
+            standard.CheckboxLabeled("Hide RocketMan button/icon", ref Finder.mainButtonToggle,
+                    "Due to some limiations some options aren't available from the game menu settings.");
+            if (Finder.mainButtonToggle != mainButtonToggle)
+            {
+                MainButtonDef mainButton_WindowDef = DefDatabase<MainButtonDef>.GetNamed("RocketWindow", errorOnFail: false);
+                if (mainButton_WindowDef != null)
+                {
+                    mainButton_WindowDef.buttonVisible = Finder.mainButtonToggle;
+                    string state = Finder.mainButtonToggle ? "shown" : "hidden";
+                    Log.Message($"ROCKETMAN: <color=red>MainButton</color> is now {state}!");
+                }
+            }
             if (enabled != Finder.enabled && !Finder.enabled)
                 ResetDebugSettings();
             if (Finder.enabled)
@@ -146,6 +160,8 @@ namespace RocketMan
                 }
             }
             standard.End();
+            try { if (frameCounter++ % 5 == 0) settings.Write(); }
+            catch (Exception er) { Log.Warning($"ROCKETMAN:[NOTANERROR] Writing settings failed with error {er}"); }
             Text.Font = font;
             Text.Anchor = anchor;
             Text.CurFontStyle.fontStyle = style;
@@ -384,9 +400,11 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.timeDilationCriticalHediffs, "timeDilationCriticalHediffs", true);
                 Scribe_Values.Look(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache");
                 Scribe_Values.Look(ref Finder.universalCacheAge, "universalCacheAge");
+                Scribe_Values.Look(ref Finder.mainButtonToggle, "mainButtonToggle", true);
                 Scribe_Values.Look(ref Finder.corpsesRemovalEnabled, "corpsesRemovalEnabled", false);
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
                 Scribe_Collections.Look(ref dilationSettings, "dilationSettings", LookMode.Deep);
+
                 foreach (var action in Main.onScribe)
                     action.Invoke();
                 UpdateExceptions();

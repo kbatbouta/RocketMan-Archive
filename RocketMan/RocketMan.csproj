@@ -347,6 +347,8 @@
         <Compile Include="Core\Others\CompatibilityUtility.cs" />
         <Compile Include="Core\Extras\XMLParser.cs" />
         <Compile Include="Core\Extras\IgnoreMeDatabase.cs" />
+        <Compile Include="Core\Patches\EditWindow_Log_Patch.cs" />
+        <Compile Include="Core\Others\LogUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

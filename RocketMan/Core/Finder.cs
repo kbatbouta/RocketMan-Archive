@@ -60,6 +60,8 @@ namespace RocketMan
 
         public static int lastFrame;
 
+        public static bool mainButtonToggle = true;
+
         public static float learningRate = 0.05f;
 
         public static int universalCacheAge = 2500;

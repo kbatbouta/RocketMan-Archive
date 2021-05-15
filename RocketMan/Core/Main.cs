@@ -49,6 +49,11 @@ namespace RocketMan
 
         static Main()
         {
+            // ----------------------
+            // TODO more stylizations.
+            // this is used to stylize the log output of rocketman.
+            EditWindow_Log_DoMessagesListing_Patch.PatchEditWindow_Log();
+            // Offical start of the code.
             onStaticConstructors = FunctionUtility.GetActions<OnStaticConstructor>().ToList();
             for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
         }

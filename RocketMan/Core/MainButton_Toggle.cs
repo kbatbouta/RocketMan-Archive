@@ -6,11 +6,9 @@ namespace RocketMan
 {
     internal class MainButton_Toggle : MainButtonWorker
     {
-        public override bool Disabled =>
-            Find.CurrentMap == null
-            && (!def.validWithoutMap || def == MainButtonDefOf.World) || Find.WorldRoutePlanner.Active
-            && Find.WorldRoutePlanner.FormingCaravan
-            && (!def.validWithoutMap || def == MainButtonDefOf.World);
+        public override bool Disabled => !Finder.mainButtonToggle ? true : (Find.CurrentMap == null && (!def.validWithoutMap || def == MainButtonDefOf.World) || Find.WorldRoutePlanner.Active && Find.WorldRoutePlanner.FormingCaravan && (!def.validWithoutMap || def == MainButtonDefOf.World));
+
+        public override float ButtonBarPercent => Finder.mainButtonToggle ? base.ButtonBarPercent : 0f;
 
         public override void Activate()
         {
