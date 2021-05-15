@@ -52,7 +52,24 @@ This system will work whatever the load order is and it tells rocketman to:
 * Not to do either to anything (by providing the packageId).
 * This will be applied to every new feature in RocketMan.
 This system is the new standard going forward for RocketMan. This is meant to make the compatibility process easy, simple, and seamless.  
+#### Request and notification system
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<RocketRules>
+     <Notify type="PawnDirty" packageId="krkr.RocketMan" method="ThingWithComps:Notify_Equipped"/>
+</RocketRules>
+```
+Your mod can notify RocketMan to clear the statCache by calling a function in your code (preferably empty one). You can follow this format
+* `packageId` is your mod `packageId`
+* `method` (formated as `YourClass:Method`) is the method that you call to notify rocketman that your mod need the cache cleared.
 
+**Note** This work by applying a `Prefix` patch on your destination/provided empty method (in this case `ThingWithComps:Notify_Equipped`) thus every time you call `ThingWithComps:Notify_Equipped` in this example the prefix is executed and the cache is cleared.
+and that prefix notify rocketman to clear the cache
+
+**Notification types**
+* `PawnDirty` The target/provided method for this need to have `Pawn pawn` as a parameter. 
+
+**Note on notification types** For now there is only one which the above `PawnDirty`. This system is the new way for your mod to call RocketMan regardless of the load order.
 
 #### Special Thanks goes to:
 
