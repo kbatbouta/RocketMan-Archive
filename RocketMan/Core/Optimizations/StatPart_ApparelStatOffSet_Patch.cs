@@ -16,7 +16,10 @@ namespace RocketMan.Optimizations
         public static bool Prefix(StatPart_ApparelStatOffset __instance, StatRequest req,
             ref float val)
         {
-            if (Finder.enabled && Finder.statGearCachingEnabled && req.HasThing && req.thingInt is Pawn pawn)
+            if (Finder.enabled && Finder.statGearCachingEnabled
+                && req.HasThing
+                && req.thingInt is Pawn pawn
+                && !IgnoreMeDatabase.ShouldIgnore(__instance.apparelStat))
             {
                 var stat = __instance.apparelStat ?? __instance.parentStat;
                 int key;

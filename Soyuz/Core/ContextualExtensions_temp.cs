@@ -14,7 +14,7 @@ namespace Soyuz
                 return false;
             if (!Finder.enabled || !Finder.timeDilation)
                 return false;
-            if (!Context.dilationEnabled[pawn.def.index])
+            if (!Context.dilationEnabled[pawn.def.index] || IgnoreMeDatabase.ShouldIgnore(pawn.def))
                 return false;
             if (WorldPawnsTicker.isActive)
             {

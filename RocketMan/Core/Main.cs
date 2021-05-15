@@ -75,10 +75,9 @@ namespace RocketMan
         {
             for (var i = 0; i < onDefsLoaded.Count; i++) onDefsLoaded[i].Invoke();
             base.DefsLoaded();
-            {
-                RocketPatcher.PatchAll();
-                Finder.rocket.PatchAll();
-            }
+            XMLParser.ParseXML();
+            RocketPatcher.PatchAll();
+            Finder.rocket.PatchAll();
         }
 
         public override void Tick(int currentTick)

@@ -173,7 +173,8 @@ namespace RocketMan.Optimizations
             if (true
                 && Finder.enabled
                 && Current.Game != null
-                && tick >= 600)
+                && tick >= 600
+                && !IgnoreMeDatabase.ShouldIgnore(statWorker.stat))
             {
                 var key = Tools.GetKey(statWorker, req, applyPostProcess);
                 var signature = req.thingInt?.GetSignature() ?? -1;

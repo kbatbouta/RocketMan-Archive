@@ -345,6 +345,8 @@
         <Compile Include="Core\Others\FunctionUtility.cs" />
         <Compile Include="Core\Compatibility\MultiplayerHelper.cs" />
         <Compile Include="Core\Others\CompatibilityUtility.cs" />
+        <Compile Include="Core\Extras\XMLParser.cs" />
+        <Compile Include="Core\Extras\IgnoreMeDatabase.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -361,6 +363,7 @@
         <Folder Include="Core\Collections\" />
         <Folder Include="Core\Patches\" />
         <Folder Include="Core\Optimizations\Obsolete\" />
+        <Folder Include="Core\Extras\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Target Name="Publicise" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOsPlatform(OSX))">
