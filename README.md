@@ -33,6 +33,27 @@ RocketMan is OpenSource and for anyone to use, modify, update.
 
 DISCLAIMER: I’m not responsible in any way for damage done by RocketMan to your saves. RocketMan has been tested for over 9 months. Any damage done to your save is probably your own fault since RocketMan has been tested for so long. 
 
+### RocketRules (Compatibility system)
+Now RocketMan support a new rule system to avoid compatibility issues.
+This works by placing `RocketRules.xml` files in `YourModFolder/Extras/RocketRules.xml`
+and following this format:
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<RocketRules>
+    <IgnoreMe defname="AIRobot_Hauler_III"/>
+    <IgnoreMe packageId="Haplo.Miscellaneous.Robots"/>
+    <IgnoreMe defname="AIRobot_Hauler_I"/>
+</RocketRules>
+```
+**Note** RocketRules can be made from any number of IgnoreMe nodes. To make RocketMan ignore a ThingDef as in this example just use the defname attribute. Or if you are lazy just use your mod packageId.
+This system will work whatever the load order is and it tells rocketman to:
+* Not throttle pawns/things in your mod (by providing def name).
+* Not to cache stats in your mod (by providing def name).
+* Not to do either to anything (by providing the packageId).
+* This will be applied to every new feature in RocketMan.
+This system is the new standard going forward for RocketMan. This is meant to make the compatibility process easy, simple, and seamless.  
+
+
 #### Special Thanks goes to:
 
 * Madman666 the entire Dubwise server for the help and testing they provided!
@@ -46,4 +67,5 @@ You can always ask questions on the Dubwise discord server: https://discord.gg/m
 
 ## You can always support me!
 <a href='https://ko-fi.com/karimbat' target='_blank'><img height='35' style='border:0px;height:46px;' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+ 
  
