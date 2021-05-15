@@ -60,7 +60,7 @@ This system is the new standard going forward for RocketMan. This is meant to ma
 </RocketRules>
 ```
 Your mod can notify RocketMan to clear the statCache by calling a function in your code (preferably empty one). You can follow this format
-* `packageId` is your mod `packageId`
+* `packageId` is your mod `packageId`. This is used only to keep track of the current rules.
 * `method` (formated as `YourClass:Method`) is the method that you call to notify rocketman that your mod need the cache cleared.
 
 **Note** This work by applying a `Prefix` patch on your destination/provided empty method (in this case `ThingWithComps:Notify_Equipped`) thus every time you call `ThingWithComps:Notify_Equipped` in this example the prefix is executed and the cache is cleared.
