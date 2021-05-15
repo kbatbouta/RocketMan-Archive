@@ -1,14 +1,16 @@
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
-using RimWorld;
 using RimWorld.Planet;
+using RocketMan;
 using Verse;
 
-namespace Soyuz.Patches
+namespace Soyuz
 {
-    [SoyuzPatch(typeof(Pawn_NeedsTracker), nameof(Pawn_NeedsTracker.NeedsTrackerTick))]
-    public class Pawn_NeedsTracker_NeedTrackerTick_Patch
+    [SoyuzPatch(typeof(Caravan_NeedsTracker), nameof(Caravan_NeedsTracker.TrySatisfyJoyNeed))]
+    public static class Caravan_NeedsTracker_TrySatisfyJoyNeed_Patch
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
             ILGenerator generator)

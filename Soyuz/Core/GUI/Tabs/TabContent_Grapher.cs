@@ -13,13 +13,12 @@ namespace Soyuz.Tabs
         private static Vector2 scrollPosition = Vector2.zero;
         private Listing_Standard standard_Content = new Listing_Standard();
 
-        public override string Label => "Soyuz grapher";
+        public override string Label => "Grapher";
         public override bool ShouldShow => Finder.debug;
 
         public override void DoContent(Rect rect)
         {
             standard_Content.Begin(rect);
-
             GUI.color = Color.red;
             Text.CurFontStyle.fontStyle = FontStyle.Bold;
 
@@ -28,14 +27,11 @@ namespace Soyuz.Tabs
             GUI.color = Color.white;
             var font = Text.Font;
             Text.Font = GameFont.Tiny;
-
-            standard_Content.CheckboxLabeled("Set tick multiplier to 150", ref Finder.debug150MTPS, "Dangerous!");
-            standard_Content.CheckboxLabeled("Enable data logging", ref Finder.logData, "Experimental.");
             standard_Content.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
-
+            standard_Content.CheckboxLabeled("Flash dilated pawns", ref Finder.flashDilatedPawns, "Experimental.");
             Text.Font = font;
             standard_Content.End();
-            rect.yMin += 85;
+            rect.yMin += 75;
             DoExtras(rect);
         }
 
@@ -101,6 +97,7 @@ namespace Soyuz.Tabs
 
         public override void OnSelect()
         {
+            Finder.logData = true;
         }
 
         [Main.YieldTabContent]

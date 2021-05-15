@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using RocketMan;
 using Verse;
@@ -25,14 +26,14 @@ namespace Rocketeer
 
         public static string GetDeclaredTypeMethodPath(this MethodBase method)
         {
-            var type = method.DeclaringType;
-            return $"{type.Namespace}.{type.Name}:{method.Name}";
+            Type type = method.DeclaringType;
+            return $"{type.Namespace}.{type.Name}:{Regex.Replace(method.Name, @"_Patch[0-9]+$", "")}";
         }
 
         public static string GetReflectedTypeMethodPath(this MethodBase method)
         {
             var type = method.ReflectedType;
-            return $"{type.Namespace}.{type.Name}:{method.Name}";
+            return $"{type.Namespace}.{type.Name}:{Regex.Replace(method.Name, @"_Patch[0-9]+$", "")}";
         }
 
         public static string GetUniqueMethodIdentifier(this MethodBase method)

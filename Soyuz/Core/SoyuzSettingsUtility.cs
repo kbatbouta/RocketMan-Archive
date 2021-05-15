@@ -56,5 +56,23 @@ namespace Soyuz
 
             Finder.rocketMod.WriteSettings();
         }
+
+        public static RaceSettings GetRaceSettings(this Pawn pawn)
+        {
+            if (pawn.def == null)
+                return null;
+            if (Context.dilationByDef.TryGetValue(pawn.def, out RaceSettings settings))
+                return settings;
+            ThingDef def = pawn.def;
+            Context.settings.raceSettings.Add(settings = new RaceSettings()
+            {
+                pawnDef = def,
+                pawnDefName = def.defName,
+                dilated = def.race.Animal && !def.race.Humanlike && !def.race.IsMechanoid,
+                ignoreFactions = false
+            });
+            settings.Cache();
+            return settings;
+        }
     }
 }

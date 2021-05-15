@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using RocketMan;
 using Verse;
@@ -80,6 +81,8 @@ namespace Rocketeer
                         transpiler: mDebugTranspiler,
                         finalizer: mDebugFinalizer
                     );
+                    Context.trackers[tracker.Id] = tracker;
+                    Context.trackerByMethod[method] = tracker;
                     Context.patchedMethods.Add(method.GetUniqueMethodIdentifier());
                 }
             }
@@ -93,16 +96,18 @@ namespace Rocketeer
 
         public static void Unpatch(RocketeerMethodTracker tracker)
         {
-            Unpatch(tracker.Method);
+            //Unpatch(tracker.Method);
         }
 
         public static void Unpatch(MethodBase method)
         {
             string methodId = method.GetUniqueMethodIdentifier();
             RocketeerMethodTracker tracker = Context.trackerByUniqueIdentifier[methodId];
-            Context.trackers[tracker.Id] = null;
+
+            //Context.trackers[tracker.Id] = null;
             Context.trackerByUniqueIdentifier.Remove(methodId);
             Context.patchedMethods.RemoveWhere(m => m == methodId);
+
             Finder.harmony.Unpatch(method, mDebugTranspiler.method);
             Finder.harmony.Unpatch(method, mDebugFinalizer.method);
         }
@@ -143,8 +148,15 @@ namespace Rocketeer
         {
             if (__exception != null)
             {
-                var method = new StackTrace(__exception).GetFrame(0).GetMethod();
-                Context.trackerByUniqueIdentifier[method.GetUniqueMethodIdentifier()].OnError(__exception);
+                for (int i = 0; i < Context.trackers.Length; i++)
+                {
+                    RocketeerMethodTracker tracker = Context.trackers[i];
+                    if (tracker != null)
+                        Log.Warning($"{i}");
+                    if (tracker?.Executing ?? false)
+                        tracker.OnError(__exception);
+                    Log.Error($"{i}:{tracker?.Executing ?? false}:{tracker?.successCounter ?? -1}");
+                }
             }
             return __exception;
         }

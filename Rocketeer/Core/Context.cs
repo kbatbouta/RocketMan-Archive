@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Rocketeer
 {
@@ -10,6 +11,7 @@ namespace Rocketeer
         public static RocketeerMethodTracker[] trackers = new RocketeerMethodTracker[100];
 
         public static readonly Dictionary<string, RocketeerMethodTracker> trackerByUniqueIdentifier = new Dictionary<string, RocketeerMethodTracker>();
+        public static readonly Dictionary<MethodBase, RocketeerMethodTracker> trackerByMethod = new Dictionary<MethodBase, RocketeerMethodTracker>();
 
         public static readonly HashSet<string> patchedMethods = new HashSet<string>();
 

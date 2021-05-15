@@ -44,14 +44,16 @@ namespace Soyuz.Patches
 
                         yield return new CodeInstruction(OpCodes.Ldarg_0);
                         yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(ContextualExtensions), nameof(ContextualExtensions.ShouldTick)));
+
                         yield return new CodeInstruction(OpCodes.Brtrue_S, l1);
                         {
                             yield return new CodeInstruction(OpCodes.Pop);
+
                             yield return new CodeInstruction(OpCodes.Ldarg_0);
                             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Pawn_Tick_Patch), nameof(Pawn_Tick_Patch.TickExtras)));
 
-                            yield return new CodeInstruction(OpCodes.Ldc_I4_1);
-                            yield return new CodeInstruction(OpCodes.Br_S, l2);
+                            yield return new CodeInstruction(OpCodes.Ldc_I4_1); // push suspended = true to the stack
+                            yield return new CodeInstruction(OpCodes.Br_S, l2); // go to if(suspended)
                         }
                         yield return new CodeInstruction(OpCodes.Ldarg_0) { labels = new List<Label>() { l1 } };
                         yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(ContextualExtensions), nameof(ContextualExtensions.UpdateTimers)));
@@ -68,6 +70,12 @@ namespace Soyuz.Patches
                 yield return codes[i];
             }
 
+        }
+
+        private static Exception Finalizer(Exception __exception)
+        {
+            if (__exception != null) ContextualExtensions.Reset();
+            return __exception;
         }
 
         private static void TickExtras(Pawn pawn)

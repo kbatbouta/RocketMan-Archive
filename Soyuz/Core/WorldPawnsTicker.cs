@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
+using RimWorld;
 using RimWorld.Planet;
+using RocketMan;
 using UnityEngine;
 using Verse;
 
@@ -9,23 +12,25 @@ namespace Soyuz
     {
         public const int BucketCount = 30;
 
-        private const int TransformationCacheSize = 2500; 
-        
-        private static int[] _transformationCache = new int[TransformationCacheSize];
-
+        private static HashSet<Pawn> pawns = new HashSet<Pawn>();
+        private static HashSet<Pawn> colonists = new HashSet<Pawn>();
         private static HashSet<Pawn>[] buckets;
         private static Game game;
-        
+        private static HashSet<Pawn> previousBucket = new HashSet<Pawn>();
+        private static readonly HashSet<Pawn> emptySet = new HashSet<Pawn>();
         public static int curIndex = 0;
-        public static int curCycle = 0;     
-        
+        public static int curCycle = 0;
+
         public static bool isActive = false;
+
+        public static HashSet<Pawn> PreviousBucket
+        {
+            get => previousBucket;
+        }
 
         public WorldPawnsTicker(Game game)
         {
             TryInitialize();
-            for (int i = 0; i < _transformationCache.Length; i++)
-                _transformationCache[i] = (int) Mathf.Max((float) i / WorldPawnsTicker.BucketCount, 1);
         }
 
         public override void StartedNewGame()
@@ -51,13 +56,6 @@ namespace Soyuz
             }
         }
 
-        public static int Transform(int interval)
-        {
-            if (interval >= TransformationCacheSize)
-                return (int) Mathf.Max((float) interval / WorldPawnsTicker.BucketCount, 1);
-            return _transformationCache[interval];
-        }
-
         public static void TryInitialize()
         {
             if (game != Current.Game || buckets == null)
@@ -79,30 +77,53 @@ namespace Soyuz
         }
 
         public static void Register(Pawn pawn)
-        {            
+        {
             var index = GetBucket(pawn);
-            if (buckets == null) TryInitialize();
-            if (buckets[index] == null) buckets[index] = new HashSet<Pawn>();
+            if (buckets == null)
+                TryInitialize();
+            if (buckets[index] == null)
+                buckets[index] = new HashSet<Pawn>();
+            if (pawn.IsCaravanMember() && pawn.GetCaravan().Faction == Faction.OfPlayerSilentFail)
+                colonists.Add(pawn);
+            pawns.Add(pawn);
             buckets[index].Add(pawn);
         }
 
         public static void Deregister(Pawn pawn)
-        {            
+        {
             var index = GetBucket(pawn);
-            if(buckets[index] == null) return;
+            if (buckets[index] == null) return;
+            pawns.RemoveWhere(p => p.thingIDNumber == pawn.thingIDNumber);
+            colonists.RemoveWhere(p => p.thingIDNumber == pawn.thingIDNumber);
             buckets[index].Remove(pawn);
         }
 
         public static HashSet<Pawn> GetPawns()
         {
-            var result = buckets[curIndex];
-            curIndex = curIndex + 1;
-            if (curIndex >= BucketCount)
+            HashSet<Pawn> bucket = buckets[curIndex];
+            curIndex = GenTicks.TicksGame % 30;
+            if (curIndex == 0)
+                curCycle++;
+            if (Finder.timeDilationCaravans) previousBucket = bucket ?? emptySet;
+            else previousBucket = AddExtraPawns(bucket).ToHashSet() ?? emptySet;
+            return previousBucket;
+        }
+
+        public static bool IsCustomWorldTickInterval(Thing thing, int interval)
+        {
+            return interval <= BucketCount ? true : curCycle % ((int)(interval / BucketCount)) == 0;
+        }
+
+        private static IEnumerable<Pawn> AddExtraPawns(IEnumerable<Pawn> bucket)
+        {
+            foreach (Pawn pawn in bucket)
             {
-                curIndex = 0;
-                curCycle += 1;
+                if (pawn.IsCaravanMember())
+                    continue;
+                yield return pawn;
             }
-            return result;
+            foreach (Pawn pawn in colonists)
+                yield return pawn;
         }
 
         private static int GetBucket(Pawn pawn)
@@ -110,7 +131,7 @@ namespace Soyuz
             int hash;
             unchecked
             {
-                hash = pawn.GetHashCode();
+                hash = pawn.thingIDNumber + GenTicks.TicksGame;
                 if (hash < 0) hash *= -1;
             }
             return hash % BucketCount;

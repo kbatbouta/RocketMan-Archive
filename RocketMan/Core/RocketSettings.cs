@@ -103,72 +103,94 @@ namespace RocketMan
             var font = Text.Font;
             var anchor = Text.Anchor;
             var style = Text.CurFontStyle.fontStyle;
-
             var rect = inRect;
-            rect.xMin += 10;
-
             standard.Begin(rect);
-
-            Text.Font = GameFont.Medium;
-            Text.CurFontStyle.fontStyle = FontStyle.Bold;
-            standard.Label("RocketMan 2:");
-            Text.CurFontStyle.fontStyle = style;
             Text.Font = GameFont.Tiny;
             Text.CurFontStyle.fontStyle = FontStyle.Normal;
-
+            bool enabled = Finder.enabled;
             standard.CheckboxLabeled("Enabled", ref Finder.enabled);
-
+            if (enabled != Finder.enabled && !Finder.enabled)
+                ResetDebugSettings();
             if (Finder.enabled)
             {
                 standard.GapLine();
-                standard.CheckboxLabeled("Adaptive mod", ref Finder.learning, "Only enable for 30 minutes.");
-                standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
-                    "Can cause bugs.");
-                standard.GapLine();
+                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                standard.Label("Junk removal");
+                Text.CurFontStyle.fontStyle = FontStyle.Normal;
                 standard.CheckboxLabeled("Enable automatic corpses removal", ref Finder.corpsesRemovalEnabled,
                     "This removes corpses that aren't in view for a while and that aren't near your base to avoid breaking the game balance.");
+                standard.GapLine();
+                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                standard.Label("Stats cache settings");
+                Text.CurFontStyle.fontStyle = FontStyle.Normal;
+                standard.CheckboxLabeled("Adaptive mode", ref Finder.learning, "Only enable for 30 minutes.");
+                standard.CheckboxLabeled("Enable gear stat caching", ref Finder.statGearCachingEnabled,
+                    "Can cause bugs.");
 
+                standard.GapLine();
+                standard.CheckboxLabeled("Enable debugging", ref Finder.debug, "Only for advanced users and modders");
+
+                if (Finder.debug)
+                {
+                    standard.GapLine();
+                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                    standard.Label("Debugging options");
+                    Text.CurFontStyle.fontStyle = FontStyle.Normal;
+                    standard.CheckboxLabeled("Enable Stat Logging (Will kill performance)", ref Finder.statLogging);
+                    standard.CheckboxLabeled("Enable GlowGrid flashing", ref Finder.drawGlowerUpdates);
+                    standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);
+                    standard.Gap();
+                    if (standard.ButtonText("Disable debugging related stuff"))
+                        ResetDebugSettings();
+                }
             }
-
-            standard.GapLine();
-            standard.CheckboxLabeled("Debugging", ref Finder.debug, "Only for advanced users and modders");
-
             standard.End();
-
             Text.Font = font;
             Text.Anchor = anchor;
             Text.CurFontStyle.fontStyle = style;
         }
 
+        public static void ResetDebugSettings()
+        {
+            Finder.debug = false;
+            Finder.debug150MTPS = false;
+            Finder.logData = false;
+            Finder.statLogging = false;
+            Finder.flashDilatedPawns = false;
+            Finder.alwaysDilating = false;
+            Finder.enableGridRefresh = false;
+            Finder.refreshGrid = false;
+        }
+
         public static void DoStatSettings(Rect rect)
         {
             UpdateStats();
-
             var counter = 0;
             var font = Text.Font;
             var anchor = Text.Anchor;
-
             Text.Font = GameFont.Small;
             searchString = Widgets
                 .TextArea(rect.TopPartPixels(25), searchString)
                 .ToLower();
-
-            var scrollRect = rect;
             rect.yMin += 35;
-            Widgets.BeginScrollView(rect, ref scrollPositionStatSettings,
+            Widgets.DrawMenuSection(rect);
+            rect.yMax -= 5;
+            rect.xMax -= 5;
+            Widgets.BeginScrollView(rect.ContractedBy(1), ref scrollPositionStatSettings,
                 new Rect(Vector2.zero, new Vector2(rect.width - 15, statsSettings.Count * 54)));
             Text.Font = GameFont.Tiny;
-            var size = new Vector2(rect.width - 20, 54);
-            var curRect = new Rect(new Vector2(2, 2), size);
+            Vector2 size = new Vector2(rect.width - 20, 54);
+            Rect curRect = new Rect(new Vector2(2, 2), size);
             foreach (var settings in statsSettings)
-                if (false
-                    || searchString.Trim() == ""
-                    || settings.stat.ToLower().Contains(searchString))
+            {
+                if (searchString.Trim() == "" || settings.stat.ToLower().Contains(searchString))
                 {
-                    var rowRect = curRect.ContractedBy(5);
+                    Rect rowRect = curRect.ContractedBy(5);
                     Text.Font = GameFont.Tiny;
                     Text.Anchor = TextAnchor.MiddleLeft;
-                    Widgets.DrawMenuSection(curRect.ContractedBy(1));
+                    if (counter % 2 == 0)
+                        Widgets.DrawBoxSolid(curRect, new Color(0.2f, 0.2f, 0.2f));
+                    Widgets.DrawHighlightIfMouseover(curRect);
                     Widgets.Label(rowRect.TopHalf(), string.Format("{0}. {1} set to expire in {2} ticks", counter++,
                         settings.stat,
                         settings.expireAfter));
@@ -176,7 +198,7 @@ namespace RocketMan
                         (byte)Widgets.HorizontalSlider(rowRect.BottomHalf(), settings.expireAfter, 0, 255);
                     curRect.y += size.y;
                 }
-
+            }
             Widgets.EndScrollView();
             Text.Font = font;
             Text.Anchor = anchor;
@@ -203,13 +225,9 @@ namespace RocketMan
             foreach (var setting in dilationSettings)
             {
                 if (DefDatabase<ThingDef>.defsByName.TryGetValue(setting.def, out var td))
-                {
                     setting.dilated = Finder.dilatedDefs[td.index];
-                }
                 else
-                {
                     Log.Warning("ROCKETMAN: Failed to find stat upon reloading!");
-                }
             }
         }
 
@@ -358,13 +376,14 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.learning, "learning");
                 Scribe_Values.Look(ref Finder.debug, "debug", false);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
+                Scribe_Values.Look(ref Finder.timeDilationCaravans, "timeDilationCaravans", false);
                 Scribe_Values.Look(ref Finder.timeDilationVisitors, "timeDilationVisitors", false);
                 Scribe_Values.Look(ref Finder.timeDilationWorldPawns, "timeDilationWorldPawns", true);
                 Scribe_Values.Look(ref Finder.timeDilationColonyAnimals, "timeDialationColonyAnimals", true);
                 Scribe_Values.Look(ref Finder.timeDilationCriticalHediffs, "timeDilationCriticalHediffs", true);
                 Scribe_Values.Look(ref Finder.ageOfGetValueUnfinalizedCache, "ageOfGetValueUnfinalizedCache");
                 Scribe_Values.Look(ref Finder.universalCacheAge, "universalCacheAge");
-                Scribe_Values.Look(ref Finder.corpsesRemovalEnabled, "corpsesRemovalEnabled", true);
+                Scribe_Values.Look(ref Finder.corpsesRemovalEnabled, "corpsesRemovalEnabled", false);
                 Scribe_Collections.Look(ref statsSettings, "statsSettings", LookMode.Deep);
                 Scribe_Collections.Look(ref dilationSettings, "dilationSettings", LookMode.Deep);
                 foreach (var action in Main.onScribe)

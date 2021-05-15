@@ -26,6 +26,8 @@ namespace RocketMan
 
         public static bool timeDilationVisitors = false;
 
+        public static bool timeDilationCaravans = false;
+
         public static bool flashDilatedPawns = false;
 
         public static bool alwaysDilating = false;

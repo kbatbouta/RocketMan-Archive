@@ -70,6 +70,12 @@ namespace RocketMan.Tabs
                 var contentRect = new Rect(inRect);
                 contentRect.xMin += 180;
                 DoSidebar(tabsRect);
+                Text.Font = GameFont.Medium;
+                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                GUI.Label(contentRect.TopPartPixels(25), curTab.Label);
+                Text.Font = font;
+                Text.CurFontStyle.fontStyle = style;
+                contentRect.yMin += 30;
                 curTab.DoContent(contentRect);
             }
             else
@@ -141,7 +147,7 @@ namespace RocketMan.Tabs
             Widgets.BeginScrollView(rect, ref scrollPosition, tabBarRect);
             Text.Anchor = TextAnchor.MiddleLeft;
             Text.Font = GameFont.Tiny;
-            var curRect = new Rect(5, 5, 160, 30);
+            var curRect = new Rect(rect.xMin + 5, rect.yMin + 5, 160, 30);
             var counter = 0;
             foreach (var tab in tabs)
             {
@@ -171,7 +177,6 @@ namespace RocketMan.Tabs
                 curRect.y += 30;
                 counter++;
             }
-
             Widgets.EndScrollView();
         }
     }

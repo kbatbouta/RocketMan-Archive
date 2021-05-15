@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -49,11 +50,16 @@ namespace Rocketeer
             get => resolution;
         }
 
+        public bool Executing
+        {
+            get => executing;
+        }
+
         public bool flushImmediately = false;
-        public int allocatedRuns = 128;
 
         private bool initialized = false;
         private bool expired = false;
+        private bool executing = false;
 
         public int successCounter = 0;
         public int errorCounter = 0;
@@ -114,6 +120,7 @@ namespace Rocketeer
                 Log.Warning($"ROCKETEER:[{method.GetDeclaredTypeMethodPath()}&{trackerId}] An expired Rocketeer patch is need unpatching!");
                 throw new Exception("ROCKETEER: This an expired rocketeer patch was caught active!");
             }
+            executing = true;
             currentSection = 0;
             currentInstructionIndex = 0;
             if (initialized)
@@ -129,58 +136,33 @@ namespace Rocketeer
             sectionsPasses = new int[sectionsStartPosition.Length];
             for (int i = 0; i < sectionsStartPosition.Length; i++)
                 sectionsPasses[i] = 0;
-            if (flushImmediately)
-            {
-                Flush(partial: true);
-            }
         }
 
         public void OnCall(int callIndex)
         {
+            executing = true;
             currentInstructionIndex = callToPosition[callIndex];
-            if (flushImmediately)
-            {
-                Flush(partial: true);
-            }
         }
 
         public void OnCheckPoint(int sectionIndex)
         {
+            executing = true;
             currentInstructionIndex = sectionsStartPosition[sectionIndex];
             currentSection = sectionIndex;
             sectionsPasses[currentSection]++;
-            if (flushImmediately)
-            {
-                Flush(partial: true);
-            }
         }
 
         public void OnFinished()
         {
-            allocatedRuns -= 1;
             successCounter++;
-            if (flushImmediately)
-            {
-                Flush(partial: false);
-            }
-            if (allocatedRuns <= 0)
-            {
-                Stop();
-            }
+            executing = false;
         }
 
         public void OnError(Exception exception)
         {
-            allocatedRuns = Math.Max(allocatedRuns - 32, 0);
             errorCounter += 1;
-            if (flushImmediately)
-            {
-                Flush(partial: false);
-            }
-            if (allocatedRuns <= 0)
-            {
-                Stop();
-            }
+            ProcessException(exception);
+            executing = false;
         }
 
         public void Stop()
@@ -189,14 +171,25 @@ namespace Rocketeer
             RocketeerPatcher.Unpatch(method);
         }
 
-        public void Flush(bool partial = false)
+        private void ProcessException(Exception exception)
         {
-            if (partial)
+            string report = $"ROCETEER:<color=red>[{methodPath}:ERROR]</color> An exception occured in {method.Name}\n" +
+                $"<color=red>Exception type:</color> {exception.GetType()}\n";
+            string[] trace = exception.GetStackTraceAsString();
+            foreach (var t in trace)
+                report = $"{report}\n{trace}";
+            report += "\n<color=red>excuted IL instructions</color>\n" +
+                $"<color=red>Execution ended at {currentInstructionIndex}</color>\n" +
+                $"INDEX:[TIMES PASSED]\tOpCode\tOprand\n";
+            for (int i = 0; i < currentInstructionIndex; i++)
             {
-                for (int i = sectionsStartPosition[currentSection]; i < instructions.Count; i++)
-                    Log.Message($"ROCKETEER:[{methodPath}] Reached instruction for the { sectionsPasses[currentSection] }th time {instructions[i].opCode}:{instructions[i].operand}");
-                return;
+                report = $"{report}\n" +
+                    $"{currentInstructionIndex}\t:[{sectionsPasses[indexToSection[i]]}] {instructions[i].opCode}\t{instructions[i].operand}";
             }
+            report = $"{report}\n<color=red>Exception message:</color>\n{exception.Message}";
+            Log.Message(report);
+            Log.Message("ROCKETEER: Error report generated!");
+            this.Stop();
         }
     }
 }

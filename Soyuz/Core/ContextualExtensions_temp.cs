@@ -8,21 +8,31 @@ namespace Soyuz
 {
     public static partial class ContextualExtensions
     {
-        public static bool IsValidWildlifeOrWorldPawn_newtemp(this Pawn pawn)
+        public static bool IsValidWildlifeOrWorldPawnInternal_newtemp(this Pawn pawn)
         {
-            if (!Finder.timeDilationCriticalHediffs && pawn.HasCriticalHediff())
+            if (pawn?.def == null)
                 return false;
-            if (pawn.IsBleeding())
+            if (!Finder.enabled || !Finder.timeDilation)
                 return false;
-            if (pawn.factionInt != Faction.OfPlayer && WorldPawnsTicker.isActive)
+            if (!Context.dilationEnabled[pawn.def.index])
+                return false;
+            if (WorldPawnsTicker.isActive)
+            {
+                if (!Finder.timeDilationCaravans && pawn.IsCaravanMember() && pawn.GetCaravan().Faction == Faction.OfPlayer)
+                    return false;
+                if (!Finder.timeDilationWorldPawns)
+                    return false;
                 return true;
+            }
+            if (pawn.IsBleeding() || (!Finder.timeDilationCriticalHediffs && pawn.HasCriticalHediff()))
+                return false;
             if (pawn.def.race.Humanlike)
             {
                 Faction playerFaction = Faction.OfPlayer;
                 if (pawn.factionInt == playerFaction)
-                    return WorldPawnsTicker.isActive;
+                    return false;
                 if (pawn.guest?.isPrisonerInt ?? false && pawn.guest?.hostFactionInt == playerFaction)
-                    return WorldPawnsTicker.isActive;
+                    return false;
                 if (Finder.timeDilationVisitors)
                 {
                     JobDef jobDef = pawn.jobs?.curJob?.def;
@@ -34,27 +44,36 @@ namespace Soyuz
                         return true;
                     if (jobDef == JobDefOf.SocialRelax)
                         return true;
+                    if (jobDef == JobDefOf.LayDown)
+                        return true;
+                    if (jobDef == JobDefOf.Follow)
+                        return true;
                 }
                 return WorldPawnsTicker.isActive;
             }
+            RaceSettings raceSettings = pawn.GetRaceSettings();
+            if (pawn.factionInt == Faction.OfPlayer)
+                return !raceSettings.ignorePlayerFaction;
+            if (pawn.factionInt != null)
+                return !raceSettings.ignoreFactions;
             return true;
         }
 
         public static bool IsSkippingTicks_newtemp(this Pawn pawn)
         {
-            if (Context.zoomRange == CameraZoomRange.Far || Context.zoomRange == CameraZoomRange.Furthest)
-                return true;
-            if (WorldPawnsTicker.isActive)
-                return true;
-            if (!pawn.Spawned)
+            if (!pawn.Spawned && WorldPawnsTicker.isActive)
                 return true;
             if (pawn.OffScreen())
+                return true;
+            if (Context.zoomRange == CameraZoomRange.Far || Context.zoomRange == CameraZoomRange.Furthest || Context.zoomRange == CameraZoomRange.Middle)
                 return true;
             return false;
         }
 
         public static bool ShouldTick_newtemp(this Pawn pawn)
         {
+            if (pawn == null)
+                return true;
             int tick = GenTicks.TicksGame;
             shouldTick = ShouldTickInternal_newtemp(pawn);
             if (timers.TryGetValue(pawn.thingIDNumber, out var val))

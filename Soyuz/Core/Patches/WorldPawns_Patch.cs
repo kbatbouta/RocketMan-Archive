@@ -66,7 +66,7 @@ namespace Soyuz.Patches
             {
                 WorldPawnsTicker.isActive = true;
             }
-            
+
             public static void Postfix()
             {
                 WorldPawnsTicker.isActive = false;
@@ -96,10 +96,12 @@ namespace Soyuz.Patches
 
             private static HashSet<Pawn> GetAlivePawns(HashSet<Pawn> pawns, WorldPawns instance)
             {
-                if (!Finder.timeDilation || !Finder.timeDilationWorldPawns || !Finder.enabled) return pawns;
-                var result = WorldPawnsTicker.GetPawns();
-                if (Finder.debug && Finder.flashDilatedPawns) Log.Message($"ROCKETMAN: ticker bucket of {result.Count} from {pawns.Count} and index is {WorldPawnsTicker.curIndex}");
-                return result;
+                if (false
+                    || !Finder.timeDilation
+                    || !Finder.timeDilationWorldPawns
+                    || !Finder.enabled)
+                    return pawns;
+                return WorldPawnsTicker.GetPawns();
             }
         }
     }

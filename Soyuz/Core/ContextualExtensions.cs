@@ -44,9 +44,9 @@ namespace Soyuz
                     default:
                         return 1;
                     case CameraZoomRange.Closest:
-                        return 60;
+                        return 19;
                     case CameraZoomRange.Close:
-                        return 20;
+                        return 17;
                     case CameraZoomRange.Middle:
                         return 15;
                     case CameraZoomRange.Far:
@@ -78,6 +78,8 @@ namespace Soyuz
 
         public static bool OffScreen(this Pawn pawn)
         {
+            if (pawn == null)
+                return false;
             if (Finder.alwaysDilating)
                 return offScreen = true;
             if (_pawnScreen == pawn)
@@ -88,22 +90,18 @@ namespace Soyuz
             return offScreen = true;
         }
 
+        private static bool _isSkipping;
+        private static Pawn _skipingPawn;
+
         public static bool IsSkippingTicks(this Pawn pawn)
         {
             if (!Finder.timeDilation)
                 return false;
-            return pawn.IsSkippingTicks_newtemp();
-        }
-
-        private static bool IsSkippingTicksInternal(Pawn pawn)
-        {
-            bool spawned = pawn.Spawned;
-            return (
-                (spawned == false && WorldPawnsTicker.isActive && Finder.timeDilationWorldPawns) ||
-                (spawned == true && (pawn.OffScreen()
-                                     || Context.zoomRange == CameraZoomRange.Far
-                                     || Context.zoomRange == CameraZoomRange.Furthest))
-            );
+            if (_skipingPawn == pawn)
+                return _isSkipping;
+            _skipingPawn = pawn;
+            _isSkipping = pawn?.IsSkippingTicks_newtemp() ?? false;
+            return _isSkipping;
         }
 
         private static Stopwatch _stopwatch = new Stopwatch();
@@ -129,6 +127,7 @@ namespace Soyuz
 
         public static void EndTick(this Pawn pawn)
         {
+            _pawnTick = null;
             if (Finder.logData && Time.frameCount - Finder.lastFrame < 60)
             {
                 _stopwatch.Stop();
@@ -156,12 +155,12 @@ namespace Soyuz
             else Reset();
         }
 
-        private static void Skip(Pawn pawn)
+        public static void Skip(Pawn pawn)
         {
             _isValidPawn = false;
         }
 
-        private static void Reset()
+        public static void Reset()
         {
             _pawnScreen = null;
             _pawnTick = null;
@@ -170,6 +169,8 @@ namespace Soyuz
 
         public static PawnPerformanceModel GetPerformanceModel(this Pawn pawn)
         {
+            if (pawn == null)
+                return null;
             if (pawnPerformanceModels.TryGetValue(pawn, out var model))
                 return model;
             return pawnPerformanceModels[pawn] = new PawnPerformanceModel();
@@ -177,6 +178,8 @@ namespace Soyuz
 
         public static Dictionary<Type, PawnNeedModel> GetNeedModels(this Pawn pawn)
         {
+            if (pawn == null)
+                return null;
             if (pawnNeedModels.TryGetValue(pawn, out var model))
                 return model;
             return pawnNeedModels[pawn] = new Dictionary<Type, PawnNeedModel>();
@@ -184,6 +187,8 @@ namespace Soyuz
 
         public static Dictionary<Hediff, PawnHediffModel> GetHediffModels(this Pawn pawn)
         {
+            if (pawn == null)
+                return null;
             if (pawnHediffsModels.TryGetValue(pawn, out var model))
                 return model;
             return pawnHediffsModels[pawn] = new Dictionary<Hediff, PawnHediffModel>();
@@ -191,14 +196,18 @@ namespace Soyuz
 
         public static bool IsCustomTickInterval(this Thing thing, int interval)
         {
-            if (_pawnTick == thing && Finder.timeDilation && Finder.enabled)
-            {
-                if (WorldPawnsTicker.isActive)
-                    return WorldPawnsTicker.curCycle % WorldPawnsTicker.Transform(interval) == 0;
-                else if (((Pawn)thing).IsSkippingTicks())
-                    return (thing.thingIDNumber + GenTicks.TicksGame) % RoundTransform(interval) == 0;
-            }
-            return thing.IsHashIntervalTick(interval);
+            if (Current == thing && Current.IsValidWildlifeOrWorldPawn())
+                return IsCustomTickIntervalInternel(thing, interval);
+            return (thing.thingIDNumber + GenTicks.TicksGame) % interval == 0;
+        }
+
+        public static bool IsCustomTickIntervalInternel(Thing thing, int interval)
+        {
+            if (WorldPawnsTicker.isActive)
+                return WorldPawnsTicker.IsCustomWorldTickInterval(thing, interval);
+            else if (Current.IsSkippingTicks())
+                return (thing.thingIDNumber + GenTicks.TicksGame) % RoundTransform(interval) == 0;
+            return (thing.thingIDNumber + GenTicks.TicksGame) % interval == 0;
         }
 
         public static void UpdateTimers(this Pawn pawn)
@@ -221,13 +230,17 @@ namespace Soyuz
             if (false
                 || (pawn.thingIDNumber + tick) % 30 == 0
                 || (tick % 250 == 0)
-                || pawn.jobs?.curJob != null && pawn.jobs?.curJob?.expiryInterval > 0 &&
-                (tick - pawn.jobs.curJob.startTick) % (pawn.jobs.curJob.expiryInterval * 2) == 0)
+                || (pawn.jobs?.curJob != null && pawn.jobs?.curJob?.expiryInterval > 0 &&
+                (tick - pawn.jobs.curJob.startTick) % (pawn.jobs.curJob.expiryInterval * 2) == 0))
                 return true;
+            if (Context.dilationFastMovingRace[pawn.def.index])
+                return (pawn.thingIDNumber + tick) % 2 == 0;
             if (pawn.OffScreen())
                 return (pawn.thingIDNumber + tick) % DilationRate == 0;
             if (Context.zoomRange == CameraZoomRange.Far || Context.zoomRange == CameraZoomRange.Furthest)
-                return (pawn.thingIDNumber + tick) % 3 == 0;
+                return (pawn.thingIDNumber + tick) % 4 == 0;
+            if (Context.zoomRange == CameraZoomRange.Middle)
+                return (pawn.thingIDNumber + tick) % 2 == 0;
             return true;
         }
 
@@ -235,7 +248,7 @@ namespace Soyuz
         {
             if (thing == Current)
                 return curDelta;
-            if (deltas.TryGetValue(thing.thingIDNumber, out int delta))
+            if (deltas.TryGetValue(thing?.thingIDNumber ?? -1, out int delta))
                 return delta;
             throw new Exception($"SOYUZ: Inconsistant timer data for pawn {thing}");
         }
@@ -244,23 +257,14 @@ namespace Soyuz
         private static Pawn _validPawn = null;
         public static bool IsValidWildlifeOrWorldPawn(this Pawn pawn)
         {
-            if (Current != pawn)
+            if (Current != pawn || pawn == null)
                 return false;
             if (_validPawn != pawn)
             {
                 _validPawn = pawn;
-                _isValidPawn = IsValidWildlifeOrWorldPawn_newtemp(pawn);
+                _isValidPawn = IsValidWildlifeOrWorldPawnInternal_newtemp(pawn);
             }
             return _isValidPawn;
-        }
-
-        private static bool IsValidWildlifeOrWorldPawnInternal(Pawn pawn)
-        {
-            int pawnInt = pawn.AsInt();
-            return (true
-                    && !pawn.IsBleeding()
-                    && !pawn.IsColonist
-                    && ((pawnInt == (pawnInt & Context.dilationInts[pawn.def.index])) || (WorldPawnsTicker.isActive && Finder.timeDilationWorldPawns)));
         }
 
         public static bool IsBleeding(this Pawn pawn)

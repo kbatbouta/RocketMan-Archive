@@ -301,7 +301,6 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Core\GUI\Tabs\TabContent_Debug.cs" />
         <Compile Include="Core\GUI\Tabs\TabContent_Settings.cs" />
         <Compile Include="Core\GUI\Tabs\TabContent_Stats.cs" />
         <Compile Include="Core\Gameplay\CorpsesTracker.cs" />

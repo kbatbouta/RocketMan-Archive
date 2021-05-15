@@ -92,7 +92,6 @@ namespace RocketMan
                 Log.Error($"ROCKETMAN: target type {type.Name}:{er}");
                 throw new Exception();
             }
-
             prepare = type.GetMethod("Prepare");
             prefix = type.GetMethod("Prefix");
             postfix = type.GetMethod("Postfix");

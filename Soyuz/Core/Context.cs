@@ -14,8 +14,10 @@ namespace Soyuz
         public static SoyuzSettings settings;
 
         public static readonly int[] dilationInts = new int[ushort.MaxValue];
-        public static readonly Dictionary<ThingDef, RaceSettings> dilationByDef = new Dictionary<ThingDef, RaceSettings>();
+        public static readonly bool[] dilationEnabled = new bool[ushort.MaxValue];
+        public static readonly bool[] dilationFastMovingRace = new bool[ushort.MaxValue];
 
+        public static readonly Dictionary<ThingDef, RaceSettings> dilationByDef = new Dictionary<ThingDef, RaceSettings>();
 
         public static int DilationRate
         {

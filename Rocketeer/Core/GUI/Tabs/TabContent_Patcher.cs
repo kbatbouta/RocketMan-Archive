@@ -32,7 +32,6 @@ namespace Rocketeer.Tabs
             {
                 Context.__MARCO = 10;
                 Log.Message($"ROCKETEER: Ping counter {Context.__MARCO}!");
-
             }
             if (standard.ButtonText("Random error"))
             {

@@ -10,7 +10,7 @@ namespace Soyuz.Patches
     {
         private static float remaining = 0f;
         private static Pawn curPawn;
-        
+
         [SoyuzPatch(typeof(Pawn_PathFollower), nameof(Pawn_PathFollower.CostToPayThisTick))]
         public class Pawn_PathFollower_CostToPayThisTick_Patch
         {
@@ -22,8 +22,8 @@ namespace Soyuz.Patches
                     && __instance.pawn.IsSkippingTicks())
                 {
                     curPawn = __instance.pawn;
-                    var modified = __result * __instance.pawn.GetDeltaT();
-                    var cost = __instance.nextCellCostLeft;
+                    float modified = __result * __instance.pawn.GetDeltaT();
+                    float cost = __instance.nextCellCostLeft;
                     if (modified > cost)
                     {
                         remaining = modified - cost;
@@ -31,7 +31,7 @@ namespace Soyuz.Patches
                     }
                     else __result = modified;
                 }
-            } 
+            }
         }
 
         [SoyuzPatch(typeof(Pawn_PathFollower), nameof(Pawn_PathFollower.SetupMoveIntoNextCell))]
@@ -46,7 +46,7 @@ namespace Soyuz.Patches
                     __instance.nextCellCostTotal -= remaining;
                     curPawn = null;
                 }
-            }   
+            }
         }
     }
 }
