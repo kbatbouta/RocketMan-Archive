@@ -36,44 +36,64 @@ namespace RocketMan
             catch (Exception) { report += $"\nROCKETMAN: Failed to find mod with packageId {packageId}"; }
         }
 
-        public static void Prepare()
+        public static void ParsePrepare()
         {
-            foreach (string defName in parsedDefNames)
+            try
             {
-                try
+                Dictionary<string, ThingDef> thingDefsByName =
+                    DefDatabase<ThingDef>.defsByName;
+                Dictionary<string, StatDef> statDefsByName =
+                    DefDatabase<StatDef>.defsByName;
+                Dictionary<string, HediffDef> hediffDefsByName =
+                    DefDatabase<HediffDef>.defsByName;
+                Dictionary<string, BuildableDef> buildableDefsByName =
+                    DefDatabase<BuildableDef>.defsByName;
+                Dictionary<string, BodyDef> bodyDefsByName =
+                    DefDatabase<BodyDef>.defsByName;
+                Dictionary<string, JobDef> jobsDefsByName =
+                    DefDatabase<JobDef>.defsByName;
+                foreach (string defName in parsedDefNames)
                 {
-                    if (DefDatabase<ThingDef>.defsByName.TryGetValue(defName, out ThingDef thingDef))
+                    try
                     {
-                        Add(thingDef);
-                        continue;
+                        if (thingDefsByName.TryGetValue(defName, out ThingDef thingDef))
+                        {
+                            Add(thingDef);
+                            continue;
+                        }
+                        if (statDefsByName.TryGetValue(defName, out StatDef statDef))
+                        {
+                            Add(statDef);
+                            continue;
+                        }
+                        if (hediffDefsByName.TryGetValue(defName, out HediffDef hediffDef))
+                        {
+                            Add(hediffDef);
+                            continue;
+                        }
+                        if (buildableDefsByName.TryGetValue(defName, out BuildableDef buildableDef))
+                        {
+                            Add(buildableDef);
+                            continue;
+                        }
+                        if (bodyDefsByName.TryGetValue(defName, out BodyDef bodyDef))
+                        {
+                            Add(bodyDef);
+                            continue;
+                        }
+                        if (jobsDefsByName.TryGetValue(defName, out JobDef jobDef))
+                        {
+                            Add(jobDef);
+                            continue;
+                        }
                     }
-                    if (DefDatabase<StatDef>.defsByName.TryGetValue(defName, out StatDef statDef))
-                    {
-                        Add(statDef);
-                        continue;
-                    }
-                    if (DefDatabase<HediffDef>.defsByName.TryGetValue(defName, out HediffDef hediffDef))
-                    {
-                        Add(hediffDef);
-                        continue;
-                    }
-                    if (DefDatabase<BuildableDef>.defsByName.TryGetValue(defName, out BuildableDef buildableDef))
-                    {
-                        Add(buildableDef);
-                        continue;
-                    }
-                    if (DefDatabase<BodyDef>.defsByName.TryGetValue(defName, out BodyDef bodyDef))
-                    {
-                        Add(bodyDef);
-                        continue;
-                    }
+                    catch (Exception er) { Log.Warning($"ROCKETMAN: Parsing IgnoreMe rule failed by name {defName} with error {er}"); }
                 }
-                catch (Exception er)
-                {
-                    Log.Warning($"ROCKETMAN: Parsing IgnoreMe rule failed by name {defName} with error {er}");
-                }
+                // ------------------------------
+                // Publish report to avoid spam..
+                if (Finder.debug) Log.Message(report);
             }
-            Log.Message(report);
+            catch (Exception er) { Log.Error($"ROCKETRULES: Parsing error! {er}"); }
         }
     }
 }

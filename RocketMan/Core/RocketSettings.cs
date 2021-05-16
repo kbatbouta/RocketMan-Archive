@@ -91,10 +91,15 @@ namespace RocketMan
 
         public override void WriteSettings()
         {
-            UpdateStats();
-            UpdateDilationDefs();
-            UpdateExceptions();
-            base.WriteSettings();
+            if (Finder.WarmingUp)
+                return;
+            else
+            {
+                UpdateStats();
+                UpdateDilationDefs();
+                UpdateExceptions();
+                base.WriteSettings();
+            }
         }
 
         public static void DoSettings(Rect inRect, bool doStats = true, Action<Listing_Standard> extras = null)
@@ -112,7 +117,7 @@ namespace RocketMan
             bool enabled = Finder.enabled;
             standard.CheckboxLabeled("Enabled", ref Finder.enabled);
             bool mainButtonToggle = Finder.mainButtonToggle;
-            standard.CheckboxLabeled("Hide RocketMan button/icon", ref Finder.mainButtonToggle,
+            standard.CheckboxLabeled("Show RocketMan button/icon", ref Finder.mainButtonToggle,
                     "Due to some limiations some options aren't available from the game menu settings.");
             if (Finder.mainButtonToggle != mainButtonToggle)
             {
@@ -128,6 +133,8 @@ namespace RocketMan
                 ResetDebugSettings();
             if (Finder.enabled)
             {
+                standard.CheckboxLabeled("Show warmup progress bar on startup", ref Finder.showWarmUpPopup,
+                    "This will show a warmup progress bar when you load a new map.");
                 standard.GapLine();
                 Text.CurFontStyle.fontStyle = FontStyle.Bold;
                 standard.Label("Junk removal");
@@ -160,7 +167,7 @@ namespace RocketMan
                 }
             }
             standard.End();
-            try { if (frameCounter++ % 5 == 0) settings.Write(); }
+            try { if (frameCounter++ % 5 == 0 && !Finder.WarmingUp) settings.Write(); }
             catch (Exception er) { Log.Warning($"ROCKETMAN:[NOTANERROR] Writing settings failed with error {er}"); }
             Text.Font = font;
             Text.Anchor = anchor;
@@ -223,8 +230,11 @@ namespace RocketMan
             foreach (var setting in statsSettings)
                 Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
 
-            instance.WriteSettings();
-            UpdateExceptions();
+            if (!Finder.WarmingUp && (WarmUpMapComponent.current?.Finished ?? true))
+            {
+                instance.WriteSettings();
+                UpdateExceptions();
+            }
         }
 
         public static void ReadStats()
@@ -387,11 +397,13 @@ namespace RocketMan
             public override void ExposeData()
             {
                 base.ExposeData();
+                if (Scribe.mode == LoadSaveMode.Saving && Finder.WarmingUp && !(WarmUpMapComponent.current?.Finished ?? true)) WarmUpMapComponent.current.AbortWarmUp();
                 if (Scribe.mode == LoadSaveMode.LoadingVars) ReadStats();
                 Scribe_Values.Look(ref Finder.enabled, "enabled", true);
                 Scribe_Values.Look(ref Finder.statGearCachingEnabled, "statGearCachingEnabled", true);
                 Scribe_Values.Look(ref Finder.learning, "learning");
                 Scribe_Values.Look(ref Finder.debug, "debug", false);
+                Scribe_Values.Look(ref Finder.showWarmUpPopup, "showWarmUpPopup", true);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
                 Scribe_Values.Look(ref Finder.timeDilationCaravans, "timeDilationCaravans", false);
                 Scribe_Values.Look(ref Finder.timeDilationVisitors, "timeDilationVisitors", false);

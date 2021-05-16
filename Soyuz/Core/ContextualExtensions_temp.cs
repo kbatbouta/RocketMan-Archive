@@ -38,6 +38,8 @@ namespace Soyuz
                     JobDef jobDef = pawn.jobs?.curJob?.def;
                     if (jobDef == null)
                         return false;
+                    if (IgnoreMeDatabase.ShouldIgnore(jobDef))
+                        return false;
                     if (jobDef == JobDefOf.Wait_Wander)
                         return true;
                     if (jobDef == JobDefOf.Wait)
@@ -68,38 +70,6 @@ namespace Soyuz
             if (Context.zoomRange == CameraZoomRange.Far || Context.zoomRange == CameraZoomRange.Furthest || Context.zoomRange == CameraZoomRange.Middle)
                 return true;
             return false;
-        }
-
-        public static bool ShouldTick_newtemp(this Pawn pawn)
-        {
-            if (pawn == null)
-                return true;
-            int tick = GenTicks.TicksGame;
-            shouldTick = ShouldTickInternal_newtemp(pawn);
-            if (timers.TryGetValue(pawn.thingIDNumber, out var val))
-                curDelta = GenTicks.TicksGame - val;
-            else
-                curDelta = 1;
-            if (shouldTick)
-                timers[pawn.thingIDNumber] = tick;
-            return shouldTick;
-        }
-
-        public static bool ShouldTickInternal_newtemp(this Pawn pawn)
-        {
-            int tick = GenTicks.TicksGame;
-            int id = pawn.thingIDNumber;
-            if ((id + tick) % 30 == 0 || (tick) % 250 == 0 || tick % DilationRate == 0)
-                return true;
-            if (true
-                && pawn.jobs?.curJob?.expiryInterval > 0
-                && (tick - pawn.jobs.curJob.startTick) % (pawn.jobs.curJob.expiryInterval * 2) == 0)
-                return true;
-            if (Context.zoomRange == CameraZoomRange.Far || Context.zoomRange == CameraZoomRange.Furthest)
-                return (pawn.thingIDNumber + tick) % 3 == 0;
-            if (pawn.OffScreen())
-                return (pawn.thingIDNumber + tick) % DilationRate == 0;
-            return true;
         }
     }
 }

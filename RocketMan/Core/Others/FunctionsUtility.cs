@@ -6,7 +6,7 @@ using Verse;
 
 namespace RocketMan
 {
-    public static class FunctionUtility
+    public static class FunctionsUtility
     {
         public static Type[] GetLoadableTypes(this Assembly a)
         {
@@ -17,7 +17,7 @@ namespace RocketMan
             }
             catch (ReflectionTypeLoadException e)
             {
-                Log.Warning($"<color=blue>[ROCKETMAN]</color>:[{a.FullName}] Gettypes fallback mod activated!");
+                if (Finder.debug) Log.Warning($"<color=blue>[ROCKETMAN]</color>:[{a.FullName}] Gettypes fallback mod activated!");
                 types = new List<Type>();
                 foreach (Type type in e.Types)
                 {
@@ -44,7 +44,7 @@ namespace RocketMan
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found action with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && Finder.debug) Log.Message(string.Format("ROCKETMAN: Found action with attribute {0}, {1}:{2}", typeof(T).Name,
                      method.DeclaringType.Name, method.Name));
                 yield return () => { method.Invoke(null, null); };
             }
@@ -59,7 +59,7 @@ namespace RocketMan
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && Finder.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return () => { return (P)method.Invoke(null, null); };
             }
@@ -74,7 +74,7 @@ namespace RocketMan
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && Finder.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return (input) => (K)method.Invoke(null, new object[] { input });
             }
@@ -89,7 +89,7 @@ namespace RocketMan
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && Finder.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return (input1, input2) => (U)method.Invoke(null, new object[] { input1, input2 });
             }

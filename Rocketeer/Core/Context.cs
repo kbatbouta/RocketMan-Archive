@@ -8,11 +8,7 @@ namespace Rocketeer
     {
         public static int patchIDCounter = 0;
 
-        public static RocketeerMethodTracker[] trackers = new RocketeerMethodTracker[100];
-
-        public static readonly Dictionary<string, RocketeerMethodTracker> trackerByUniqueIdentifier = new Dictionary<string, RocketeerMethodTracker>();
-        public static readonly Dictionary<MethodBase, RocketeerMethodTracker> trackerByMethod = new Dictionary<MethodBase, RocketeerMethodTracker>();
-
+        public static RocketeerPatchInfo[] trackers = new RocketeerPatchInfo[100];
         public static readonly HashSet<string> patchedMethods = new HashSet<string>();
 
         /* ----------------------------------------------------

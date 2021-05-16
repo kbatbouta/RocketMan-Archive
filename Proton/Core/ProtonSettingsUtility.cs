@@ -28,34 +28,10 @@ namespace Proton
         {
             if (Context.settings == null)
                 Context.settings = new ProtonSettings();
-            if (Context.settings.thingDefSettings.Count == 0)
-                CreateSettings();
-            foreach (var element in Context.settings.thingDefSettings)
-            {
-                if (element.thingDef == null)
-                {
-                    element.ResolveContent();
-                    if (element.thingDef == null) continue;
-                }
-                element.Cache();
-            }
         }
 
         public static void CreateSettings()
         {
-            Context.settings.thingDefSettings.Clear();
-            foreach (var def in thingDefs)
-            {
-                Context.settings.thingDefSettings.Add(new ThingDefSettings()
-                {
-                    thingDef = def,
-                    thingDefName = def.defName,
-                    isCritical = true,
-                    isRecyclable = false
-                });
-            }
-
-            Finder.rocketMod.WriteSettings();
         }
     }
 }

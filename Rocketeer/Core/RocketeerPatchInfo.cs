@@ -19,7 +19,7 @@ namespace Rocketeer
         None = 2
     }
 
-    public class RocketeerMethodTracker
+    public class RocketeerPatchInfo
     {
         private readonly int trackerId;
         private readonly MethodBase method;
@@ -37,28 +37,17 @@ namespace Rocketeer
 
         public MethodBase Method
         {
-            get => method;
+            get => patchedMethodInfo != null ? patchedMethodInfo : patchedMethodInfo;
         }
 
-        public int ExecutionRunsCounter
+        public string MethodPath
         {
-            get => successCounter + errorCounter;
+            get => patchedMethodInfo != null ? patchedMethodInfo.GetMethodPath() : methodPath;
         }
-
-        public int Resolution
-        {
-            get => resolution;
-        }
-
-        public bool Executing
-        {
-            get => executing;
-        }
-
-        public bool flushImmediately = false;
 
         private bool initialized = false;
         private bool expired = false;
+        private bool patched = false;
         private bool executing = false;
 
         public int successCounter = 0;
@@ -67,10 +56,9 @@ namespace Rocketeer
         private int resolution = 3;
         private int currentInstructionIndex = 0;
         private int currentSection = 0;
-        private int t_currentSection = 0;
-
         private string methodPath;
 
+        private int t_currentSection = 0;
         private readonly List<RocketeerInstruction> instructions = new List<RocketeerInstruction>();
         private readonly List<int> t_indexToSection = new List<int>();
         private readonly List<int> t_callToPosition = new List<int>();
@@ -81,11 +69,13 @@ namespace Rocketeer
         private int[] sectionsStartPosition;
         private int[] sectionsPasses;
 
-        public RocketeerMethodTracker(MethodBase method, int trackerId)
+        private MethodInfo patchedMethodInfo;
+
+        public RocketeerPatchInfo(MethodBase method, int trackerId)
         {
             this.trackerId = trackerId;
             this.method = method;
-            this.methodPath = method.GetDeclaredTypeMethodPath();
+            this.methodPath = method.GetMethodPath();
         }
 
         public void PushInstruction(CodeInstruction instruction, BreakPointTypes pointTypes)
@@ -108,16 +98,26 @@ namespace Rocketeer
             });
         }
 
+        public void Notify_Patched(MethodInfo patchedMethodInfo)
+        {
+            this.patchedMethodInfo = patchedMethodInfo;
+            this.patched = true;
+        }
+
         public void OnStart()
         {
             if (Context.__MARCO > 0)
             {
                 Context.__MARCO -= 1;
-                Log.Warning($"ROCKETEER: PAULO:{Context.__MARCO}! from {method.GetDeclaredTypeMethodPath()}");
+                Log.Warning($"ROCKETEER: PAULO:{Context.__MARCO}! from {Method.GetMethodPath()}");
             }
-            if (expired)
+            if (executing)
             {
-                Log.Warning($"ROCKETEER:[{method.GetDeclaredTypeMethodPath()}&{trackerId}] An expired Rocketeer patch is need unpatching!");
+                Log.Error("Interupted!");
+            }
+            if (expired || !patched)
+            {
+                Log.Warning($"ROCKETEER:[{Method.GetMethodPath()}&{trackerId}] An expired Rocketeer patch is need unpatching!");
                 throw new Exception("ROCKETEER: This an expired rocketeer patch was caught active!");
             }
             executing = true;
@@ -150,6 +150,13 @@ namespace Rocketeer
             currentInstructionIndex = sectionsStartPosition[sectionIndex];
             currentSection = sectionIndex;
             sectionsPasses[currentSection]++;
+            // ----------------
+            // TODO remove this
+            if (Context.__NUKE > 0 && Rand.Chance(0.05f))
+            {
+                Context.__NUKE = Math.Max(Context.__NUKE - 1, 0);
+                throw new Exception("BOOM!");
+            }
         }
 
         public void OnFinished()
@@ -168,12 +175,11 @@ namespace Rocketeer
         public void Stop()
         {
             expired = true;
-            RocketeerPatcher.Unpatch(method);
         }
 
         private void ProcessException(Exception exception)
         {
-            string report = $"ROCETEER:<color=red>[{methodPath}:ERROR]</color> An exception occured in {method.Name}\n" +
+            string report = $"ROCETEER:<color=red>[{MethodPath}:ERROR]</color> An exception occured in {Method.Name}\n" +
                 $"<color=red>Exception type:</color> {exception.GetType()}\n";
             string[] trace = exception.GetStackTraceAsString();
             foreach (var t in trace)
@@ -189,7 +195,8 @@ namespace Rocketeer
             report = $"{report}\n<color=red>Exception message:</color>\n{exception.Message}";
             Log.Message(report);
             Log.Message("ROCKETEER: Error report generated!");
-            this.Stop();
+            // TODO fix this
+            // this.Stop();
         }
     }
 }

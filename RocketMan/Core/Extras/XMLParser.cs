@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Xml;
+using HarmonyLib;
 using Verse;
 
 namespace RocketMan
@@ -24,7 +26,8 @@ namespace RocketMan
                 }
             }
 
-            IgnoreMeDatabase.Prepare();
+            IgnoreMeDatabase.ParsePrepare();
+            NotificationsManager.HookAll();
         }
 
         private static void ProcessRocketRuleData(XmlElement node)
@@ -41,6 +44,25 @@ namespace RocketMan
                     IgnoreMeDatabase.AddPackageId(node.GetAttribute("packageId"));
                     return;
                 }
+            }
+            else if (node.Name == "Notify")
+            {
+                if (!node.HasAttribute("type"))
+                    return;
+                if (!node.HasAttribute("packageId"))
+                    return;
+                if (!node.HasAttribute("method"))
+                    return;
+                string type = node.GetAttribute("type");
+                string packageId = node.GetAttribute("type");
+                MethodBase method = AccessTools.Method(node.GetAttribute("method"));
+                if (method == null)
+                {
+                    Log.Warning($"ROCKETMAN: RocketRule <color=red><Event method=\"{node.GetAttribute("method")}\"></color> is not implemented!");
+                    return;
+                }
+                NotificationsManager.Register(packageId, type, method);
+                return;
             }
         }
     }

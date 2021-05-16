@@ -123,7 +123,7 @@ namespace RocketMan
                 }
                 catch (Exception er)
                 {
-                    Log.Warning($"ROCKETMAN: patching {target.DeclaringType.Name}:{target} is not possible! {er}");
+                    if (Finder.debug) Log.Warning($"ROCKETMAN: patching {target.DeclaringType.Name}:{target} is not possible! {er}");
                 }
             }
         }

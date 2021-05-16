@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proton", "Proton\Proton.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rocketeer", "Rocketeer\Rocketeer.csproj", "{DA705F6E-C7E7-47DF-B66C-DD08731512E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIFramework", "..\..\UIFramework\Source\UIFramework\UIFramework\UIFramework.csproj", "{1C156622-7118-4BC3-B246-B38006EBB8A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{DA705F6E-C7E7-47DF-B66C-DD08731512E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA705F6E-C7E7-47DF-B66C-DD08731512E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA705F6E-C7E7-47DF-B66C-DD08731512E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C156622-7118-4BC3-B246-B38006EBB8A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C156622-7118-4BC3-B246-B38006EBB8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C156622-7118-4BC3-B246-B38006EBB8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C156622-7118-4BC3-B246-B38006EBB8A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

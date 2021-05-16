@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using HarmonyLib;
 using HugsLib;
 using RocketMan.Tabs;
 using Verse;
@@ -32,19 +33,20 @@ namespace RocketMan
 
         public static void ReloadActions()
         {
-            onClearCache = FunctionUtility.GetActions<OnClearCache>().ToList();
-            onDefsLoaded = FunctionUtility.GetActions<OnDefsLoaded>().ToList();
-            onWorldLoaded = FunctionUtility.GetActions<OnWorldLoaded>().ToList();
-            onMapLoaded = FunctionUtility.GetActions<OnMapLoaded>().ToList();
-            onMapComponentsInitializing = FunctionUtility.GetActions<OnMapComponentsInitializing>().ToList();
-            onTick = FunctionUtility.GetActions<OnTick>().ToList();
-            onDebugginEnabled = FunctionUtility.GetActions<OnDebugginEnabled>().ToList();
-            onDebugginDisabled = FunctionUtility.GetActions<OnDebugginDisabled>().ToList();
-            onTickLong = FunctionUtility.GetActions<OnTickLong>().ToList();
-            yieldTabContent = FunctionUtility.GetFunctions<YieldTabContent, ITabContent>().ToList();
-            onScribe = FunctionUtility.GetActions<Main.OnScribe>().ToList();
-            onStaticConstructors = FunctionUtility.GetActions<Main.OnStaticConstructor>().ToList();
-            onInitialization = FunctionUtility.GetActions<Main.OnInitialization>().ToList();
+            onClearCache = FunctionsUtility.GetActions<OnClearCache>().ToList();
+            onDefsLoaded = FunctionsUtility.GetActions<OnDefsLoaded>().ToList();
+            onWorldLoaded = FunctionsUtility.GetActions<OnWorldLoaded>().ToList();
+            onMapLoaded = FunctionsUtility.GetActions<OnMapLoaded>().ToList();
+            onMapComponentsInitializing = FunctionsUtility.GetActions<OnMapComponentsInitializing>().ToList();
+            onTick = FunctionsUtility.GetActions<OnTick>().ToList();
+            onDebugginEnabled = FunctionsUtility.GetActions<OnDebugginEnabled>().ToList();
+            onDebugginDisabled = FunctionsUtility.GetActions<OnDebugginDisabled>().ToList();
+            onTickLong = FunctionsUtility.GetActions<OnTickLong>().ToList();
+            yieldTabContent = FunctionsUtility.GetFunctions<YieldTabContent, ITabContent>().ToList();
+            onScribe = FunctionsUtility.GetActions<Main.OnScribe>().ToList();
+            onStaticConstructors = FunctionsUtility.GetActions<Main.OnStaticConstructor>().ToList();
+            onInitialization = FunctionsUtility.GetActions<Main.OnInitialization>().ToList();
+            Finder.settingsFields = FieldsUtility.GetFields<SettingsField>().ToArray();
         }
 
         static Main()
@@ -53,8 +55,9 @@ namespace RocketMan
             // TODO more stylizations.
             // this is used to stylize the log output of rocketman.
             EditWindow_Log_DoMessagesListing_Patch.PatchEditWindow_Log();
-            // Offical start of the code.
-            onStaticConstructors = FunctionUtility.GetActions<OnStaticConstructor>().ToList();
+            // -------------------------
+            // Offical start of the code.            
+            onStaticConstructors = FunctionsUtility.GetActions<OnStaticConstructor>().ToList();
             for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
         }
 
@@ -203,6 +206,17 @@ namespace RocketMan
         [AttributeUsage(AttributeTargets.Method)]
         public class OnDebugginDisabled : Attribute
         {
+        }
+
+        [AttributeUsage(AttributeTargets.Field)]
+        public class SettingsField : Attribute
+        {
+            public object warmUpValue;
+
+            public SettingsField(object warmUpValue)
+            {
+                this.warmUpValue = warmUpValue;
+            }
         }
     }
 }

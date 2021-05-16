@@ -342,13 +342,17 @@
         <Compile Include="Core\Compatibility\RimWarHelper.cs" />
         <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
         <Compile Include="Core\Others\PatchingUtility.cs" />
-        <Compile Include="Core\Others\FunctionUtility.cs" />
+        <Compile Include="Core\Others\FunctionsUtility.cs" />
         <Compile Include="Core\Compatibility\MultiplayerHelper.cs" />
         <Compile Include="Core\Others\CompatibilityUtility.cs" />
         <Compile Include="Core\Extras\XMLParser.cs" />
         <Compile Include="Core\Extras\IgnoreMeDatabase.cs" />
         <Compile Include="Core\Patches\EditWindow_Log_Patch.cs" />
         <Compile Include="Core\Others\LogUtility.cs" />
+        <Compile Include="Core\Extras\NotificationsManager.cs" />
+        <Compile Include="Core\Collections\FlagsArray.cs" />
+        <Compile Include="Core\Components\WarmUpMapComponent.cs" />
+        <Compile Include="Core\Others\FieldsUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -356,6 +360,8 @@
             <Link>About\About.xml</Link>
         </None>
         <None Include="Core\Optimizations\Obsolete\Pawn_Patch.cs" />
+        <None Include="Core\Diagnosis\Platform.cs" />
+        <None Include="Core\Diagnosis\DeferredStackTracingImpl.cs" />
     </ItemGroup>
     <ItemGroup />
     <ItemGroup>
@@ -366,6 +372,8 @@
         <Folder Include="Core\Patches\" />
         <Folder Include="Core\Optimizations\Obsolete\" />
         <Folder Include="Core\Extras\" />
+        <Folder Include="Core\Diagnosis\" />
+        <Folder Include="Core\Components\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Target Name="Publicise" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOsPlatform(OSX))">
