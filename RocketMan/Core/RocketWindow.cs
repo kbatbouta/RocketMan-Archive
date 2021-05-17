@@ -38,6 +38,7 @@ namespace RocketMan
             FontStyle style = Text.CurFontStyle.fontStyle;
             Color color = GUI.color;
             GameFont font = Text.Font;
+            Rect rect = inRect.TopPartPixels(25);
             try
             {
                 // TODO fix this mess
@@ -45,15 +46,20 @@ namespace RocketMan
                 Finder.lastFrame = Time.frameCount;
                 // For Stat settings reason...
                 RocketMod.ReadStats();
-                // Actual work
-                standard.Begin(inRect.TopPart(25));
-                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                // Actual work                                
                 GUI.color = Color.white;
-                standard.Label("RocketMan");
+                // Create the RocketMan stamp
+                Text.Font = GameFont.Small;
+                Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                Widgets.Label(rect, "RocketMan");
+                // Create the version string
+                rect.xMin += 90;
+                rect.xMax -= 45;
+                rect.y += 2;
                 Text.CurFontStyle.fontStyle = FontStyle.Normal;
                 Text.Font = GameFont.Tiny;
-                GUI.color = Color.white;
-                standard.End();
+                Widgets.Label(rect.TopPartPixels(25), $"Version <color=grey>{Finder.Version}</color>");
+                // Do the window content
                 inRect.yMin += 25;
                 tabs.DoContent(inRect);
                 // Reduce the error counter

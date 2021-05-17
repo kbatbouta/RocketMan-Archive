@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using Verse;
@@ -21,6 +22,23 @@ namespace RocketMan
                 if (!assemblies.Contains(mainAssembly))
                     assemblies.Add(mainAssembly);
                 return assemblies;
+            }
+        }
+
+        private static string versionString;
+
+        public static string Version
+        {
+            get
+            {
+                if (versionString != null)
+                    return versionString;
+                Version version = Assembly.GetExecutingAssembly().GetName().Version;
+                versionString = $"{version.Major}" +
+                    $".{version.Minor}" +
+                    $".{version.Build}" +
+                    $".{version.Revision}";
+                return versionString;
             }
         }
 
