@@ -35,9 +35,7 @@ namespace RocketMan
 
         public override void DoWindowContents(Rect inRect)
         {
-            FontStyle style = Text.CurFontStyle.fontStyle;
-            Color color = GUI.color;
-            GameFont font = Text.Font;
+            GUIUtility.StashGUIState();
             Rect rect = inRect.TopPartPixels(25);
             try
             {
@@ -74,9 +72,7 @@ namespace RocketMan
             }
             finally
             {
-                Text.Font = font;
-                Text.CurFontStyle.fontStyle = style;
-                GUI.color = color;
+                GUIUtility.RestoreGUIState();
             }
         }
 

@@ -8,7 +8,7 @@ namespace RocketMan.Patches
 {
     public static class Pawn_Notify_Dirty
     {
-        [RocketPatch(modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+        [RocketPatch()]
         public static class Pawn_ApparelTracker_Dirty
         {
             public static IEnumerable<MethodBase> TargetMethods()
@@ -31,7 +31,7 @@ namespace RocketMan.Patches
             }
         }
 
-        [RocketPatch(modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+        [RocketPatch()]
         public static class Pawn_EquipmentTracker_Dirty
         {
             public static IEnumerable<MethodBase> TargetMethods()
@@ -46,7 +46,7 @@ namespace RocketMan.Patches
             }
         }
 
-        [RocketPatch(modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+        [RocketPatch()]
         public static class Pawn_Dirty
         {
             public static IEnumerable<MethodBase> TargetMethods()
@@ -64,7 +64,7 @@ namespace RocketMan.Patches
             }
         }
 
-        [RocketPatch(modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+        [RocketPatch()]
         public static class Pawn_HealthTracker_Dirty
         {
             public static IEnumerable<MethodBase> TargetMethods()

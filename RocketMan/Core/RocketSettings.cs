@@ -42,7 +42,6 @@ namespace RocketMan
                 Main.ReloadActions();
                 foreach (var action in Main.onInitialization)
                     action.Invoke();
-
                 instance = this;
                 settings = GetSettings<RocketModSettings>();
                 UpdateExceptions();

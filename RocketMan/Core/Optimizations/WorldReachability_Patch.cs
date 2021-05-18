@@ -9,12 +9,7 @@ namespace RocketMan.Optimizations
 {
     public class WorldReachability_Patch
     {
-        public static bool ShouldPatch()
-        {
-            return !RimWarThreadedHelper.Instance.IsLoaded() && !RimWarHelper.Instance.IsLoaded();
-        }
-
-        [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) }, parameters = new[] { typeof(int), typeof(int) })]
+        [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), parameters = new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
             internal static HashSet<int> visitedTiles;
@@ -33,11 +28,6 @@ namespace RocketMan.Optimizations
 
             internal static Thread thread;
             internal static ThreadStart threadStart;
-
-            internal static bool Prepare()
-            {
-                return ShouldPatch();
-            }
 
             internal static void StartIslandGeneration()
             {

@@ -25,9 +25,6 @@ namespace RocketMan
                         ProcessRocketRuleData(element);
                 }
             }
-
-            IgnoreMeDatabase.ParsePrepare();
-            NotificationsManager.HookAll();
         }
 
         private static void ProcessRocketRuleData(XmlElement node)
@@ -63,6 +60,16 @@ namespace RocketMan
                 }
                 NotificationsManager.Register(packageId, type, method);
                 return;
+            }
+            else if (node.Name == "Incompatibility")
+            {
+                if (!node.HasAttribute("packageId"))
+                    return;
+                if (!node.HasAttribute("name"))
+                    return;
+                string name = node.GetAttribute("name").ToLower();
+                string packageId = node.GetAttribute("packageId").ToLower();
+                IncompatibilityHelper.Register(name, packageId);
             }
         }
     }

@@ -14,6 +14,8 @@ namespace RocketMan
             get => WarmUpMapComponent.settingsBeingStashed;
         }
 
+        public static bool incompatibilityUnresolved = false;
+
         public static FieldInfo[] settingsFields;
 
         [Main.SettingsField(warmUpValue: false)]

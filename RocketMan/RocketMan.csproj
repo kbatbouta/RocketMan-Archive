@@ -328,8 +328,6 @@
         <Compile Include="Core\RocketWindow.cs" />
         <Compile Include="Core\RocketShip.cs" />
         <Compile Include="Core\RocketSettings.Exceptions.cs" />
-        <Compile Include="Core\Compatibility\DubsPreformanceAnalyzerHelper.cs" />
-        <Compile Include="Core\Compatibility\RimWarThreadedHelper.cs" />
         <Compile Include="Core\Optimizations\GlowGrid_Patch.cs" />
         <Compile Include="Core\Optimizations\StatPart_ApparelStatOffSet_Patch.cs" />
         <Compile Include="Core\Collections\CachedDict.cs" />
@@ -337,12 +335,9 @@
         <Compile Include="Core\Optimizations\StatWorker_Patch.cs" />
         <Compile Include="Core\Patches\Pawn_Notify_Patch.cs" />
         <Compile Include="Core\Patches\Pawn_TimetableTracker_Patch.cs" />
-        <Compile Include="Core\ModHelper.cs" />
-        <Compile Include="Core\Compatibility\RimWarHelper.cs" />
         <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
         <Compile Include="Core\Others\PatchingUtility.cs" />
         <Compile Include="Core\Others\FunctionsUtility.cs" />
-        <Compile Include="Core\Compatibility\MultiplayerHelper.cs" />
         <Compile Include="Core\Others\CompatibilityUtility.cs" />
         <Compile Include="Core\Extras\XMLParser.cs" />
         <Compile Include="Core\Extras\IgnoreMeDatabase.cs" />
@@ -357,6 +352,12 @@
         </Compile>
         <Compile Include="Core\RocketAssembliesInfo.cs" />
         <Compile Include="Core\GUI\Windows\Window_IncompatibilityWarning.cs" />
+        <Compile Include="Core\Others\GUIUtility.cs" />
+        <Compile Include="Core\Patches\MainMenuDrawer_Patch.cs" />
+        <Compile Include="Core\IPatch.cs" />
+        <Compile Include="Core\IPatchType.cs" />
+        <Compile Include="Core\IPatchInfo.cs" />
+        <Compile Include="Core\Extras\IncompatibilityHelper.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -377,7 +378,6 @@
     <ItemGroup />
     <ItemGroup>
         <Folder Include="Core\" />
-        <Folder Include="Core\Compatibility\" />
         <Folder Include="Core\Optimizations\" />
         <Folder Include="Core\Collections\" />
         <Folder Include="Core\Patches\" />

@@ -1,9 +1,9 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Verse;
 
 namespace RocketMan.Patches
 {
-    [RocketPatch(typeof(TickManager), nameof(TickManager.TickRateMultiplier), MethodType.Getter, modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+    [RocketPatch(typeof(TickManager), nameof(TickManager.TickRateMultiplier), MethodType.Getter)]
     public class TickManager_TickRateMultiplier_Patch
     {
         public static bool Prefix(ref float __result)
@@ -17,7 +17,7 @@ namespace RocketMan.Patches
         }
     }
 
-    [RocketPatch(typeof(TickManager), nameof(TickManager.Notify_GeneratedPotentiallyHostileMap), modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+    [RocketPatch(typeof(TickManager), nameof(TickManager.Notify_GeneratedPotentiallyHostileMap))]
     public class TickManager_Notify_GeneratedPotentiallyHostileMap_Patch
     {
         public static bool Prefix()

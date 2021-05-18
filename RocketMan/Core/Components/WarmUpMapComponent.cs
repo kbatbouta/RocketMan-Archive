@@ -67,7 +67,9 @@ namespace RocketMan
             int width = 450;
             int height = 65;
             Rect rect = new Rect(UI.screenWidth / 2 - ((float)width / 2), UI.screenHeight / 5, width, height);
+            GUIUtility.StashGUIState();
             DoPopupContent(rect);
+            GUIUtility.RestoreGUIState();
         }
 
         public override void MapComponentTick()

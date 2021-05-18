@@ -11,7 +11,7 @@ using Verse;
 
 namespace RocketMan.Optimizations
 {
-    [RocketPatch(typeof(StatWorker), "GetValueUnfinalized", parameters: new[] { typeof(StatRequest), typeof(bool) }, modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+    [RocketPatch(typeof(StatWorker), "GetValueUnfinalized", parameters: new[] { typeof(StatRequest), typeof(bool) })]
     internal static class StatWorker_GetValueUnfinalized_Interrupt_Patch
     {
         public static HashSet<MethodBase> callingMethods = new HashSet<MethodBase>();
@@ -44,7 +44,7 @@ namespace RocketMan.Optimizations
         }
     }
 
-    [RocketPatch(modsCompatiblityHandlers: new[] { typeof(MultiplayerHelper) })]
+    [RocketPatch()]
     internal static class StatWorker_GetValueUnfinalized_Hijacked_Patch
     {
         internal static MethodBase m_GetValueUnfinalized = AccessTools.Method(typeof(StatWorker), "GetValueUnfinalized",

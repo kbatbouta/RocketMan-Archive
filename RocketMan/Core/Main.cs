@@ -60,6 +60,12 @@ namespace RocketMan
             // Offical start of the code.            
             onStaticConstructors = FunctionsUtility.GetActions<OnStaticConstructor>().ToList();
             for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
+            // ---------------------------------------
+            // TODO implement compatiblity xml support
+            //foreach (var mod in ModsConfig.ActiveModsInLoadOrder)
+            //{
+            //    Log.Message($"{mod.PackageId}, {mod.Name}, {mod.PackageIdPlayerFacing}");
+            //}
         }
 
         public override void MapLoaded(Map map)
@@ -84,7 +90,16 @@ namespace RocketMan
         {
             for (var i = 0; i < onDefsLoaded.Count; i++) onDefsLoaded[i].Invoke();
             base.DefsLoaded();
+            // --------------
+            // start loading xml data
             XMLParser.ParseXML();
+            // --------------
+            // load xml data and parse it
+            IgnoreMeDatabase.ParsePrepare();
+            IncompatibilityHelper.Prepare();
+            NotificationsManager.HookAll();
+            // --------------
+            // start patching
             RocketPatcher.PatchAll();
             Finder.rocket.PatchAll();
         }

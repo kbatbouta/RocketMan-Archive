@@ -58,41 +58,42 @@ namespace RocketMan.Tabs
                 curTabIndex = 0;
                 tabs[0].Selected = true;
             }
-
-            var font = Text.Font;
-            var style = Text.CurFontStyle.fontStyle;
-            var anchor = Text.Anchor;
-
-            curTab = tabs[curTabIndex];
-            if (useSidebar)
+            GUIUtility.ExecuteSafeGUIAction(() =>
             {
-                var tabsRect = inRect.LeftPartPixels(170);
-                var contentRect = new Rect(inRect);
-                contentRect.xMin += 180;
-                DoSidebar(tabsRect);
-                Text.Font = GameFont.Medium;
-                Text.CurFontStyle.fontStyle = FontStyle.Bold;
-                GUI.Label(contentRect.TopPartPixels(25), curTab.Label);
+                TextAnchor anchor = Text.Anchor;
+                FontStyle style = Text.CurFontStyle.fontStyle;
+                GameFont font = Text.Font;
+                curTab = tabs[curTabIndex];
+                if (useSidebar)
+                {
+                    var tabsRect = inRect.LeftPartPixels(170);
+                    var contentRect = new Rect(inRect);
+                    contentRect.xMin += 180;
+                    DoSidebar(tabsRect);
+                    Text.Font = GameFont.Medium;
+                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                    GUI.Label(contentRect.TopPartPixels(25), curTab.Label);
+                    Text.Font = font;
+                    Text.CurFontStyle.fontStyle = style;
+                    contentRect.yMin += 30;
+                    curTab.DoContent(contentRect);
+                }
+                else
+                {
+                    // TODO fix this API                
+                    // inRect.yMin += 40;
+                    // var tabRect = new Rect(inRect);
+                    // tabRect.height = 0;                
+                    // MakeRecords();
+                    // TabDrawer.DrawTabs(tabRect, tabsRecord);
+                    // curTab.DoContent(inRect);
+                    // -----------------------
+                    throw new InvalidOperationException("ROCKETMAN: this is an outdated API!");
+                }
+                Text.Anchor = anchor;
                 Text.Font = font;
                 Text.CurFontStyle.fontStyle = style;
-                contentRect.yMin += 30;
-                curTab.DoContent(contentRect);
-            }
-            else
-            {
-                // TODO fix this API                
-                // inRect.yMin += 40;
-                // var tabRect = new Rect(inRect);
-                // tabRect.height = 0;                
-                // MakeRecords();
-                // TabDrawer.DrawTabs(tabRect, tabsRecord);
-                // curTab.DoContent(inRect);
-                // -----------------------
-                throw new InvalidOperationException("ROCKETMAN: this is an outdated API!");
-            }
-            Text.Anchor = anchor;
-            Text.Font = font;
-            Text.CurFontStyle.fontStyle = style;
+            }, fallbackAction: null, catchExceptions: false);
         }
 
         public void AddTab(ITabContent newTab)
