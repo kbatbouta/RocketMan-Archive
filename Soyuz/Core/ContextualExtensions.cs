@@ -15,10 +15,7 @@ namespace Soyuz
     {
         private static Pawn _pawnTick;
         private static Pawn _pawnScreen;
-
         private static bool offScreen;
-        private static bool shouldTick;
-
         private static int curDelta;
 
         private const int TransformationCacheSize = 2500;
@@ -112,6 +109,7 @@ namespace Soyuz
             if (false
                 || !Finder.enabled
                 || !Finder.timeDilation
+                || (!Finder.timeDilationCaravans && pawn.IsCaravanMember() && pawn.GetCaravan().IsPlayerControlled)
                 || !pawn.IsValidWildlifeOrWorldPawn()
                 || (!Finder.timeDilationCriticalHediffs && pawn.HasCriticalHediff()))
             {

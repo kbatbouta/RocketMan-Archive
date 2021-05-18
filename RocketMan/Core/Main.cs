@@ -51,7 +51,7 @@ namespace RocketMan
 
         static Main()
         {
-            Log.Message($"<color=orange>ROCKETMAN:</color> Version { Finder.Version }");
+            Log.Message($"<color=orange>ROCKETMAN:</color> Version { RocketAssembliesInfo.Version }");
             // ----------------------
             // TODO more stylizations.
             // this is used to stylize the log output of rocketman.

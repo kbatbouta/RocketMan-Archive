@@ -37,7 +37,7 @@ namespace RocketMan
 
         public static IEnumerable<Action> GetActions<T>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
@@ -52,7 +52,7 @@ namespace RocketMan
 
         public static IEnumerable<Func<P>> GetFunctions<T, P>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
@@ -67,7 +67,7 @@ namespace RocketMan
 
         public static IEnumerable<Func<P, K>> GetFunctions<T, P, K>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
@@ -82,7 +82,7 @@ namespace RocketMan
 
         public static IEnumerable<Func<P, K, U>> GetFunctions<T, P, K, U>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())

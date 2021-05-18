@@ -10,7 +10,7 @@ namespace RocketMan
     {
         public static IEnumerable<FieldInfo> GetFields<T>() where T : Attribute
         {
-            foreach (var field in Finder.RocketManAssemblies
+            foreach (var field in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetFields())

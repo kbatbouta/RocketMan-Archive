@@ -355,6 +355,8 @@
         <Compile Include="Properties\AssemblyInfo.cs">
             <DependentUpon>AssemblyInfo.tt</DependentUpon>
         </Compile>
+        <Compile Include="Core\RocketAssembliesInfo.cs" />
+        <Compile Include="Core\GUI\Windows\Window_IncompatibilityWarning.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -385,6 +387,7 @@
         <Folder Include="Core\Components\" />
         <Folder Include="Properties\" />
         <Folder Include="About\" />
+        <Folder Include="Core\GUI\Windows\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <PropertyGroup>

@@ -31,7 +31,7 @@ namespace RocketMan
                 LoadPlugins(content, "Soyuz.dll", "Soyuz");
                 LoadPlugins(content, "Proton.dll", "Proton");
                 LoadPlugins(content, "Rocketeer.dll", "Rocketeer");
-                Finder.assemblies.Add(content.assemblies.loadedAssemblies[0]);
+                RocketAssembliesInfo.Assemblies.Add(content.assemblies.loadedAssemblies[0]);
             }
             catch (Exception er)
             {
@@ -73,7 +73,7 @@ namespace RocketMan
                 {
                     return;
                 }
-                Finder.assemblies.Add(asm);
+                RocketAssembliesInfo.Assemblies.Add(asm);
                 content.assemblies.loadedAssemblies.Add(asm);
             }
         }

@@ -18,7 +18,7 @@ namespace Soyuz
                 return false;
             if (WorldPawnsTicker.isActive)
             {
-                if (!Finder.timeDilationCaravans && pawn.IsCaravanMember() && pawn.GetCaravan().Faction == Faction.OfPlayer)
+                if (!Finder.timeDilationCaravans && pawn.IsCaravanMember() && pawn.GetCaravan().IsPlayerControlled)
                     return false;
                 if (!Finder.timeDilationWorldPawns)
                     return false;

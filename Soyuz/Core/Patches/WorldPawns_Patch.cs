@@ -16,7 +16,7 @@ namespace Soyuz.Patches
         {
             public static void Postfix(WorldPawns __instance)
             {
-                WorldPawnsTicker.Rebuild(__instance);
+                WorldPawnsTicker.SetDirty();
             }
         }
 
@@ -25,7 +25,7 @@ namespace Soyuz.Patches
         {
             public static void Postfix(WorldPawns __instance)
             {
-                WorldPawnsTicker.Rebuild(__instance);
+                WorldPawnsTicker.SetDirty();
             }
         }
 
@@ -34,6 +34,7 @@ namespace Soyuz.Patches
         {
             public static void Prefix(Pawn p)
             {
+                WorldPawnsTicker.SetDirty();
                 WorldPawnsTicker.Register(p);
             }
         }
@@ -43,6 +44,7 @@ namespace Soyuz.Patches
         {
             public static void Prefix(Pawn p)
             {
+                WorldPawnsTicker.SetDirty();
                 WorldPawnsTicker.Deregister(p);
             }
         }
@@ -52,6 +54,7 @@ namespace Soyuz.Patches
         {
             public static void Prefix(Pawn p)
             {
+                WorldPawnsTicker.SetDirty();
                 WorldPawnsTicker.Deregister(p);
             }
         }

@@ -14,34 +14,6 @@ namespace RocketMan
             get => WarmUpMapComponent.settingsBeingStashed;
         }
 
-        public static IEnumerable<Assembly> RocketManAssemblies
-        {
-            get
-            {
-                Assembly mainAssembly = typeof(Finder).Assembly;
-                if (!assemblies.Contains(mainAssembly))
-                    assemblies.Add(mainAssembly);
-                return assemblies;
-            }
-        }
-
-        private static string versionString;
-
-        public static string Version
-        {
-            get
-            {
-                if (versionString != null)
-                    return versionString;
-                Version version = Assembly.GetExecutingAssembly().GetName().Version;
-                versionString = $"{version.Major}" +
-                    $".{version.Minor}" +
-                    $".{version.Build}" +
-                    $".{version.Revision}";
-                return versionString;
-            }
-        }
-
         public static FieldInfo[] settingsFields;
 
         [Main.SettingsField(warmUpValue: false)]
@@ -136,7 +108,5 @@ namespace RocketMan
         public static RocketShip.SkipperPatcher rocket = new RocketShip.SkipperPatcher(HarmonyID);
 
         public static object locker = new object();
-
-        public static readonly HashSet<Assembly> assemblies = new HashSet<Assembly>();
     }
 }

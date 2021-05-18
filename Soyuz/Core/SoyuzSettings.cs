@@ -16,7 +16,7 @@ namespace Soyuz
         public ThingDef pawnDef;
         public string pawnDefName;
 
-        public bool dilated;
+        public bool dilated = true;
         public bool enabled = true;
         public bool ignoreFactions;
         public bool ignorePlayerFaction;
@@ -49,7 +49,7 @@ namespace Soyuz
         public void ExposeData()
         {
             Scribe_Values.Look(ref pawnDefName, "pawnDefName");
-            Scribe_Values.Look(ref dilated, "dilated");
+            Scribe_Values.Look(ref dilated, "dilated", true);
             Scribe_Values.Look(ref enabled, "enabled", true);
             Scribe_Values.Look(ref ignoreFactions, "ignoreFactions");
             Scribe_Values.Look(ref ignorePlayerFaction, "ignorePlayerFaction");

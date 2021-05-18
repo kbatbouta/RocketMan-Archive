@@ -58,7 +58,7 @@ namespace RocketMan
                 rect.y += 2;
                 Text.CurFontStyle.fontStyle = FontStyle.Normal;
                 Text.Font = GameFont.Tiny;
-                Widgets.Label(rect.TopPartPixels(25), $"Version <color=grey>{Finder.Version}</color>");
+                Widgets.Label(rect.TopPartPixels(25), $"Version <color=grey>{RocketAssembliesInfo.Version}</color>");
                 // Do the window content
                 inRect.yMin += 25;
                 tabs.DoContent(inRect);

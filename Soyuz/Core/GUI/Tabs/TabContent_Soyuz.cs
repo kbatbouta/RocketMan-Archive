@@ -31,7 +31,7 @@ namespace Soyuz.Tabs
             standard.CheckboxLabeled("Enable time dilation for caravans (Can cause issues)", ref Finder.timeDilationCaravans, "Disable this in case your caravans are consuming food too quickly.");
             standard.CheckboxLabeled("Enable time dilation for visitor pawns.", ref Finder.timeDilationVisitors, "Experimental: Can cause a lot of bugs.");
             standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Throttle ticking for world pawns.");
-            standard.CheckboxLabeled("Enable time dilation for pawns with critical hediffs", ref Finder.timeDilationCriticalHediffs, "This will enable dilation for pawns with critical hediffs such as pregnant pawns or bleeding pawns. (Disable this in case of a hediff problem)");
+            //standard.CheckboxLabeled("Enable time dilation for pawns with critical hediffs", ref Finder.timeDilationCriticalHediffs, "This will enable dilation for pawns with critical hediffs such as pregnant pawns or bleeding pawns. (Disable this in case of a hediff problem)");
             if (Finder.debug)
             {
                 standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "For debugging only.");
@@ -69,7 +69,7 @@ namespace Soyuz.Tabs
             if (oldSearchString != searchString)
                 scrollPosition = Vector2.zero;
             rect.yMin += 30;
-            if (curSelection != null && !searchString.NullOrEmpty())
+            if (curSelection != null)
             {
                 var height = 128 + (Finder.debug ? 25 : 0);
                 var selectionRect = rect.TopPartPixels(height);
@@ -120,13 +120,14 @@ namespace Soyuz.Tabs
             var counter = 0;
             foreach (var element in Context.settings.raceSettings)
             {
-                if (element?.pawnDef?.label == null)
+                string defLabel = element?.pawnDef?.label?.ToLower();
+                if (defLabel == null)
                     continue;
-                if (!element.pawnDef.label.ToLower().Contains(searchString))
+                if (!searchString.NullOrEmpty() && !(defLabel?.Contains(searchString) ?? false))
                     continue;
                 counter++;
                 if (counter % 2 == 0)
-                    Widgets.DrawBoxSolid(curRect, new Color(0.1f, 0.1f, 0.1f, 0.2f));
+                    Widgets.DrawBoxSolid(curRect, new Color(0.2f, 0.2f, 0.2f));
                 Widgets.DrawHighlightIfMouseover(curRect);
                 Widgets.DefLabelWithIcon(curRect.ContractedBy(3), element.pawnDef);
                 if (Widgets.ButtonInvisible(curRect))

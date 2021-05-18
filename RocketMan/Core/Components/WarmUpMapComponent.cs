@@ -16,6 +16,7 @@ namespace RocketMan
         private bool settingsStashed = false;
         private int startingTicksGame = -1;
         private int ticksPassed = 0;
+        private bool showUI = true;
 
         public float Progress
         {
@@ -46,6 +47,7 @@ namespace RocketMan
         public WarmUpMapComponent(Map map) : base(map)
         {
             current?.AbortWarmUp();
+            showUI = Finder.enabled;
             Initialize();
         }
 
@@ -58,7 +60,7 @@ namespace RocketMan
         public override void MapComponentOnGUI()
         {
             base.MapComponentOnGUI();
-            if (finished || !started || !settingsBeingStashed)
+            if (finished || !started || !settingsBeingStashed || !showUI)
                 return;
             if (!Finder.showWarmUpPopup)
                 return;
