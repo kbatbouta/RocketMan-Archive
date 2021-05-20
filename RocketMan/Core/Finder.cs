@@ -21,10 +21,6 @@ namespace RocketMan
         [Main.SettingsField(warmUpValue: false)]
         public static bool enabled = true;
 
-        public static bool debug = false;
-
-        public static bool statLogging = false;
-
         [Main.SettingsField(warmUpValue: false)]
         public static bool learning = true;
 
@@ -47,12 +43,6 @@ namespace RocketMan
         public static bool timeDilationCaravans = false;
 
         [Main.SettingsField(warmUpValue: false)]
-        public static bool flashDilatedPawns = false;
-
-        [Main.SettingsField(warmUpValue: false)]
-        public static bool alwaysDilating = false;
-
-        [Main.SettingsField(warmUpValue: false)]
         public static bool timeDilationColonyAnimals = true;
 
         [Main.SettingsField(warmUpValue: false)]
@@ -65,8 +55,6 @@ namespace RocketMan
 
         public static bool enableGridRefresh = false;
 
-        public static bool drawGlowerUpdates = false;
-
         [Main.SettingsField(warmUpValue: false)]
         public static bool statGearCachingEnabled = false;
 
@@ -74,10 +62,6 @@ namespace RocketMan
         public static bool corpsesRemovalEnabled = true;
 
         public static bool showWarmUpPopup = true;
-
-        public static bool logData = false;
-
-        public static bool debug150MTPS = false;
 
         public static bool soyuzLoaded = false;
 

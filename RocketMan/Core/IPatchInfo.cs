@@ -38,21 +38,35 @@ namespace RocketMan
                 {
                     if (attribute.methodType == MethodType.Getter)
                         targets = new MethodBase[1]
-                            {AccessTools.PropertyGetter(attribute.targetType, attribute.targetMethod)};
+                            {
+                                AccessTools.PropertyGetter(attribute.targetType, attribute.targetMethod)
+                            };
                     else if (attribute.methodType == MethodType.Setter)
                         targets = new MethodBase[1]
-                            {AccessTools.PropertySetter(attribute.targetType, attribute.targetMethod)};
+                            {
+                                AccessTools.PropertySetter(attribute.targetType, attribute.targetMethod)
+                            };
                     else if (attribute.methodType == MethodType.Normal)
                         targets = new MethodBase[1]
                         {
                             AccessTools.Method(attribute.targetType, attribute.targetMethod, attribute.parameters,
                                 attribute.generics)
                         };
-                    else throw new NotImplementedException();
+                    else if (attribute.methodType == MethodType.Constructor)
+                        targets = new MethodBase[1]
+                       {
+                            AccessTools.Constructor(attribute.targetType, attribute.parameters)
+                       };
+                    else
+                        throw new Exception("Not implemented!");
+
                 }
                 else if (patchType == PatchType.empty)
                 {
-                    targets = (type.GetMethod("TargetMethods").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
+                    if (type.GetMethod("TargetMethods") != null)
+                        targets = (type.GetMethod("TargetMethods").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
+                    else
+                        targets = (type.GetMethod("TargetMethod").Invoke(null, null) as IEnumerable<MethodBase>).ToArray();
                 }
             }
             catch (Exception er)
@@ -71,14 +85,14 @@ namespace RocketMan
         {
             if (prepare != null && !((bool)prepare.Invoke(null, null)))
             {
-                if (Finder.debug) Log.Message($"{PluginName}: Prepare failed for {attribute.targetType.Name ?? null}:{attribute.targetMethod ?? null}");
+                if (RocketDebugPrefs.debug) Log.Message($"{PluginName}: Prepare failed for {attribute.targetType.Name ?? null}:{attribute.targetMethod ?? null}");
                 return;
             }
             foreach (var target in targets.ToHashSet())
             {
                 if (!target.IsValidTarget())
                 {
-                    if (Finder.debug) Log.Warning($"{PluginName}:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} is not possible! Patch attempt skipped");
+                    if (RocketDebugPrefs.debug) Log.Warning($"{PluginName}:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} is not possible! Patch attempt skipped");
                     continue;
                 }
                 try
@@ -88,11 +102,11 @@ namespace RocketMan
                         postfix: postfix != null ? new HarmonyMethod(postfix) : null,
                         transpiler: transpiler != null ? new HarmonyMethod(transpiler) : null,
                         finalizer: finalizer != null ? new HarmonyMethod(finalizer) : null);
-                    if (Finder.debug) Log.Message($"{PluginName}:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} finished!");
+                    if (RocketDebugPrefs.debug) Log.Message($"{PluginName}:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} finished!");
                 }
                 catch (Exception er)
                 {
-                    if (Finder.debug) Log.Warning($"{PluginName}: patching {target.DeclaringType.Name}:{target} is not possible! {er}");
+                    if (RocketDebugPrefs.debug) Log.Warning($"{PluginName}: patching {target.DeclaringType.Name}:{target} is not possible! {er}");
                 }
             }
         }

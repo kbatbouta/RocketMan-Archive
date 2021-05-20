@@ -4,14 +4,14 @@ using RocketMan.Tabs;
 using UnityEngine;
 using Verse;
 
-namespace Proton.GUI
+namespace Proton
 {
     public class TabContent_Proton : ITabContent
     {
         private Listing_Standard standard = new Listing_Standard();
 
-        public override string Label => "Proton";
-        public override bool ShouldShow => true;
+        public override string Label => "Alerts";
+        public override bool ShouldShow => RocketDebugPrefs.debug;
 
         public override void DoContent(Rect rect)
         {
@@ -31,6 +31,6 @@ namespace Proton.GUI
         }
 
         [Main.YieldTabContent]
-        private ITabContent YieldTab() => new TabContent_Proton();
+        public static ITabContent YieldTab() => new TabContent_Proton();
     }
 }

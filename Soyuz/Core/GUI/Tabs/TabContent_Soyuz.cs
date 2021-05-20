@@ -24,7 +24,7 @@ namespace Soyuz.Tabs
 
         public override void DoContent(Rect rect)
         {
-            standard.Begin(rect.TopPartPixels(95 + (Finder.debug ? 120 : 0)));
+            standard.Begin(rect.TopPartPixels(95 + (RocketDebugPrefs.debug ? 120 : 0)));
             var font = Text.Font;
             Text.Font = GameFont.Tiny;
             standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
@@ -32,18 +32,18 @@ namespace Soyuz.Tabs
             standard.CheckboxLabeled("Enable time dilation for visitor pawns.", ref Finder.timeDilationVisitors, "Experimental: Can cause a lot of bugs.");
             standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Throttle ticking for world pawns.");
             //standard.CheckboxLabeled("Enable time dilation for pawns with critical hediffs", ref Finder.timeDilationCriticalHediffs, "This will enable dilation for pawns with critical hediffs such as pregnant pawns or bleeding pawns. (Disable this in case of a hediff problem)");
-            if (Finder.debug)
+            if (RocketDebugPrefs.debug)
             {
-                standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "For debugging only.");
-                standard.CheckboxLabeled("Set tick multiplier to 150", ref Finder.debug150MTPS, "Dangerous!");
+                standard.CheckboxLabeled("Enable data logging", ref RocketDebugPrefs.logData, "For debugging only.");
+                standard.CheckboxLabeled("Set tick multiplier to 150", ref RocketDebugPrefs.debug150MTPS, "Dangerous!");
                 standard.GapLine();
                 standard.CheckboxLabeled("Enable flashing dilated pawns",
-                    ref Finder.flashDilatedPawns);
-                standard.CheckboxLabeled("Simulate offscreen behavior", ref Finder.alwaysDilating);
+                    ref RocketDebugPrefs.flashDilatedPawns);
+                standard.CheckboxLabeled("Simulate offscreen behavior", ref RocketDebugPrefs.alwaysDilating);
             }
             Text.Font = font;
             standard.End();
-            rect.yMin += 85 + (Finder.debug ? 120 : 0);
+            rect.yMin += 85 + (RocketDebugPrefs.debug ? 120 : 0);
             DoExtras(rect);
         }
 
@@ -71,7 +71,7 @@ namespace Soyuz.Tabs
             rect.yMin += 30;
             if (curSelection != null)
             {
-                var height = 128 + (Finder.debug ? 25 : 0);
+                var height = 128 + (RocketDebugPrefs.debug ? 25 : 0);
                 var selectionRect = rect.TopPartPixels(height);
                 Widgets.DrawMenuSection(selectionRect);
                 Text.Font = GameFont.Tiny;
@@ -88,7 +88,7 @@ namespace Soyuz.Tabs
                 standard_extras.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.enabled, tooltip: "Used to control which races are dilated/throttled in case of a problem.");
                 standard_extras.CheckboxLabeled($"Disable dilation for all factions except the player faction", ref curSelection.ignoreFactions);
                 standard_extras.CheckboxLabeled($"Disable dilation for the player faction", ref curSelection.ignorePlayerFaction);
-                if (Finder.debug)
+                if (RocketDebugPrefs.debug)
                 {
                     if (curSelection.pawnDef.StatBaseDefined(StatDefOf.MoveSpeed))
                         standard_extras.Label($"Base race move speed is {curSelection.pawnDef.GetStatValueAbstract(StatDefOf.MoveSpeed)}:{Context.dilationFastMovingRace[curSelection.pawnDef.index]}");
@@ -102,7 +102,7 @@ namespace Soyuz.Tabs
                 var height = 128;
                 var selectionRect = rect.TopPartPixels(height);
                 var model = pawn.GetPerformanceModel();
-                if (Finder.debug) Log.Message($"SOYUZ: UI stage is {stage}:{1}");
+                if (RocketDebugPrefs.debug) Log.Message($"SOYUZ: UI stage is {stage}:{1}");
                 if (model != null)
                 {
                     model.DrawGraph(selectionRect, 2000);

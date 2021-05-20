@@ -12,11 +12,27 @@ namespace RocketMan
         private const int WARMUP_TIME = 4;
 
         private bool finished = false;
+
         private bool started = false;
-        private bool settingsStashed = false;
+
+        private bool settingsStashed;
+
         private int startingTicksGame = -1;
+
         private int ticksPassed = 0;
+
         private bool showUI = true;
+
+        private int integrityGameTick = -1;
+
+        public bool SettingsStashed
+        {
+            get => settingsStashed;
+            set
+            {
+                settingsStashed = value;
+            }
+        }
 
         public float Progress
         {
@@ -39,8 +55,10 @@ namespace RocketMan
         }
 
         public static WarmUpMapComponent current;
+
         public static int warmUpsCount = 0;
-        public static bool settingsBeingStashed = false;
+
+        public static bool settingsBeingStashed;
 
         private Dictionary<FieldInfo, object> stashedValues = new Dictionary<FieldInfo, object>();
 
@@ -75,11 +93,21 @@ namespace RocketMan
         public override void MapComponentTick()
         {
             base.MapComponentTick();
+            if (finished && GenTicks.TicksGame == integrityGameTick)
+            {
+                Log.Message("ROCKETMAN: Position verfication started!");
+                PopPawnsPosition();
+            }
             if (finished)
                 return;
             if (!started)
                 return;
             int tick = GenTicks.TicksGame;
+            if ((tick + 1 - startingTicksGame).TicksToSeconds() >= WARMUP_TIME)
+            {
+                integrityGameTick = tick + 3;
+                StashPawnsPosition();
+            }
             if ((tick - startingTicksGame).TicksToSeconds() < WARMUP_TIME)
             {
                 ticksPassed++;
@@ -94,7 +122,7 @@ namespace RocketMan
         public override void MapRemoved()
         {
             base.MapRemoved();
-            if (settingsStashed)
+            if (SettingsStashed)
             {
                 PopSettings();
                 settingsBeingStashed = false;
@@ -108,7 +136,7 @@ namespace RocketMan
 
         public void AbortWarmUp()
         {
-            if (settingsStashed || !finished)
+            if (SettingsStashed || !finished)
             {
                 current = null;
                 finished = true;
@@ -183,14 +211,14 @@ namespace RocketMan
         {
             try
             {
-                settingsStashed = true;
+                SettingsStashed = true;
                 settingsBeingStashed = true;
                 StashSettingsInternal();
             }
             catch (Exception er)
             {
                 Log.Error($"ROCKETMAN: Stashing settings failed! {er}");
-                settingsStashed = false;
+                SettingsStashed = false;
                 settingsBeingStashed = false;
                 current = null;
             }
@@ -200,7 +228,7 @@ namespace RocketMan
         {
             try
             {
-                settingsStashed = false;
+                SettingsStashed = false;
                 settingsBeingStashed = false;
                 PopSettingsInternal();
                 stashedValues.Clear();
@@ -208,9 +236,49 @@ namespace RocketMan
             catch (Exception er)
             {
                 Log.Error($"ROCKETMAN: Popping settings failed! {er}");
-                settingsStashed = false;
+                SettingsStashed = false;
                 settingsBeingStashed = false;
                 current = null;
+            }
+        }
+
+        private readonly Dictionary<Pawn, IntVec3> positionStash = new Dictionary<Pawn, IntVec3>();
+
+        private void PopPawnsPosition()
+        {
+            foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
+            {
+                if (false
+                   || !pawn.Spawned
+                   || pawn.Dead
+                   || pawn.Suspended
+                   || pawn.InContainerEnclosed
+                   || pawn.Destroyed)
+                    continue;
+                if (positionStash.TryGetValue(pawn, out IntVec3 stashedPosition)
+                    && (pawn.positionInt.DistanceTo(pawn.positionInt) >= 7.5f || (pawn.positionInt.InBounds(map) && !pawn.positionInt.Standable(map))))
+                {
+                    pawn.jobs?.StopAll(true, true);
+                    pawn.pather.StopDead();
+                    pawn.Position = stashedPosition;
+                }
+            }
+            positionStash.Clear();
+        }
+
+        private void StashPawnsPosition()
+        {
+            positionStash.Clear();
+            foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
+            {
+                if (false
+                    || !pawn.Spawned
+                    || pawn.Dead
+                    || pawn.Suspended
+                    || pawn.InContainerEnclosed
+                    || pawn.Destroyed)
+                    continue;
+                positionStash[pawn] = pawn.positionInt;
             }
         }
 

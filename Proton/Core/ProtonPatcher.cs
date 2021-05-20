@@ -15,7 +15,7 @@ namespace Proton
         {
         }
 
-        public ProtonPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null) : base(targetType, targetMethod, methodType, parameters, generics)
+        public ProtonPatch(Type targetType, string targetMethod = null, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null) : base(targetType, targetMethod, methodType, parameters, generics)
         {
         }
     }
@@ -54,7 +54,7 @@ namespace Proton
             {
                 ProtonPatchInfo patch = new ProtonPatchInfo(type);
                 patchList.Add(patch);
-                if (Finder.debug) Log.Message($"PROTON: found patch in {type} and is {(patch.IsValid ? "valid" : "invalid") }");
+                if (RocketDebugPrefs.debug) Log.Message($"PROTON: found patch in {type} and is {(patch.IsValid ? "valid" : "invalid") }");
             }
             patches = patchList.Where(p => p.IsValid).ToArray();
         }

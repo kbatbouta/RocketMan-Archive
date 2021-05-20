@@ -32,13 +32,13 @@ namespace RocketMan.Optimizations
 
         public static void Interrupt(StatWorker statWorker, StatRequest req, bool applyPostProcess)
         {
-            if (Finder.learning && Finder.statLogging)
+            if (Finder.learning && RocketDebugPrefs.statLogging)
             {
                 StackTrace trace = new StackTrace();
                 StackFrame frame = trace.GetFrame(2);
                 MethodBase method = frame.GetMethod();
                 string handler = method.GetMethodPath();
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: called stats.GetUnfinalizedValue from {0}", handler));
+                if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: called stats.GetUnfinalizedValue from {0}", handler));
                 callingMethods.Add(method);
             }
         }
@@ -117,7 +117,7 @@ namespace RocketMan.Optimizations
         {
             var signature = pawn.GetSignature(true);
 #if DEBUG
-            if (Finder.debug) Log.Message(string.Format("ROCKETMAN: changed signature for pawn {0} to {1}", pawn, signature));
+            if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: changed signature for pawn {0} to {1}", pawn, signature));
 #endif
         }
 

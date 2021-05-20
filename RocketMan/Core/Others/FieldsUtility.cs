@@ -17,7 +17,7 @@ namespace RocketMan
                 .Where(f => f.HasAttribute<T>() && f.IsStatic)
                 .ToArray())
             {
-                if (Prefs.DevMode && Finder.debug) Log.Message(string.Format("ROCKETMAN: Found <color=yellow>settings fields</color> with {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Found <color=yellow>settings fields</color> with {0}, {1}:{2}", typeof(T).Name,
                      field.DeclaringType.Name, field.Name));
                 yield return field;
             }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -89,7 +89,7 @@ namespace Soyuz.Patches
                     pawn.rotationTracker?.RotationTrackerTick();
                 }
             }
-            if (Finder.flashDilatedPawns && pawn.Spawned)
+            if (RocketDebugPrefs.flashDilatedPawns && pawn.Spawned)
                 pawn.Map.debugDrawer.FlashCell(pawn.positionInt, 0.05f, $"{pawn.OffScreen()}", 100);
         }
     }

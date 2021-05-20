@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using RimWorld;
@@ -77,7 +77,7 @@ namespace Soyuz
         {
             if (pawn == null)
                 return false;
-            if (Finder.alwaysDilating)
+            if (RocketDebugPrefs.alwaysDilating)
                 return offScreen = true;
             if (_pawnScreen == pawn)
                 return offScreen;
@@ -116,7 +116,7 @@ namespace Soyuz
                 Skip(pawn);
                 return;
             }
-            if (Finder.logData && Time.frameCount - Finder.lastFrame < 60)
+            if (RocketDebugPrefs.logData && Time.frameCount - Finder.lastFrame < 60)
             {
                 _stopwatch.Reset();
                 _stopwatch.Start();
@@ -126,7 +126,7 @@ namespace Soyuz
         public static void EndTick(this Pawn pawn)
         {
             _pawnTick = null;
-            if (Finder.logData && Time.frameCount - Finder.lastFrame < 60)
+            if (RocketDebugPrefs.logData && Time.frameCount - Finder.lastFrame < 60)
             {
                 _stopwatch.Stop();
                 var performanceModel = pawn.GetPerformanceModel();

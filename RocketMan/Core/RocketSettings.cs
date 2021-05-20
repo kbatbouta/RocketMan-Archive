@@ -6,18 +6,24 @@ using System.Reflection;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace RocketMan
 {
     public partial class RocketMod : Mod
     {
         private static RocketModSettings settings;
+
         private static readonly Listing_Standard standard = new Listing_Standard();
+
         private static List<StatSettings> statsSettings = new List<StatSettings>();
+
         private static List<DilationSettings> dilationSettings = new List<DilationSettings>();
+
         private static string searchString = "";
 
         private const string PluginDir = "Plugins";
+
         private static int frameCounter = 0;
 
         public static RocketMod instance;
@@ -50,7 +56,7 @@ namespace RocketMan
 
         private static void LoadPlugins(ModContentPack content, string pluginAssemblyName, string name)
         {
-            var pluginsPath = Path.Combine(content.RootDir, PluginDir);
+            string pluginsPath = Path.Combine(content.RootDir, PluginDir);
             if (File.Exists(Path.Combine(pluginsPath, pluginAssemblyName)) &&
                 !LoadedModManager.runningMods.Any(m => m.Name.Contains(name)))
             {
@@ -129,7 +135,9 @@ namespace RocketMan
                 }
             }
             if (enabled != Finder.enabled && !Finder.enabled)
-                ResetDebugSettings();
+            {
+                ResetRocketDebugPrefs();
+            }
             if (Finder.enabled)
             {
                 standard.CheckboxLabeled("Show warmup progress bar on startup", ref Finder.showWarmUpPopup,
@@ -149,20 +157,24 @@ namespace RocketMan
                     "Can cause bugs.");
 
                 standard.GapLine();
-                standard.CheckboxLabeled("Enable debugging", ref Finder.debug, "Only for advanced users and modders");
-
-                if (Finder.debug)
+                bool oldDebugging = RocketDebugPrefs.debug;
+                standard.CheckboxLabeled("Enable debugging", ref RocketDebugPrefs.debug, "Only for advanced users and modders");
+                if (oldDebugging != RocketDebugPrefs.debug && !RocketDebugPrefs.debug)
+                {
+                    ResetRocketDebugPrefs();
+                }
+                if (RocketDebugPrefs.debug)
                 {
                     standard.GapLine();
                     Text.CurFontStyle.fontStyle = FontStyle.Bold;
                     standard.Label("Debugging options");
                     Text.CurFontStyle.fontStyle = FontStyle.Normal;
-                    standard.CheckboxLabeled("Enable Stat Logging (Will kill performance)", ref Finder.statLogging);
-                    standard.CheckboxLabeled("Enable GlowGrid flashing", ref Finder.drawGlowerUpdates);
+                    standard.CheckboxLabeled("Enable Stat Logging (Will kill performance)", ref RocketDebugPrefs.statLogging);
+                    standard.CheckboxLabeled("Enable GlowGrid flashing", ref RocketDebugPrefs.drawGlowerUpdates);
                     standard.CheckboxLabeled("Enable GlowGrid refresh", ref Finder.enableGridRefresh);
                     standard.Gap();
                     if (standard.ButtonText("Disable debugging related stuff"))
-                        ResetDebugSettings();
+                        ResetRocketDebugPrefs();
                 }
             }
             standard.End();
@@ -173,16 +185,17 @@ namespace RocketMan
             Text.CurFontStyle.fontStyle = style;
         }
 
-        public static void ResetDebugSettings()
+        public static void ResetRocketDebugPrefs()
         {
-            Finder.debug = false;
-            Finder.debug150MTPS = false;
-            Finder.logData = false;
-            Finder.statLogging = false;
-            Finder.flashDilatedPawns = false;
-            Finder.alwaysDilating = false;
+            RocketDebugPrefs.debug = false;
+            RocketDebugPrefs.debug150MTPS = false;
+            RocketDebugPrefs.logData = false;
+            RocketDebugPrefs.statLogging = false;
+            RocketDebugPrefs.flashDilatedPawns = false;
+            RocketDebugPrefs.alwaysDilating = false;
             Finder.enableGridRefresh = false;
             Finder.refreshGrid = false;
+            RocketDebugPrefs.singleTickIncrement = false;
         }
 
         public static void DoStatSettings(Rect rect)
@@ -264,32 +277,26 @@ namespace RocketMan
             var failed = false;
             var defs = DefDatabase<ThingDef>.AllDefs.Where(
                 d => d.race != null).ToList();
-            try
+            if (statsSettings.Count != defs.Count())
             {
-                if (statsSettings.Count != defs.Count())
-                {
-                    dilationSettings.Clear();
-                    foreach (var def in defs)
-                        dilationSettings.Add(new DilationSettings()
-                        {
-                            def = def.defName,
-                            dilated = def.race.Animal && !def.race.IsMechanoid && !def.race.Humanlike
-                        });
-                }
-
-                foreach (var setting in dilationSettings)
-                {
-                    if (setting?.def == null)
+                dilationSettings.Clear();
+                foreach (var def in defs)
+                    dilationSettings.Add(new DilationSettings()
                     {
-                        failed = true;
-                        break;
-                    }
-                    Finder.dilatedDefs[DefDatabase<ThingDef>.defsByName[setting.def].index] = setting.dilated;
-                }
+                        def = def.defName,
+                        dilated = def.race.Animal && !def.race.IsMechanoid && !def.race.Humanlike
+                    });
             }
-            catch (Exception er)
+
+            foreach (var setting in dilationSettings)
             {
-                Log.Error($"SOYUZ: {er}");
+                if (setting?.def != null && DefDatabase<ThingDef>.defsByName.TryGetValue(setting.def, out ThingDef def))
+                    Finder.dilatedDefs[def.index] = setting.dilated;
+                else
+                {
+                    failed = true;
+                    break;
+                }
             }
             if (failed)
             {
@@ -310,13 +317,13 @@ namespace RocketMan
             var failed = false;
             foreach (var setting in statsSettings)
             {
-                if (setting?.stat == null)
+                if (setting?.stat != null && DefDatabase<StatDef>.defsByName.TryGetValue(setting.stat, out StatDef def))
+                    Finder.statExpiry[def.index] = (byte)setting.expireAfter;
+                else
                 {
                     failed = true;
                     break;
                 }
-
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
             }
             if (failed)
             {
@@ -343,19 +350,17 @@ namespace RocketMan
                     statsSettings.Add(new StatSettings
                     { stat = def.defName, expireAfter = def.defName.PredictValueFromString() });
             }
-
-            var failed = false;
-            foreach (var setting in statsSettings)
+            bool failed = false;
+            foreach (StatSettings settings in statsSettings)
             {
-                if (setting?.stat == null)
+                if (settings?.stat != null && DefDatabase<StatDef>.defsByName.TryGetValue(settings.stat, out StatDef def))
+                    Finder.statExpiry[def.index] = (byte)settings.expireAfter;
+                else
                 {
                     failed = true;
                     break;
                 }
-
-                Finder.statExpiry[DefDatabase<StatDef>.defsByName[setting.stat].index] = (byte)setting.expireAfter;
             }
-
             if (failed)
             {
                 Log.Warning("Failed to reindex the statDef database");
@@ -401,7 +406,7 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.enabled, "enabled", true);
                 Scribe_Values.Look(ref Finder.statGearCachingEnabled, "statGearCachingEnabled", true);
                 Scribe_Values.Look(ref Finder.learning, "learning");
-                Scribe_Values.Look(ref Finder.debug, "debug", false);
+                Scribe_Values.Look(ref RocketDebugPrefs.debug, "debug", false);
                 Scribe_Values.Look(ref Finder.showWarmUpPopup, "showWarmUpPopup", true);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
                 Scribe_Values.Look(ref Finder.timeDilationCaravans, "timeDilationCaravans", false);

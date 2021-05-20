@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using Verse;
 
 namespace RocketMan.Patches
@@ -8,7 +9,7 @@ namespace RocketMan.Patches
     {
         public static bool Prefix(ref float __result)
         {
-            if (Finder.debug150MTPS && Finder.debug)
+            if (RocketDebugPrefs.debug150MTPS && RocketDebugPrefs.debug)
             {
                 __result = 150f;
                 return false;
@@ -24,6 +25,30 @@ namespace RocketMan.Patches
         {
             if (Prefs.DevMode) return false;
             else return true;
+        }
+    }
+
+    [RocketPatch(typeof(TickManager), nameof(TickManager.TickManagerUpdate))]
+    public static class TickManager_TickManagerUpdate_Patch
+    {
+        public static bool Prefix(TickManager __instance)
+        {
+            if (!RocketDebugPrefs.singleTickIncrement)
+                return true;
+            if (RocketDebugPrefs.singleTickIncrement && RocketDebugPrefs.singleTickLeft > 0)
+            {
+                if (__instance.Paused)
+                {
+                    __instance.TogglePaused();
+                }
+                RocketDebugPrefs.singleTickLeft = Math.Max(RocketDebugPrefs.singleTickLeft - 1, 0);
+                return true;
+            }
+            if (!__instance.Paused)
+            {
+                __instance.Pause();
+            }
+            return false;
         }
     }
 }

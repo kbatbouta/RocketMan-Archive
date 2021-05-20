@@ -14,14 +14,18 @@ namespace RocketMan
         {
             if (Event.current.button == 0)
             {
-                if (Find.WindowStack.WindowOfType<RocketWindow>() != null)
-                    Find.WindowStack.RemoveWindowsOfType(typeof(RocketWindow));
+                if (Find.WindowStack.WindowOfType<Window_MainControls>() != null)
+                {
+                    Find.WindowStack.RemoveWindowsOfType(typeof(Window_MainControls));
+                }
                 else
-                    Find.WindowStack.Add(new RocketWindow());
+                {
+                    Find.WindowStack.Add(new Window_MainControls());
+                }
             }
             else
             {
-                if (Find.WindowStack.WindowOfType<RocketWindow>() == null) Find.WindowStack.Add(new RocketWindow());
+                if (Find.WindowStack.WindowOfType<Window_MainControls>() == null) Find.WindowStack.Add(new Window_MainControls());
             }
         }
     }

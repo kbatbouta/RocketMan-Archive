@@ -14,7 +14,7 @@ namespace Soyuz.Tabs
         private Listing_Standard standard_Content = new Listing_Standard();
 
         public override string Label => "Grapher";
-        public override bool ShouldShow => Finder.debug;
+        public override bool ShouldShow => RocketDebugPrefs.debug;
 
         public override void DoContent(Rect rect)
         {
@@ -28,7 +28,7 @@ namespace Soyuz.Tabs
             var font = Text.Font;
             Text.Font = GameFont.Tiny;
             standard_Content.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
-            standard_Content.CheckboxLabeled("Flash dilated pawns", ref Finder.flashDilatedPawns, "Experimental.");
+            standard_Content.CheckboxLabeled("Flash dilated pawns", ref RocketDebugPrefs.flashDilatedPawns, "Experimental.");
             Text.Font = font;
             standard_Content.End();
             rect.yMin += 75;
@@ -97,7 +97,7 @@ namespace Soyuz.Tabs
 
         public override void OnSelect()
         {
-            Finder.logData = true;
+            RocketDebugPrefs.logData = true;
         }
 
         [Main.YieldTabContent]

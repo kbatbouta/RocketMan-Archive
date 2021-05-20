@@ -19,7 +19,7 @@ namespace RocketMan
             this.patchType = PatchType.empty;
         }
 
-        public IPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null)
+        public IPatch(Type targetType, string targetMethod = null, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null)
         {
             this.patchType = PatchType.normal;
             this.targetType = targetType;

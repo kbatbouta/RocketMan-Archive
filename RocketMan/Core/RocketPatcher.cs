@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,7 +15,7 @@ namespace RocketMan
         {
         }
 
-        public RocketPatch(Type targetType, string targetMethod, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null) : base(targetType, targetMethod, methodType, parameters, generics)
+        public RocketPatch(Type targetType, string targetMethod = null, MethodType methodType = MethodType.Normal, Type[] parameters = null, Type[] generics = null) : base(targetType, targetMethod, methodType, parameters, generics)
         {
         }
     }
@@ -39,7 +39,7 @@ namespace RocketMan
         {
             foreach (var patch in patches)
                 patch.Patch(Finder.harmony);
-            if (Finder.debug) Log.Message($"ROCKETMAN: Patching finished");
+            if (RocketDebugPrefs.debug) Log.Message($"ROCKETMAN: Patching finished");
         }
 
         static RocketPatcher()
@@ -50,7 +50,7 @@ namespace RocketMan
             {
                 RocketPatchInfo patch = new RocketPatchInfo(type);
                 patchList.Add(patch);
-                if (Finder.debug) Log.Message($"ROCKETMAN: Found patch in {type} and is {(patch.IsValid ? "valid" : "invalid") }");
+                if (RocketDebugPrefs.debug) Log.Message($"ROCKETMAN: Found patch in {type} and is {(patch.IsValid ? "valid" : "invalid") }");
             }
             patches = patchList.Where(p => p.IsValid).ToArray();
         }

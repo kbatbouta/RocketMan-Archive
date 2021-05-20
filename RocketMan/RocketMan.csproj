@@ -325,7 +325,6 @@
         <Compile Include="Core\RocketSettings.cs" />
         <Compile Include="Core\Main.cs" />
         <Compile Include="Core\MainButton_Toggle.cs" />
-        <Compile Include="Core\RocketWindow.cs" />
         <Compile Include="Core\RocketShip.cs" />
         <Compile Include="Core\RocketSettings.Exceptions.cs" />
         <Compile Include="Core\Optimizations\GlowGrid_Patch.cs" />
@@ -358,6 +357,10 @@
         <Compile Include="Core\IPatchType.cs" />
         <Compile Include="Core\IPatchInfo.cs" />
         <Compile Include="Core\Extras\IncompatibilityHelper.cs" />
+        <Compile Include="Core\Patches\DebugWindowsOpener_Patch.cs" />
+        <Compile Include="Core\RocketDebugPrefs.cs" />
+        <Compile Include="Core\GUI\Windows\Window_HiddenDebugMenu.cs" />
+        <Compile Include="Core\GUI\Windows\Window_Main.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

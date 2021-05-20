@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -129,18 +130,18 @@ namespace RocketMan
             switch (debugging)
             {
                 case 0:
-                    if (Finder.debug == true)
+                    if (RocketDebugPrefs.debug == true)
                         changed = true;
                     else return;
                     break;
                 case 1:
-                    if (Finder.debug == false)
+                    if (RocketDebugPrefs.debug == false)
                         return;
                     debugging = 2;
                     changed = true;
                     break;
                 case 2:
-                    if (Finder.debug == true)
+                    if (RocketDebugPrefs.debug == true)
                         return;
                     debugging = 1;
                     changed = true;

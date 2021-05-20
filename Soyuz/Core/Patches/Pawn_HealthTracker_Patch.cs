@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -49,7 +49,7 @@ namespace Soyuz.Patches
     //        if (__instance.hediffSet.HasHediff(HediffDefOf.Pregnant))
     //        {
     //            __instance.pawn.GetHediffTracker().Pregnant = true;
-    //            if (Finder.debug) Log.Message(string.Format("Pawn is pregnant: {0}", __instance.pawn));
+    //            if (RocketDebugPrefs.debug) Log.Message(string.Format("Pawn is pregnant: {0}", __instance.pawn));
     //        }
     //    }
     //}
@@ -69,7 +69,7 @@ namespace Soyuz.Patches
     //        if (hediff.def == HediffDefOf.Pregnant)
     //        {
     //            __instance.pawn.GetHediffTracker().Pregnant = false;
-    //            if (Finder.debug) Log.Message(string.Format("Pawn is not pregnant anymore: {0}", __instance.pawn));
+    //            if (RocketDebugPrefs.debug) Log.Message(string.Format("Pawn is not pregnant anymore: {0}", __instance.pawn));
     //        }
     //    }
     //}

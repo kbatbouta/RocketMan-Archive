@@ -64,11 +64,11 @@ namespace RocketMan
                     replacement = Finder.harmony.Patch(method, prefix: prefix);
                     patched = true;
 
-                    if (Finder.debug) Log.Message($"ROCKETMAN: Notification by {packageId} added [{method.GetMethodPath()}][Patch Okay!]");
+                    if (RocketDebugPrefs.debug) Log.Message($"ROCKETMAN: Notification by {packageId} added [{method.GetMethodPath()}][Patch Okay!]");
                 }
                 catch (Exception er)
                 {
-                    if (Finder.debug) Log.Error($"ROCKETMAN: {packageId} notification method of type {type} doesn't match the documenation! {er}");
+                    if (RocketDebugPrefs.debug) Log.Error($"ROCKETMAN: {packageId} notification method of type {type} doesn't match the documenation! {er}");
                 }
             }
         }

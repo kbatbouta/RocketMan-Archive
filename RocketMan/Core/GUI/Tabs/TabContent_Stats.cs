@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Verse;
 
 namespace RocketMan.Tabs
@@ -6,7 +6,7 @@ namespace RocketMan.Tabs
     public class TabContent_Stats : ITabContent
     {
         public override string Label => "Statistics";
-        public override bool ShouldShow => Finder.debug;
+        public override bool ShouldShow => RocketDebugPrefs.debug;
 
         public override void DoContent(Rect rect)
         {
