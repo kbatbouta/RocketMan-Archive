@@ -106,7 +106,7 @@ namespace RocketMan
                 }
                 catch (Exception er)
                 {
-                    if (RocketDebugPrefs.debug) Log.Warning($"{PluginName}: patching {target.DeclaringType.Name}:{target} is not possible! {er}");
+                    Log.Warning($"{PluginName}:<color=orange>[ERROR]</color> <color=red>patching {target.DeclaringType.Name}:{target} Failed!</color> {er}");
                 }
             }
         }

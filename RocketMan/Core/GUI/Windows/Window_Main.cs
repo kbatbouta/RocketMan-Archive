@@ -74,7 +74,6 @@ namespace RocketMan
                 tabs.DoContent(inRect);
                 // Reduce the error counter
                 _errors = Math.Max(_errors - 1, 0);
-                if (RocketDebugPrefs.debug) DoDebugToolbar(originalRect);
             }
             catch (Exception er)
             {
@@ -93,42 +92,6 @@ namespace RocketMan
         {
             base.Close(doCloseSound);
             RocketDebugPrefs.logData = false;
-        }
-
-        private void DoDebugToolbar(Rect rect)
-        {
-            if (Current.Game == null) return;
-            rect = rect.TopPartPixels(25);
-            rect.xMin += 400;
-            rect.yMax -= 2;
-            rect.yMin -= 2;
-            rect.xMax -= 25;
-            rect.y += 5;
-            GUIUtility.StashGUIState();
-            try
-            {
-                Text.CurFontStyle.fontStyle = FontStyle.BoldAndItalic;
-                Text.Font = GameFont.Tiny;
-                Text.Anchor = TextAnchor.MiddleRight;
-                Widgets.CheckboxLabeled(rect.LeftPart(0.75f),
-                    RocketDebugPrefs.singleTickIncrement ? "<color=green>Single ticks increments</color>" : "<color=red>Single ticks increments</color>",
-                    ref RocketDebugPrefs.singleTickIncrement);
-                if (RocketDebugPrefs.singleTickIncrement && Widgets.ButtonText(rect.RightPart(0.20f), "step"))
-                {
-                    RocketDebugPrefs.singleTickLeft += 1;
-                    TickManager manager = Find.TickManager;
-                    if (!manager.Paused)
-                        manager.Pause();
-                }
-            }
-            catch (Exception er)
-            {
-                Log.Warning($"ROCKETMAN: Single ticking error on GUI {er}");
-            }
-            finally
-            {
-                GUIUtility.RestoreGUIState();
-            }
         }
     }
 }

@@ -22,11 +22,11 @@ namespace RocketMan
             public bool wordWrap;
         }
 
-        private readonly static List<GUIState> queue = new List<GUIState>();
+        private readonly static List<GUIState> stack = new List<GUIState>();
 
         public static void StashGUIState()
         {
-            queue.Add(new GUIState()
+            stack.Add(new GUIState()
             {
                 font = Text.Font,
                 curStyle = Text.CurFontStyle.fontStyle,
@@ -43,18 +43,18 @@ namespace RocketMan
 
         public static void RestoreGUIState()
         {
-            GUIState config = queue.Last();
-            queue.RemoveLast();
-            Text.Font = config.font;
-            Text.CurFontStyle.fontStyle = config.curStyle;
-            Text.CurTextAreaReadOnlyStyle.fontStyle = config.curTextAreaReadOnlyStyle;
-            Text.CurTextAreaStyle.fontStyle = config.curTextAreaStyle;
-            Text.CurTextFieldStyle.fontStyle = config.curTextFieldStyle;
-            Text.WordWrap = config.wordWrap;
-            Text.Anchor = config.anchor;
+            GUIState config = stack.Last();
+            stack.RemoveLast();
             GUI.color = config.color;
             GUI.contentColor = config.contentColor;
             GUI.backgroundColor = config.backgroundColor;
+            Text.WordWrap = config.wordWrap;
+            Text.Anchor = config.anchor;
+            Text.CurTextAreaReadOnlyStyle.fontStyle = config.curTextAreaReadOnlyStyle;
+            Text.CurTextAreaStyle.fontStyle = config.curTextAreaStyle;
+            Text.CurTextFieldStyle.fontStyle = config.curTextFieldStyle;
+            Text.CurFontStyle.fontStyle = config.curStyle;
+            Text.Font = config.font;
         }
 
         public static Exception ExecuteSafeGUIAction(Action function, Action fallbackAction = null, bool catchExceptions = false)

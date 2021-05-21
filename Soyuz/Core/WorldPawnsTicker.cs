@@ -171,13 +171,7 @@ namespace Soyuz
             result = null;
             foreach (Pawn pawn in pawns)
             {
-                if (pawn.Destroyed)
-                {
-                    ResetInternalState();
-                    Rebuild(Find.WorldPawns);
-                    throw new Exception("ROCKETMAN: Tried to tick a destroyed pawn!");
-                }
-                if (pawn.Spawned || pawn.Dead)
+                if (pawn.Destroyed || pawn.Spawned || pawn.Dead)
                     invalidPawns.Add(pawn);
             }
             if (invalidPawns.Count == 0)
@@ -186,7 +180,9 @@ namespace Soyuz
                 return;
             }
             foreach (Pawn pawn in invalidPawns)
+            {
                 Deregister(pawn);
+            }
             result = GetPawns(fallbackMode: true);
         }
 
