@@ -408,6 +408,8 @@ namespace RocketMan
                 Scribe_Values.Look(ref Finder.learning, "learning");
                 Scribe_Values.Look(ref RocketDebugPrefs.debug, "debug", false);
                 Scribe_Values.Look(ref Finder.showWarmUpPopup, "showWarmUpPopup", true);
+                Scribe_Values.Look(ref Finder.alertThrottling, "alertThrottling", true);
+                Scribe_Values.Look(ref Finder.disableAllAlert, "disableAllAlert", false);
                 Scribe_Values.Look(ref Finder.timeDilation, "timeDilation", true);
                 Scribe_Values.Look(ref Finder.timeDilationCaravans, "timeDilationCaravans", false);
                 Scribe_Values.Look(ref Finder.timeDilationVisitors, "timeDilationVisitors", false);

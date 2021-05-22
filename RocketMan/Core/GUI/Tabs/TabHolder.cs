@@ -60,23 +60,27 @@ namespace RocketMan.Tabs
             }
             GUIUtility.ExecuteSafeGUIAction(() =>
             {
-                TextAnchor anchor = Text.Anchor;
-                FontStyle style = Text.CurFontStyle.fontStyle;
-                GameFont font = Text.Font;
                 curTab = tabs[curTabIndex];
                 if (useSidebar)
                 {
                     var tabsRect = inRect.LeftPartPixels(170);
                     var contentRect = new Rect(inRect);
                     contentRect.xMin += 180;
-                    DoSidebar(tabsRect);
-                    Text.Font = GameFont.Medium;
-                    Text.CurFontStyle.fontStyle = FontStyle.Bold;
-                    GUI.Label(contentRect.TopPartPixels(25), curTab.Label);
-                    Text.Font = font;
-                    Text.CurFontStyle.fontStyle = style;
+                    GUIUtility.ExecuteSafeGUIAction(() =>
+                    {
+                        DoSidebar(tabsRect);
+                    });
+                    GUIUtility.ExecuteSafeGUIAction(() =>
+                    {
+                        Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                        Text.Font = GameFont.Medium;
+                        GUI.Label(contentRect.TopPartPixels(25), curTab.Label);
+                    });
                     contentRect.yMin += 30;
-                    curTab.DoContent(contentRect);
+                    GUIUtility.ExecuteSafeGUIAction(() =>
+                    {
+                        curTab.DoContent(contentRect);
+                    });
                 }
                 else
                 {
@@ -90,9 +94,6 @@ namespace RocketMan.Tabs
                     // -----------------------
                     throw new InvalidOperationException("ROCKETMAN: this is an outdated API!");
                 }
-                Text.Anchor = anchor;
-                Text.Font = font;
-                Text.CurFontStyle.fontStyle = style;
             }, fallbackAction: null, catchExceptions: false);
         }
 

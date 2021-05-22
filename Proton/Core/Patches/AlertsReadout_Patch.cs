@@ -50,17 +50,54 @@ namespace Proton
     [ProtonPatch(typeof(AlertsReadout), nameof(AlertsReadout.AlertsReadoutUpdate))]
     public static class AlertsReadout_AlertsReadoutUpdate_Patch
     {
+        private static bool toggleBit = false;
+
+        private static FieldInfo fToggleBit = AccessTools.Field(typeof(AlertsReadout_AlertsReadoutUpdate_Patch), nameof(AlertsReadout_AlertsReadoutUpdate_Patch.toggleBit));
+
+        private static FieldInfo fEnabled = AccessTools.Field(typeof(Finder), nameof(Finder.enabled));
+
+        private static FieldInfo fAlertThrottling = AccessTools.Field(typeof(Finder), nameof(Finder.alertThrottling));
+
+        private static FieldInfo fAlertsDisabled = AccessTools.Field(typeof(Finder), nameof(Finder.disableAllAlert));
+
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
+            bool finished = false;
+            CodeInstruction code;
+            CodeInstruction[] codes = instructions.ToArray();
             MethodBase mCheckAddOrRemoveAlert = AccessTools.Method(typeof(AlertsReadout), nameof(AlertsReadout.CheckAddOrRemoveAlert));
+
             Label l1 = generator.DefineLabel();
             Label l2 = generator.DefineLabel();
             Label l3 = generator.DefineLabel();
-            bool finished = false;
-            CodeInstruction[] codes = instructions.ToArray();
+            Label l4 = generator.DefineLabel();
+            Label l5 = generator.DefineLabel();
+            Label l6 = generator.DefineLabel();
+            Label l7 = generator.DefineLabel();
+
+            yield return new CodeInstruction(OpCodes.Ldsfld, fAlertThrottling);
+            yield return new CodeInstruction(OpCodes.Brfalse_S, l7);
+
+            yield return new CodeInstruction(OpCodes.Ldsfld, fAlertsDisabled);
+            yield return new CodeInstruction(OpCodes.Brtrue_S, l6);
+
+            code = codes[0];
+            if (code.labels == null)
+            {
+                code.labels = new List<Label>();
+            }
+            code.labels.Add(l7);
             for (int i = 0; i < codes.Length; i++)
             {
-                CodeInstruction code = codes[i];
+                code = codes[i];
+                if (code.opcode == OpCodes.Ret)
+                {
+                    if (code.labels == null)
+                    {
+                        code.labels = new List<Label>();
+                    }
+                    code.labels.Add(l6);
+                }
                 if (code.opcode == OpCodes.Ldc_I4_S && code.OperandIs(24))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
@@ -70,6 +107,12 @@ namespace Proton
                 if (!finished && code.OperandIs(mCheckAddOrRemoveAlert))
                 {
                     finished = true;
+                    yield return new CodeInstruction(OpCodes.Ldsfld, fEnabled);
+                    yield return new CodeInstruction(OpCodes.Brfalse_S, l5);
+
+                    yield return new CodeInstruction(OpCodes.Ldsfld, fAlertThrottling);
+                    yield return new CodeInstruction(OpCodes.Brfalse_S, l5);
+
                     yield return new CodeInstruction(OpCodes.Ldloc_0);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AlertsReadout_AlertsReadoutUpdate_Patch), nameof(AlertsReadout_AlertsReadoutUpdate_Patch.ShouldUpdate)));
 
@@ -83,10 +126,14 @@ namespace Proton
                     yield return new CodeInstruction(OpCodes.Ldloc_0) { labels = new List<Label>() { l2 } };
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AlertsReadout_AlertsReadoutUpdate_Patch), nameof(AlertsReadout_AlertsReadoutUpdate_Patch.StartProfiling)));
 
-                    yield return code;
+                    yield return new CodeInstruction(code.opcode, code.operand);
 
                     yield return new CodeInstruction(OpCodes.Ldloc_0);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AlertsReadout_AlertsReadoutUpdate_Patch), nameof(AlertsReadout_AlertsReadoutUpdate_Patch.StopProfiling)));
+
+                    yield return new CodeInstruction(OpCodes.Br_S, l1);
+
+                    yield return new CodeInstruction(code.opcode, code.operand) { labels = new List<Label>() { l5 } };
 
                     if (codes[i + 1].labels == null)
                     {
@@ -103,10 +150,6 @@ namespace Proton
 
         private static bool ShouldUpdate(int index)
         {
-            if (!Finder.enabled)
-            {
-                return true;
-            }
             AlertSettings settings = Context.alertsSettings[index];
             if (settings == null)
             {
@@ -122,10 +165,6 @@ namespace Proton
 
         private static void StopProfiling(int index)
         {
-            if (!Finder.enabled)
-            {
-                return;
-            }
             Context.alertsSettings[index]?.UpdatePerformanceMetrics((float)stopwatch.ElapsedTicks * 1000.0f / (float)Stopwatch.Frequency);
             stopwatch.Stop();
         }

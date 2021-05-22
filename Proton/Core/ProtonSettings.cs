@@ -29,16 +29,14 @@ namespace Proton
         {
             get
             {
-                if (warmup <= 10)
+                if (counter < 15)
                     return true;
-                if (stopwatch == null)
-                {
-                    stopwatch = new Stopwatch();
-                    stopwatch.Start();
-                    return true;
-                }
                 float elapsedSeconds = ((float)stopwatch.ElapsedTicks / Stopwatch.Frequency);
-                if (elapsedSeconds <= 2.5f)
+                if (avgT > 10.0f && counter > 30)
+                    return avgT < 15f && elapsedSeconds > 120;
+                if (avgT > 2.5f)
+                    return elapsedSeconds > Math.Min(30f * (avgT - 1.5f), 60);
+                if (elapsedSeconds <= 3.5f)
                     return false;
                 if (elapsedSeconds >= 25f)
                     return true;
@@ -46,16 +44,16 @@ namespace Proton
             }
         }
 
-        private int warmup = 0;
+        private int counter = 0;
 
         private float avgT = 0f;
 
-        private Stopwatch stopwatch;
+        private Stopwatch stopwatch = new Stopwatch();
 
         public void UpdatePerformanceMetrics(float t)
         {
             avgT = avgT * 0.9f + 0.1f * t;
-            warmup++;
+            counter++;
             if (stopwatch == null)
             {
                 stopwatch = new Stopwatch();

@@ -45,16 +45,16 @@ namespace RocketMan
         {
             GUIState config = stack.Last();
             stack.RemoveLast();
+            Text.Font = config.font;
+            Text.CurTextAreaReadOnlyStyle.fontStyle = config.curTextAreaReadOnlyStyle;
+            Text.CurTextAreaStyle.fontStyle = config.curTextAreaStyle;
+            Text.CurTextFieldStyle.fontStyle = config.curTextFieldStyle;
+            Text.CurFontStyle.fontStyle = config.curStyle;
             GUI.color = config.color;
             GUI.contentColor = config.contentColor;
             GUI.backgroundColor = config.backgroundColor;
             Text.WordWrap = config.wordWrap;
             Text.Anchor = config.anchor;
-            Text.CurTextAreaReadOnlyStyle.fontStyle = config.curTextAreaReadOnlyStyle;
-            Text.CurTextAreaStyle.fontStyle = config.curTextAreaStyle;
-            Text.CurTextFieldStyle.fontStyle = config.curTextFieldStyle;
-            Text.CurFontStyle.fontStyle = config.curStyle;
-            Text.Font = config.font;
         }
 
         public static Exception ExecuteSafeGUIAction(Action function, Action fallbackAction = null, bool catchExceptions = false)
@@ -78,8 +78,7 @@ namespace RocketMan
                 if (fallbackAction != null)
                     exception = ExecuteSafeGUIAction(
                         fallbackAction,
-                        catchExceptions: false
-                        );
+                        catchExceptions: false);
                 if (exception != null)
                     throw exception;
             }

@@ -19,26 +19,55 @@ namespace Proton
         public override void DoContent(Rect rect)
         {
             int count = Context.alerts.Length;
-            Widgets.DrawMenuSection(rect);
-            Widgets.BeginScrollView(rect.ContractedBy(3), ref scrollPosition, new Rect(0, 0, rect.width - 15, count * rowHeight));
             RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
             {
-                Rect current = new Rect(0, 0, rect.width - 15, rowHeight);
-                for (int i = 0; i < count; i++)
+                Text.Font = GameFont.Tiny;
+                Text.CurFontStyle.fontStyle = FontStyle.Normal;
+                Widgets.CheckboxLabeled(rect.TopPartPixels(20), "Enable alerts controls", ref Finder.alertThrottling);
+                bool disabled = Finder.disableAllAlert;
+                Widgets.CheckboxLabeled(rect.TopPartPixels(40).BottomHalf(), "<color=red>Disable</color> all alerts", ref Finder.disableAllAlert);
+                if (disabled != Finder.disableAllAlert && Finder.disableAllAlert)
                 {
-                    if (i % 2 == 0)
+                    foreach (Alert alert in Context.alerts)
                     {
-                        Widgets.DrawBoxSolid(current, difColor);
+                        alert.cachedActive = false;
+                        alert.cachedLabel = string.Empty;
                     }
-                    Widgets.DrawHighlightIfMouseover(current);
-                    RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
-                    {
-                        DoAlertRow(current, Context.alertsSettings[i], Context.alerts[i]);
-                    });
-                    current.y += rowHeight;
                 }
             });
-            Widgets.EndScrollView();
+            rect.yMin += 45;
+            Widgets.DrawMenuSection(rect);
+            if (!Finder.disableAllAlert)
+            {
+                Widgets.BeginScrollView(rect.ContractedBy(3), ref scrollPosition, new Rect(0, 0, rect.width - 15, count * rowHeight));
+                RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
+                {
+                    Rect current = new Rect(0, 0, rect.width - 15, rowHeight);
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (i % 2 == 0)
+                        {
+                            Widgets.DrawBoxSolid(current, difColor);
+                        }
+                        Widgets.DrawHighlightIfMouseover(current);
+                        RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
+                        {
+                            DoAlertRow(current, Context.alertsSettings[i], Context.alerts[i]);
+                        });
+                        current.y += rowHeight;
+                    }
+                });
+                Widgets.EndScrollView();
+            }
+            else
+            {
+                RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
+                {
+                    Text.Anchor = TextAnchor.MiddleCenter;
+                    Text.Font = GameFont.Medium;
+                    Widgets.Label(rect, "Alerts are disabled!");
+                });
+            }
         }
 
         private void DoAlertRow(Rect rect, AlertSettings settings, Alert alert)

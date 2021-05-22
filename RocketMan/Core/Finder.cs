@@ -28,6 +28,12 @@ namespace RocketMan
         public static bool labelCaching = true;
 
         [Main.SettingsField(warmUpValue: false)]
+        public static bool alertThrottling = true;
+
+        [Main.SettingsField(warmUpValue: false)]
+        public static bool disableAllAlert = false;
+
+        [Main.SettingsField(warmUpValue: false)]
         public static bool timeDilation = true;
 
         [Main.SettingsField(warmUpValue: false)]
