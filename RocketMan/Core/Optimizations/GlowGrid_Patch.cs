@@ -42,7 +42,7 @@ namespace RocketMan.Optimizations
             }
 #if DEBUG
 
-            if (Finder.debug) Log.Message("ROCKETMAN: Refreshing all light grid");
+            if (RocketDebugPrefs.debug) Log.Message("ROCKETMAN: Refreshing all light grid");
 #endif
             Finder.refreshGrid = true;
             Find.CurrentMap.glowGrid.RecalculateAllGlow();
@@ -149,13 +149,13 @@ namespace RocketMan.Optimizations
                 var prop = GlowerPorperties.GetGlowerPorperties(newGlow);
                 if (props.ContainsKey(newGlow))
                 {
-                    if (Finder.debug)
+                    if (RocketDebugPrefs.debug)
                         Log.Warning(string.Format("ROCKETMAN: Double registering an registered glower {0}:{1}", newGlow,
                             newGlow.parent));
                     return;
                 }
 
-                if (Finder.debug)
+                if (RocketDebugPrefs.debug)
                     Log.Warning(string.Format("ROCKETMAN: Registering an registered glower {0}:{1}", newGlow,
                         newGlow.parent));
             }
@@ -181,17 +181,17 @@ namespace RocketMan.Optimizations
                 TryRegisterMap(map);
 
                 GlowerPorperties prop;
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Removed {0}", oldGlow));
+                if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Removed {0}", oldGlow));
                 if (!props.ContainsKey(oldGlow))
                 {
-                    if (Finder.debug && !removedProps[map.Index].Any(p => p.glower == oldGlow))
+                    if (RocketDebugPrefs.debug && !removedProps[map.Index].Any(p => p.glower == oldGlow))
                         Log.Warning(string.Format("ROCKETMAN: Found an unregisterd {0}:{1}", oldGlow, oldGlow.parent));
                     return;
                 }
 
                 prop = props[oldGlow];
 
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Queued {0} for removal", oldGlow.parent));
+                if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Queued {0} for removal", oldGlow.parent));
                 removedProps[map.Index].Add(prop);
             }
 
@@ -247,7 +247,7 @@ namespace RocketMan.Optimizations
                     return;
                 }
 
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for removed with {0} queued for removal",
+                if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for removed with {0} queued for removal",
                         removedProps[mapIndex].Count));
                 foreach (var prop in removedProps[mapIndex])
                 {
@@ -256,7 +256,7 @@ namespace RocketMan.Optimizations
                     props.Remove(prop.glower);
                 }
 
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for changes with {0} queued for changes",
+                if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Recalculationg for changes with {0} queued for changes",
                         changedProps[mapIndex].Count));
                 if (changedProps[mapIndex].Count != 0)
                 {
@@ -330,7 +330,7 @@ namespace RocketMan.Optimizations
                     {
                         instance.glowGrid[index] = new Color32(0, 0, 0, 0);
 #if DEBUG
-                        if (Finder.drawGlowerUpdates)
+                        if (RocketDebugPrefs.drawGlowerUpdates)
                             map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "000", 10);
 #endif
                     }
@@ -342,7 +342,7 @@ namespace RocketMan.Optimizations
                     {
                         instance.glowGrid[index] = tBufferedGrid[index];
 #if DEBUG
-                        if (Finder.drawGlowerUpdates)
+                        if (RocketDebugPrefs.drawGlowerUpdates)
                             map.debugDrawer.FlashCell(map.cellIndices.IndexToCell(index), 0.6f, "1__");
 #endif
                     }
@@ -370,7 +370,7 @@ namespace RocketMan.Optimizations
                 {
                     instance.glowGrid[index] = tBufferedGrid[index];
 #if DEBUG
-                    if (Finder.drawGlowerUpdates)
+                    if (RocketDebugPrefs.drawGlowerUpdates)
                         instance.map.debugDrawer.FlashCell(
                             instance.map.cellIndices.IndexToCell(index), 0.05f, "_1_");
 #endif
@@ -462,7 +462,7 @@ namespace RocketMan.Optimizations
                         if (!loc.IsValid || !loc.InBounds(map)) return;
                         if (register || calculating || deregister) return;
 #if DEBUG
-                        if (Finder.debug) Log.Message(string.Format("ROCKETMAN: Map glow grid dirty at {0}", loc));
+                        if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Map glow grid dirty at {0}", loc));
 #endif
                         var changedPos = loc.ToVector3();
                         foreach (var glower in __instance.litGlowers)
@@ -472,7 +472,7 @@ namespace RocketMan.Optimizations
                             {
                                 changedProps[mapIndex].Add(prop);
 #if DEBUG
-                                if (Finder.debug)
+                                if (RocketDebugPrefs.debug)
                                     Log.Message(string.Format("ROCKETMAN: Changed and glow grid dirty at {0} for {1}",
                                         loc, glower.parent));
 #endif
@@ -546,7 +546,7 @@ namespace RocketMan.Optimizations
             {
                 currentProp.indices.Add(index);
 #if DEBUG
-                if (Finder.debug && Finder.drawGlowerUpdates)
+                if (RocketDebugPrefs.debug && RocketDebugPrefs.drawGlowerUpdates)
                 {
                     var map = Find.CurrentMap;
                     var cell = map.cellIndices.IndexToCell(index);

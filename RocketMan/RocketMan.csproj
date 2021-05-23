@@ -292,16 +292,15 @@
             <Private>False</Private>
         </Reference>
         <Reference Include="Assembly-CSharp_public">
-          <HintPath>..\..\..\..\Contents\Resources\Data\Managed\Assembly-CSharp_public.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>..\..\..\..\Contents\Resources\Data\Managed\Assembly-CSharp_public.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="0Harmony">
-          <HintPath>..\packages\Lib.Harmony.2.0.4\lib\net472\0Harmony.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>..\packages\Lib.Harmony.2.0.4\lib\net472\0Harmony.dll</HintPath>
+            <Private>False</Private>
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Core\GUI\Tabs\TabContent_Debug.cs" />
         <Compile Include="Core\GUI\Tabs\TabContent_Settings.cs" />
         <Compile Include="Core\GUI\Tabs\TabContent_Stats.cs" />
         <Compile Include="Core\Gameplay\CorpsesTracker.cs" />
@@ -322,16 +321,12 @@
         <Compile Include="Core\Others\SignatureUtility.cs" />
         <Compile Include="Core\Others\Tools.cs" />
         <Compile Include="Core\Others\TranspilerUtility.cs" />
-        <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Core\Finder.cs" />
         <Compile Include="Core\RocketSettings.cs" />
         <Compile Include="Core\Main.cs" />
         <Compile Include="Core\MainButton_Toggle.cs" />
-        <Compile Include="Core\RocketWindow.cs" />
         <Compile Include="Core\RocketShip.cs" />
         <Compile Include="Core\RocketSettings.Exceptions.cs" />
-        <Compile Include="Core\Compatibility\DubsPreformanceAnalyzerHelper.cs" />
-        <Compile Include="Core\Compatibility\RimWarThreadedHelper.cs" />
         <Compile Include="Core\Optimizations\GlowGrid_Patch.cs" />
         <Compile Include="Core\Optimizations\StatPart_ApparelStatOffSet_Patch.cs" />
         <Compile Include="Core\Collections\CachedDict.cs" />
@@ -339,31 +334,76 @@
         <Compile Include="Core\Optimizations\StatWorker_Patch.cs" />
         <Compile Include="Core\Patches\Pawn_Notify_Patch.cs" />
         <Compile Include="Core\Patches\Pawn_TimetableTracker_Patch.cs" />
-        <Compile Include="Core\ModHelper.cs" />
-        <Compile Include="Core\Compatibility\RimWarHelper.cs" />
         <Compile Include="Core\Optimizations\PathFinder_Patch.cs" />
         <Compile Include="Core\Others\PatchingUtility.cs" />
-        <Compile Include="Core\Others\FunctionUtility.cs" />
+        <Compile Include="Core\Others\FunctionsUtility.cs" />
+        <Compile Include="Core\Others\CompatibilityUtility.cs" />
+        <Compile Include="Core\Extras\XMLParser.cs" />
+        <Compile Include="Core\Extras\IgnoreMeDatabase.cs" />
+        <Compile Include="Core\Patches\EditWindow_Log_Patch.cs" />
+        <Compile Include="Core\Others\LogUtility.cs" />
+        <Compile Include="Core\Extras\NotificationsManager.cs" />
+        <Compile Include="Core\Collections\FlagsArray.cs" />
+        <Compile Include="Core\Components\WarmUpMapComponent.cs" />
+        <Compile Include="Core\Others\FieldsUtility.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs">
+            <DependentUpon>AssemblyInfo.tt</DependentUpon>
+        </Compile>
+        <Compile Include="Core\RocketAssembliesInfo.cs" />
+        <Compile Include="Core\GUI\Windows\Window_IncompatibilityWarning.cs" />
+        <Compile Include="Core\Others\GUIUtility.cs" />
+        <Compile Include="Core\Patches\MainMenuDrawer_Patch.cs" />
+        <Compile Include="Core\IPatch.cs" />
+        <Compile Include="Core\IPatchType.cs" />
+        <Compile Include="Core\IPatchInfo.cs" />
+        <Compile Include="Core\Extras\IncompatibilityHelper.cs" />
+        <Compile Include="Core\Patches\DebugWindowsOpener_Patch.cs" />
+        <Compile Include="Core\RocketDebugPrefs.cs" />
+        <Compile Include="Core\GUI\Windows\Window_HiddenDebugMenu.cs" />
+        <Compile Include="Core\GUI\Windows\Window_Main.cs" />
+        <Compile Include="Core\Optimizations\FloatMenuMakerMap_Patch.cs" />
+        <Compile Include="Core\Others\StringUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
-        <None Include="..\..\About\About.xml">
-            <Link>About\About.xml</Link>
-        </None>
         <None Include="Core\Optimizations\Obsolete\Pawn_Patch.cs" />
+        <None Include="Core\Diagnosis\Platform.cs" />
+        <None Include="Core\Diagnosis\DeferredStackTracingImpl.cs" />
+        <None Include="Properties\AssemblyInfo.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>AssemblyInfo.cs</LastGenOutput>
+        </None>
+        <None Include="..\..\About\PublishedFileId.txt">
+          <Link>About\PublishedFileId.txt</Link>
+        </None>
+        <None Include="..\..\About\About.xml">
+          <Link>About\About.xml</Link>
+        </None>
     </ItemGroup>
     <ItemGroup />
     <ItemGroup>
         <Folder Include="Core\" />
-        <Folder Include="Core\Compatibility\" />
         <Folder Include="Core\Optimizations\" />
         <Folder Include="Core\Collections\" />
         <Folder Include="Core\Patches\" />
         <Folder Include="Core\Optimizations\Obsolete\" />
+        <Folder Include="Core\Extras\" />
+        <Folder Include="Core\Diagnosis\" />
+        <Folder Include="Core\Components\" />
+        <Folder Include="Properties\" />
+        <Folder Include="About\" />
+        <Folder Include="Core\GUI\Windows\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <PropertyGroup>
+        <TextTransformPath>/Applications/Visual Studio.app/Contents/Resources/lib/monodevelop/AddIns/MonoDevelop.TextTemplating/TextTransform.exe</TextTransformPath>
+    </PropertyGroup>
+    <PropertyGroup>
+        <TransformOnBuild>true</TransformOnBuild>
+    </PropertyGroup>
     <Target Name="Publicise" BeforeTargets="BeforeBuild" Condition="$([MSBuild]::IsOsPlatform(OSX))">
         <Publicise AssemblyPath="/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/Assembly-CSharp.dll" OutputPath="/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/" />
         <Publicise AssemblyPath="/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/Assembly-CSharp-firstpass.dll" OutputPath="/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/" />
     </Target>
+    <Import Project="..\packages\Clarius.TransformOnBuild.1.22.0\build\Clarius.TransformOnBuild.targets" Condition="Exists('..\packages\Clarius.TransformOnBuild.1.22.0\build\Clarius.TransformOnBuild.targets')" />
 </Project>

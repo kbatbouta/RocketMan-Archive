@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using RocketMan;
 using Verse;
 
@@ -11,7 +11,8 @@ namespace Soyuz.Patches
         {
             Context.zoomRange = __instance.CurrentZoom;
             Context.curViewRect = __instance.CurrentViewRect;
-            if (Finder.debug && Finder.statLogging) Log.Message($"SOYUZ: Zoom range is {Context.zoomRange}");
+            if (RocketDebugPrefs.debug && RocketDebugPrefs.statLogging)
+                Log.Message($"SOYUZ: Zoom range is {Context.zoomRange}");
         }
     }
 }

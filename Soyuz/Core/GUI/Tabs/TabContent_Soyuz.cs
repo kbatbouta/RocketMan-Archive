@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using RimWorld;
 using RocketMan;
 using RocketMan.Tabs;
 using UnityEngine;
@@ -10,44 +11,46 @@ namespace Soyuz.Tabs
 {
     public class TabContent_Soyuz : ITabContent
     {
-        private static Vector2 scrollPosition = Vector2.zero;
         private Listing_Standard standard = new Listing_Standard();
-        private static Listing_Standard standard_extras = new Listing_Standard();
+        private Listing_Standard standard_extras = new Listing_Standard();
 
+        private static Vector2 scrollPosition = Vector2.zero;
         private static Rect viewRect = Rect.zero;
         private static string searchString;
         private static RaceSettings curSelection;
 
-        public override string Label => "Soyuz";
-        public override bool ShouldShow => true;
+        public override string Label => "Time dilation controls";
+        public override bool ShouldShow => Finder.enabled;
 
         public override void DoContent(Rect rect)
         {
-            standard.Begin(rect.TopPartPixels(80 + (Finder.debug ? 54 : 0)));
+            standard.Begin(rect.TopPartPixels(95 + (RocketDebugPrefs.debug ? 120 : 0)));
             var font = Text.Font;
             Text.Font = GameFont.Tiny;
-            standard.Gap();
             standard.CheckboxLabeled("Enable time dilation", ref Finder.timeDilation, "Experimental.");
-            standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Experimental.");
-            standard.CheckboxLabeled("Enable time dilation for pawns with critical hediffs", ref Finder.timeDilationCriticalHediffs, "This will enable dilation for pawns with critical hediffs such as pregnant pawns or bleeding pawns. (Disable this in case of a hediff problem)");
-            standard.CheckboxLabeled("Enable data logging", ref Finder.logData, "Experimental.");
-            if (Finder.debug)
+            standard.CheckboxLabeled("Enable time dilation for caravans (Can cause issues)", ref Finder.timeDilationCaravans, "Disable this in case your caravans are consuming food too quickly.");
+            standard.CheckboxLabeled("Enable time dilation for visitor pawns.", ref Finder.timeDilationVisitors, "Experimental: Can cause a lot of bugs.");
+            standard.CheckboxLabeled("Enable time dilation for world pawns", ref Finder.timeDilationWorldPawns, "Throttle ticking for world pawns.");
+            //standard.CheckboxLabeled("Enable time dilation for pawns with critical hediffs", ref Finder.timeDilationCriticalHediffs, "This will enable dilation for pawns with critical hediffs such as pregnant pawns or bleeding pawns. (Disable this in case of a hediff problem)");
+            if (RocketDebugPrefs.debug)
             {
+                standard.CheckboxLabeled("Enable data logging", ref RocketDebugPrefs.logData, "For debugging only.");
+                standard.CheckboxLabeled("Set tick multiplier to 150", ref RocketDebugPrefs.debug150MTPS, "Dangerous!");
                 standard.GapLine();
-                standard.CheckboxLabeled("Enable Dilation flashing dilated pawns",
-                    ref Finder.flashDilatedPawns);
-                standard.CheckboxLabeled("Enable Simulate offscreen behavior", ref Finder.alwaysDilating);
+                standard.CheckboxLabeled("Enable flashing dilated pawns",
+                    ref RocketDebugPrefs.flashDilatedPawns);
+                standard.CheckboxLabeled("Simulate offscreen behavior", ref RocketDebugPrefs.alwaysDilating);
             }
             Text.Font = font;
-            standard.GapLine();
             standard.End();
-            rect.yMin += 74 + (Finder.debug ? 54 : 0);
+            rect.yMin += 85 + (RocketDebugPrefs.debug ? 120 : 0);
             DoExtras(rect);
         }
 
         public void DoExtras(Rect rect)
         {
             var stage = 0;
+            rect.yMin += 5;
             Text.CurFontStyle.fontStyle = FontStyle.Bold;
             Widgets.Label(rect.TopPartPixels(25), "Dilated races");
             Text.CurFontStyle.fontStyle = FontStyle.Normal;
@@ -61,15 +64,14 @@ namespace Soyuz.Tabs
             Text.Anchor = TextAnchor.MiddleLeft;
             rect.yMin += 25;
             var searchRect = rect.TopPartPixels(25);
-            searchString = Widgets.TextField(searchRect, searchString).ToLower().Trim();
+            string oldSearchString = searchString;
+            searchString = Widgets.TextField(searchRect, searchString)?.ToLower()?.Trim() ?? string.Empty;
+            if (oldSearchString != searchString)
+                scrollPosition = Vector2.zero;
             rect.yMin += 30;
-            if (searchString == null)
-            {
-                searchString = string.Empty;
-            }
             if (curSelection != null)
             {
-                var height = 128;
+                var height = 128 + (RocketDebugPrefs.debug ? 25 : 0);
                 var selectionRect = rect.TopPartPixels(height);
                 Widgets.DrawMenuSection(selectionRect);
                 Text.Font = GameFont.Tiny;
@@ -83,18 +85,31 @@ namespace Soyuz.Tabs
                 selectionRect.yMin += 54;
                 standard_extras.Begin(selectionRect.ContractedBy(3));
                 Text.Font = GameFont.Tiny;
-                standard_extras.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.dilated);
-                standard_extras.CheckboxLabeled($"Enable dilation for all factions except Player", ref curSelection.ignoreFactions);
-                standard_extras.CheckboxLabeled($"Enable dilation for Player faction", ref curSelection.ignorePlayerFaction);
+                if (!IgnoreMeDatabase.ShouldIgnore(curSelection.pawnDef))
+                {
+                    standard_extras.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.enabled, tooltip: "Used to control which races are dilated/throttled in case of a problem.");
+                    standard_extras.CheckboxLabeled($"Disable dilation for all factions except the player faction", ref curSelection.ignoreFactions);
+                    standard_extras.CheckboxLabeled($"Disable dilation for the player faction", ref curSelection.ignorePlayerFaction);
+                }
+                else
+                {
+                    standard_extras.Label($"This race will be ignored due to a mod <color=red>incompability issues or by a modder request!</color>");
+                }
+                if (RocketDebugPrefs.debug)
+                {
+                    if (curSelection.pawnDef.StatBaseDefined(StatDefOf.MoveSpeed))
+                        standard_extras.Label($"Base race move speed is {curSelection.pawnDef.GetStatValueAbstract(StatDefOf.MoveSpeed)}:{Context.dilationFastMovingRace[curSelection.pawnDef.index]}");
+                    else standard_extras.Label("Base race move speed is not defined");
+                }
                 standard_extras.End();
                 rect.yMin += height + 8;
             }
-            else if (Find.Selector.selected.Count == 1 && Find.Selector.selected.First() is Pawn pawn && pawn != null)
+            else if (Find.Selector.selected.Count == 1 && Find.Selector.selected.First() is Pawn pawn && pawn != null && searchString.NullOrEmpty())
             {
                 var height = 128;
                 var selectionRect = rect.TopPartPixels(height);
                 var model = pawn.GetPerformanceModel();
-                if (Finder.debug) Log.Message($"SOYUZ: UI stage is {stage}:{1}");
+                if (RocketDebugPrefs.debug) Log.Message($"SOYUZ: UI stage is {stage}:{1}");
                 if (model != null)
                 {
                     model.DrawGraph(selectionRect, 2000);
@@ -112,13 +127,14 @@ namespace Soyuz.Tabs
             var counter = 0;
             foreach (var element in Context.settings.raceSettings)
             {
-                if (element?.pawnDef?.label == null)
+                string defLabel = element?.pawnDef?.label?.ToLower();
+                if (defLabel == null)
                     continue;
-                if (!element.pawnDef.label.ToLower().Contains(searchString))
+                if (!searchString.NullOrEmpty() && !(defLabel?.Contains(searchString) ?? false))
                     continue;
                 counter++;
                 if (counter % 2 == 0)
-                    Widgets.DrawBoxSolid(curRect, new Color(0.1f, 0.1f, 0.1f, 0.2f));
+                    Widgets.DrawBoxSolid(curRect, new Color(0.2f, 0.2f, 0.2f));
                 Widgets.DrawHighlightIfMouseover(curRect);
                 Widgets.DefLabelWithIcon(curRect.ContractedBy(3), element.pawnDef);
                 if (Widgets.ButtonInvisible(curRect))

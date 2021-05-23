@@ -1,5 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using RimWorld;
 using RimWorld.Planet;
+using RocketMan;
 using UnityEngine;
 using Verse;
 
@@ -9,33 +14,59 @@ namespace Soyuz
     {
         public const int BucketCount = 30;
 
-        private const int TransformationCacheSize = 2500; 
-        
-        private static int[] _transformationCache = new int[TransformationCacheSize];
-
+        private static HashSet<Pawn> pawns = new HashSet<Pawn>();
+        private static HashSet<Pawn> caravaningColonists = new HashSet<Pawn>();
+        private static HashSet<Pawn> caravaningPawns = new HashSet<Pawn>();
+        private static HashSet<Pawn> previousBucket = new HashSet<Pawn>();
         private static HashSet<Pawn>[] buckets;
         private static Game game;
-        
+        private static bool dirty = false;
+        private static int tickCounter = 0;
         public static int curIndex = 0;
-        public static int curCycle = 0;     
-        
+        public static int curCycle = 0;
+
         public static bool isActive = false;
+
+        public static HashSet<Pawn> PreviousBucket
+        {
+            get => previousBucket;
+        }
 
         public WorldPawnsTicker(Game game)
         {
+            ResetInternalState();
             TryInitialize();
-            for (int i = 0; i < _transformationCache.Length; i++)
-                _transformationCache[i] = (int) Mathf.Max((float) i / WorldPawnsTicker.BucketCount, 1);
+        }
+
+        public override void GameComponentTick()
+        {
+            base.GameComponentTick();
+            if (!Finder.WarmingUp && Find.World != null)
+            {
+                if (dirty)
+                {
+                    dirty = false;
+                    ResetInternalState();
+                    Rebuild(Find.WorldPawns);
+                }
+                else if (GenTicks.TicksGame % 5000 == 0)
+                {
+                    ResetInternalState();
+                    Rebuild(Find.WorldPawns);
+                }
+            }
         }
 
         public override void StartedNewGame()
         {
+            ResetInternalState();
             base.StartedNewGame();
             TryInitialize();
         }
 
         public override void LoadedGame()
         {
+            ResetInternalState();
             base.LoadedGame();
             TryInitialize();
         }
@@ -51,17 +82,11 @@ namespace Soyuz
             }
         }
 
-        public static int Transform(int interval)
-        {
-            if (interval >= TransformationCacheSize)
-                return (int) Mathf.Max((float) interval / WorldPawnsTicker.BucketCount, 1);
-            return _transformationCache[interval];
-        }
-
         public static void TryInitialize()
         {
             if (game != Current.Game || buckets == null)
             {
+                ResetInternalState();
                 curIndex = curCycle = 0;
                 game = Current.Game;
                 buckets = new HashSet<Pawn>[BucketCount];
@@ -72,37 +97,140 @@ namespace Soyuz
 
         public static void Rebuild(WorldPawns instance)
         {
+            ResetInternalState();
             curCycle = 0;
             curIndex = 0;
             for (int i = 0; i < BucketCount; i++) buckets[i].Clear();
-            foreach (Pawn pawn in instance.pawnsAlive) Register(pawn);
+            foreach (Pawn pawn in instance.pawnsAlive)
+            {
+                if (!pawn.Dead && !pawn.Destroyed)
+                    Register(pawn);
+            }
+        }
+
+        public static void ResetInternalState()
+        {
+            caravaningPawns.Clear();
+            caravaningColonists.Clear();
+            pawns.Clear();
+            previousBucket.Clear();
         }
 
         public static void Register(Pawn pawn)
-        {            
-            var index = GetBucket(pawn);
-            if (buckets == null) TryInitialize();
-            if (buckets[index] == null) buckets[index] = new HashSet<Pawn>();
+        {
+            int index = GetBucket(pawn);
+            if (buckets == null)
+                TryInitialize();
+            if (buckets[index] == null)
+                buckets[index] = new HashSet<Pawn>();
+            if (pawn.IsCaravanMember())
+            {
+                caravaningPawns.Add(pawn);
+                if (pawn.GetCaravan().IsPlayerControlled)
+                    caravaningColonists.Add(pawn);
+            }
+            pawns.Add(pawn);
             buckets[index].Add(pawn);
         }
 
+        public static void SetDirty() => dirty = true;
+
         public static void Deregister(Pawn pawn)
-        {            
-            var index = GetBucket(pawn);
-            if(buckets[index] == null) return;
+        {
+            int index = GetBucket(pawn);
+            if (buckets[index] == null) return;
+            pawns.RemoveWhere(p => p.thingIDNumber == pawn.thingIDNumber);
+            caravaningColonists.RemoveWhere(p => p.thingIDNumber == pawn.thingIDNumber);
+            caravaningPawns.RemoveWhere(p => p.thingIDNumber == pawn.thingIDNumber);
             buckets[index].Remove(pawn);
         }
 
-        public static HashSet<Pawn> GetPawns()
+        public static HashSet<Pawn> GetPawns(bool fallbackMode = false)
         {
-            var result = buckets[curIndex];
-            curIndex = curIndex + 1;
-            if (curIndex >= BucketCount)
+            HashSet<Pawn> bucket = buckets[curIndex];
+            curIndex = GenTicks.TicksGame % 30;
+            if (curIndex == 0)
+                curCycle++;
+            IEnumerable<Pawn> result = Finder.timeDilationCaravans ? bucket : AddExtraPawns(bucket);
+            if (!fallbackMode)
             {
-                curIndex = 0;
-                curCycle += 1;
+                ValidateCollection(result, out IEnumerable<Pawn> validated);
+                return previousBucket = validated.ToHashSet();
             }
-            return result;
+            return previousBucket = result.ToHashSet();
+        }
+
+        public static bool IsCustomWorldTickInterval(Thing thing, int interval)
+        {
+            return interval <= BucketCount ? true : curCycle % ((int)(interval / BucketCount)) == 0;
+        }
+
+        private static void ValidateCollection(IEnumerable<Pawn> pawns, out IEnumerable<Pawn> result)
+        {
+            List<Pawn> invalidPawns = new List<Pawn>();
+            result = null;
+            foreach (Pawn pawn in pawns)
+            {
+                if (pawn.Destroyed || pawn.Spawned || pawn.Dead)
+                    invalidPawns.Add(pawn);
+            }
+            if (invalidPawns.Count == 0)
+            {
+                result = pawns;
+                return;
+            }
+            foreach (Pawn pawn in invalidPawns)
+            {
+                Deregister(pawn);
+            }
+            result = GetPawns(fallbackMode: true);
+        }
+
+        private static IEnumerable<Pawn> AddExtraPawns(IEnumerable<Pawn> bucket)
+        {
+            List<Pawn> temp = new List<Pawn>();
+            foreach (Pawn pawn in caravaningColonists)
+            {
+                if (pawn.Destroyed)
+                {
+                    ResetInternalState();
+                    Rebuild(Find.WorldPawns);
+                    throw new Exception("ROCKETMAN: Tried to tick a destroyed pawn!");
+                }
+                if (!pawn.IsCaravanMember() || !pawn.GetCaravan().IsPlayerControlled || pawn.Spawned || pawn.Dead)
+                {
+                    temp.Add(pawn);
+                    continue;
+                }
+                yield return pawn;
+            }
+            if (temp.Count > 0)
+            {
+                caravaningColonists.RemoveWhere(p => temp.Contains(p));
+                temp.Clear();
+            }
+            foreach (Pawn pawn in caravaningPawns)
+            {
+                if (pawn.Destroyed)
+                {
+                    ResetInternalState();
+                    Rebuild(Find.WorldPawns);
+                    throw new Exception("ROCKETMAN: Tried to tick a destroyed pawn!");
+                }
+                if (!pawn.IsCaravanMember() || pawn.Spawned || pawn.Dead)
+                {
+                    temp.Add(pawn);
+                    continue;
+                }
+                yield return pawn;
+            }
+            if (temp.Count > 0)
+            {
+                caravaningPawns.RemoveWhere(p => temp.Contains(p));
+                temp.Clear();
+            }
+            foreach (Pawn pawn in bucket)
+                yield return pawn;
         }
 
         private static int GetBucket(Pawn pawn)
@@ -110,7 +238,7 @@ namespace Soyuz
             int hash;
             unchecked
             {
-                hash = pawn.GetHashCode();
+                hash = pawn.thingIDNumber + GenTicks.TicksGame;
                 if (hash < 0) hash *= -1;
             }
             return hash % BucketCount;

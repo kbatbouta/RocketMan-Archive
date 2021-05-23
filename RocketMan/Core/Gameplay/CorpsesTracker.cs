@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using RimWorld;
@@ -33,7 +33,7 @@ namespace RocketMan.Gameplay
             if (!Finder.enabled) return;
             if (!Finder.corpsesRemovalEnabled) return;
             removalList.Clear();
-            var counter = 0;
+            int counter = 0;
             if (tick % ScanInterval == 0) FindCorpses();
             if (tick++ % Interval != 0) return;
             stopwatch.Reset();
@@ -71,12 +71,12 @@ namespace RocketMan.Gameplay
                 try
                 {
                     var record = destroyList.Pop();
-                    if (Finder.debug) Log.Message($"ROCKETMAN: removed thing {record.thing} with total removed {removedThingsCount + 1}");
+                    if (RocketDebugPrefs.debug) Log.Message($"ROCKETMAN: removed thing {record.thing} with total removed {removedThingsCount + 1}");
                     if (!record.thing.Destroyed) record.thing.Destroy();
                 }
                 catch (Exception er)
                 {
-                    if (Finder.debug) Log.Error($"ROCKETMAN: Error in GC while destroying thing {er}");
+                    if (RocketDebugPrefs.debug) Log.Error($"ROCKETMAN: Error in GC while destroying thing {er}");
                 }
                 finally
                 {
@@ -112,23 +112,26 @@ namespace RocketMan.Gameplay
         {
             var corpsesTemp = map.listerThings.ThingsInGroup(ThingRequestGroup.Corpse);
             foreach (var thing in corpsesTemp)
-                if (!corpses.Contains(thing) && thing is Corpse corpse &&
-                    corpse.CurRotDrawMode == RotDrawMode.Dessicated)
+            {
+                if (!corpses.Contains(thing) && thing is Corpse corpse && corpse.CurRotDrawMode == RotDrawMode.Dessicated)
                 {
                     var record = new CorpseRecord(corpse);
                     corpses.Add(corpse);
                     records.Add(record);
                 }
+            }
         }
 
         private void ProcessCorpse(CorpseRecord record)
         {
             var position = record.thing.positionInt;
 
-            if (viewRect.Contains(position)) record.RegisterVisibility(true);
-            else record.RegisterVisibility(false);
+            if (viewRect.Contains(position))
+                record.RegisterVisibility(true);
+            else
+                record.RegisterVisibility(false);
 
-            if (record.Age.TicksToDays() >= (Finder.debug ? 0.5f : record.thing?.factionInt != null ? 14.0f : 7f) &&
+            if (record.Age.TicksToDays() >= (RocketDebugPrefs.debug ? 0.5f : record.thing?.factionInt != null ? 14.0f : 7f) &&
                 record.ViewedRatio < 0.25f && Rand.Chance(0.25f))
             {
                 if (!ShouldDelete(record.thing)) return;
@@ -139,7 +142,7 @@ namespace RocketMan.Gameplay
 
         private bool ShouldDelete(Thing thing)
         {
-            if (thing.factionInt == Faction.OfPlayer)
+            if (thing.factionInt == Faction.OfPlayer || !Finder.corpsesRemovalEnabled)
                 return false;
             return true;
         }

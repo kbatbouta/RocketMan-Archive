@@ -1,5 +1,6 @@
 using HarmonyLib;
 using RimWorld;
+using Verse;
 
 namespace Soyuz.Patches
 {
@@ -11,7 +12,7 @@ namespace Soyuz.Patches
             if (true
                 && __instance.pawn.IsValidWildlifeOrWorldPawn()
                 && __instance.pawn.IsSkippingTicks())
-                __instance.lastRestTick += __instance.pawn.GetDeltaT();
+                __instance.lastRestTick = GenTicks.TicksGame + __instance.pawn.GetDeltaT() * 2;
         }
     }
 }

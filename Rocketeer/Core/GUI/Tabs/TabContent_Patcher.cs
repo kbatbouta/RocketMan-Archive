@@ -13,9 +13,9 @@ namespace Rocketeer.Tabs
         private Listing_Standard standard = new Listing_Standard();
 
         public override string Label => "Debugger";
-        public override bool ShouldShow => Finder.debug;
+        public override bool ShouldShow => false;
 
-        private RocketeerMethodTracker report;
+        private RocketeerPatchInfo report;
         private string target = string.Empty;
 
         public override void DoContent(Rect rect)
@@ -25,14 +25,12 @@ namespace Rocketeer.Tabs
             target = standard.TextEntry(target);
             if (standard.ButtonText("Patch") && AccessTools.Method(target) is MethodBase method && method != null)
             {
-                report = method.GetRocketeerMethodTracker();
-                RocketeerPatcher.Patch(report);
+                RocketeerPatchingUtility.PatchInternal(method as MethodInfo);
             }
             if (standard.ButtonText("Ping patches"))
             {
                 Context.__MARCO = 10;
                 Log.Message($"ROCKETEER: Ping counter {Context.__MARCO}!");
-
             }
             if (standard.ButtonText("Random error"))
             {

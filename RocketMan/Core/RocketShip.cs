@@ -14,24 +14,25 @@ namespace RocketMan
         [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
         public class SkipperPatch : Attribute
         {
-            private bool found;
+            public MethodType methodType;
+            public Type targetType;
             public Type[] genericsTypes;
+            public Type[] methodArguments;
+            public string targetMethod;
+            public readonly Type[] modsCompatiblityHandlers;
 
             private MethodInfo method;
-            public Type[] methodArguments;
-            public MethodType methodType;
-            public string targetMethod;
-
-            public Type targetType;
+            private bool found;
 
             public SkipperPatch(Type type, string methodName, MethodType methodType = MethodType.Normal,
-                Type[] methodArguments = null, Type[] genericsTypes = null)
+                Type[] methodArguments = null, Type[] genericsTypes = null, Type[] modsCompatiblityHandlers = null)
             {
                 targetMethod = methodName;
                 targetType = type;
                 this.methodType = methodType;
                 this.methodArguments = methodArguments;
                 this.genericsTypes = genericsTypes;
+                this.modsCompatiblityHandlers = modsCompatiblityHandlers;
             }
 
             public MethodInfo GetMethodInfo()
@@ -67,7 +68,7 @@ namespace RocketMan
             }
         }
 
-        public class RocketPatcher
+        public class SkipperPatcher
         {
             private static readonly MethodInfo mTranspiler = AccessTools.Method("RocketPatcher:SkipperTranspiler");
             private static Type patchType;
@@ -78,7 +79,7 @@ namespace RocketMan
             public List<MethodInfo> patchedMethods = new List<MethodInfo>();
             public Dictionary<MethodInfo, Type> patches = new Dictionary<MethodInfo, Type>();
 
-            public RocketPatcher(string id)
+            public SkipperPatcher(string id)
             {
                 this.id = id;
                 harmony = new Harmony(id + ".rocketpatch");
@@ -102,11 +103,11 @@ namespace RocketMan
                 {
                     try
                     {
-                        RocketPatcher.patchType = patchType;
+                        SkipperPatcher.patchType = patchType;
                         harmony.Patch(target, transpiler: new HarmonyMethod(mTranspiler));
                         patchedMethods.Add(target);
                         patches.Add(target, patchType);
-                        if (Finder.debug) Log.Message(string.Format("ROCKETMAN: patched target {0}", target));
+                        if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: patched target {0}", target));
                     }
                     catch (Exception er)
                     {
@@ -118,11 +119,11 @@ namespace RocketMan
 
             public static IEnumerable<Type> GetSkipperPatchTypes()
             {
-                var types = Finder.RocketManAssemblies.SelectMany(x => x.GetLoadableTypes());
+                var types = RocketAssembliesInfo.Assemblies.SelectMany(x => x.GetLoadableTypes());
                 foreach (var type in types)
                     if (type.HasAttribute<SkipperPatch>())
                     {
-                        if (Finder.debug) Log.Message(string.Format("ROCKETMAN: found type {0} with skipper patch attributes", type));
+                        if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: found type {0} with skipper patch attributes", type));
                         yield return type;
                     }
             }

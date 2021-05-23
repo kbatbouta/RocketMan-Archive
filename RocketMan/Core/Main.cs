@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using HarmonyLib;
 using HugsLib;
 using RocketMan.Tabs;
 using Verse;
@@ -32,25 +34,39 @@ namespace RocketMan
 
         public static void ReloadActions()
         {
-            onClearCache = FunctionUtility.GetActions<OnClearCache>().ToList();
-            onDefsLoaded = FunctionUtility.GetActions<OnDefsLoaded>().ToList();
-            onWorldLoaded = FunctionUtility.GetActions<OnWorldLoaded>().ToList();
-            onMapLoaded = FunctionUtility.GetActions<OnMapLoaded>().ToList();
-            onMapComponentsInitializing = FunctionUtility.GetActions<OnMapComponentsInitializing>().ToList();
-            onTick = FunctionUtility.GetActions<OnTick>().ToList();
-            onDebugginEnabled = FunctionUtility.GetActions<OnDebugginEnabled>().ToList();
-            onDebugginDisabled = FunctionUtility.GetActions<OnDebugginDisabled>().ToList();
-            onTickLong = FunctionUtility.GetActions<OnTickLong>().ToList();
-            yieldTabContent = FunctionUtility.GetFunctions<YieldTabContent, ITabContent>().ToList();
-            onScribe = FunctionUtility.GetActions<Main.OnScribe>().ToList();
-            onStaticConstructors = FunctionUtility.GetActions<Main.OnStaticConstructor>().ToList();
-            onInitialization = FunctionUtility.GetActions<Main.OnInitialization>().ToList();
+            onClearCache = FunctionsUtility.GetActions<OnClearCache>().ToList();
+            onDefsLoaded = FunctionsUtility.GetActions<OnDefsLoaded>().ToList();
+            onWorldLoaded = FunctionsUtility.GetActions<OnWorldLoaded>().ToList();
+            onMapLoaded = FunctionsUtility.GetActions<OnMapLoaded>().ToList();
+            onMapComponentsInitializing = FunctionsUtility.GetActions<OnMapComponentsInitializing>().ToList();
+            onTick = FunctionsUtility.GetActions<OnTick>().ToList();
+            onDebugginEnabled = FunctionsUtility.GetActions<OnDebugginEnabled>().ToList();
+            onDebugginDisabled = FunctionsUtility.GetActions<OnDebugginDisabled>().ToList();
+            onTickLong = FunctionsUtility.GetActions<OnTickLong>().ToList();
+            yieldTabContent = FunctionsUtility.GetFunctions<YieldTabContent, ITabContent>().ToList();
+            onScribe = FunctionsUtility.GetActions<Main.OnScribe>().ToList();
+            onStaticConstructors = FunctionsUtility.GetActions<Main.OnStaticConstructor>().ToList();
+            onInitialization = FunctionsUtility.GetActions<Main.OnInitialization>().ToList();
+            Finder.settingsFields = FieldsUtility.GetFields<SettingsField>().ToArray();
         }
 
         static Main()
         {
-            onStaticConstructors = FunctionUtility.GetActions<OnStaticConstructor>().ToList();
+            Log.Message($"<color=orange>ROCKETMAN:</color> Version { RocketAssembliesInfo.Version }");
+            // ----------------------
+            // TODO more stylizations.
+            // this is used to stylize the log output of rocketman.
+            EditWindow_Log_DoMessagesListing_Patch.PatchEditWindow_Log();
+            // -------------------------
+            // Offical start of the code.            
+            onStaticConstructors = FunctionsUtility.GetActions<OnStaticConstructor>().ToList();
             for (var i = 0; i < onStaticConstructors.Count; i++) onStaticConstructors[i].Invoke();
+            // ---------------------------------------
+            // TODO implement compatiblity xml support
+            //foreach (var mod in ModsConfig.ActiveModsInLoadOrder)
+            //{
+            //    Log.Message($"{mod.PackageId}, {mod.Name}, {mod.PackageIdPlayerFacing}");
+            //}
         }
 
         public override void MapLoaded(Map map)
@@ -73,12 +89,20 @@ namespace RocketMan
 
         public override void DefsLoaded()
         {
-            base.DefsLoaded();
-            {
-                RocketPatcher.PatchAll();
-                Finder.rocket.PatchAll();
-            }
             for (var i = 0; i < onDefsLoaded.Count; i++) onDefsLoaded[i].Invoke();
+            base.DefsLoaded();
+            // --------------
+            // start loading xml data
+            XMLParser.ParseXML();
+            // --------------
+            // load xml data and parse it
+            IgnoreMeDatabase.ParsePrepare();
+            IncompatibilityHelper.Prepare();
+            NotificationsManager.HookAll();
+            // --------------
+            // start patching
+            RocketPatcher.PatchAll();
+            Finder.rocket.PatchAll();
         }
 
         public override void Tick(int currentTick)
@@ -106,18 +130,18 @@ namespace RocketMan
             switch (debugging)
             {
                 case 0:
-                    if (Finder.debug == true)
+                    if (RocketDebugPrefs.debug == true)
                         changed = true;
                     else return;
                     break;
                 case 1:
-                    if (Finder.debug == false)
+                    if (RocketDebugPrefs.debug == false)
                         return;
                     debugging = 2;
                     changed = true;
                     break;
                 case 2:
-                    if (Finder.debug == true)
+                    if (RocketDebugPrefs.debug == true)
                         return;
                     debugging = 1;
                     changed = true;
@@ -199,6 +223,17 @@ namespace RocketMan
         [AttributeUsage(AttributeTargets.Method)]
         public class OnDebugginDisabled : Attribute
         {
+        }
+
+        [AttributeUsage(AttributeTargets.Field)]
+        public class SettingsField : Attribute
+        {
+            public object warmUpValue;
+
+            public SettingsField(object warmUpValue)
+            {
+                this.warmUpValue = warmUpValue;
+            }
         }
     }
 }

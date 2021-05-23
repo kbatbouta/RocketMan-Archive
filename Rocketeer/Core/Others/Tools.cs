@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using RocketMan;
 using Verse;
@@ -17,27 +18,9 @@ namespace Rocketeer
             return Context.patchedMethods.Contains(method.GetUniqueMethodIdentifier());
         }
 
-        public static bool TryGetRocketeerMethodTracker(this MethodBase method, out RocketeerMethodTracker report)
-        {
-            string id = method.GetUniqueMethodIdentifier();
-            return Context.trackerByUniqueIdentifier.TryGetValue(id, out report);
-        }
-
-        public static string GetDeclaredTypeMethodPath(this MethodBase method)
-        {
-            var type = method.DeclaringType;
-            return $"{type.Namespace}.{type.Name}:{method.Name}";
-        }
-
-        public static string GetReflectedTypeMethodPath(this MethodBase method)
-        {
-            var type = method.ReflectedType;
-            return $"{type.Namespace}.{type.Name}:{method.Name}";
-        }
-
         public static string GetUniqueMethodIdentifier(this MethodBase method)
         {
-            return $"{method.GetDeclaredTypeMethodPath()}&{method.GetReflectedTypeMethodPath()}";
+            return method.GetMethodPath();
         }
 
         public static bool IsValidMethodPath(this string methodPath)
@@ -68,7 +51,7 @@ namespace Rocketeer
             for (int i = 0; i < trace.FrameCount; i++)
             {
                 frame = trace.GetFrame(i);
-                frames[i] = $"method:{frame.GetMethod().GetDeclaredTypeMethodPath()}\t" +
+                frames[i] = $"method:{frame.GetMethod().GetMethodPath()}\t" +
                     $"file:{frame.GetFileName()}\t" +
                     $"line:{frame.GetFileLineNumber()}\t" +
                     $"offset:{frame.GetILOffset()}\t";

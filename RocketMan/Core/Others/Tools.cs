@@ -46,7 +46,7 @@ namespace RocketMan
             }
             catch (Exception er)
             {
-                if (Finder.debug) Log.Warning(string.Format("ROCKETMAN: Notify_Dirty error of {0} at {1}",
+                if (RocketDebugPrefs.debug) Log.Warning(string.Format("ROCKETMAN: Notify_Dirty error of {0} at {1}",
                         er.Message, er.StackTrace));
             }
         }

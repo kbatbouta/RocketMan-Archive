@@ -49,28 +49,31 @@ namespace Soyuz
 
         public static bool HasCriticalHediff(this Pawn pawn)
         {
-            return pawn.IsPregnant();
+            //
+            //return pawn.IsPregnant();
+            return false;
         }
 
-        private static Pawn _pregnantPawn;
-        private static bool _pregnant;
-
+        //private static Pawn _pregnantPawn;
+        //private static bool _pregnant;
+        //
         public static bool IsPregnant(this Pawn pawn)
         {
-            if (Finder.timeDilationCriticalHediffs)
-            {
-                throw new InvalidOperationException("timeDilationCriticalHediffs is disabled!");
-            }
-            if (pawn.gender != Gender.Female)
-            {
-                return _pregnant = false;
-            }
-            if (_pregnantPawn == pawn)
-            {
-                return _pregnant;
-            }
-            _pregnantPawn = pawn;
-            return _pregnant = pawn.GetHediffTracker().Pregnant;
+            //if (Finder.timeDilationCriticalHediffs)
+            //{
+            //    throw new InvalidOperationException("timeDilationCriticalHediffs is disabled!");
+            //}
+            //if (pawn.gender != Gender.Female)
+            //{
+            //    return _pregnant = false;
+            //}
+            //if (_pregnantPawn == pawn)
+            //{
+            //    return _pregnant;
+            //}
+            //_pregnantPawn = pawn;
+            //return _pregnant = pawn.GetHediffTracker().Pregnant;
+            return false;
         }
     }
 }

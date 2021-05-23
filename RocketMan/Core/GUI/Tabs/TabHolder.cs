@@ -58,35 +58,43 @@ namespace RocketMan.Tabs
                 curTabIndex = 0;
                 tabs[0].Selected = true;
             }
-
-            var font = Text.Font;
-            var style = Text.CurFontStyle.fontStyle;
-            var anchor = Text.Anchor;
-
-            curTab = tabs[curTabIndex];
-            if (useSidebar)
+            GUIUtility.ExecuteSafeGUIAction(() =>
             {
-                var tabsRect = inRect.LeftPartPixels(170);
-                var contentRect = new Rect(inRect);
-                contentRect.xMin += 180;
-                DoSidebar(tabsRect);
-                curTab.DoContent(contentRect);
-            }
-            else
-            {
-                // TODO fix this API                
-                // inRect.yMin += 40;
-                // var tabRect = new Rect(inRect);
-                // tabRect.height = 0;                
-                // MakeRecords();
-                // TabDrawer.DrawTabs(tabRect, tabsRecord);
-                // curTab.DoContent(inRect);
-                // -----------------------
-                throw new InvalidOperationException("ROCKETMAN: this is an outdated API!");
-            }
-            Text.Anchor = anchor;
-            Text.Font = font;
-            Text.CurFontStyle.fontStyle = style;
+                curTab = tabs[curTabIndex];
+                if (useSidebar)
+                {
+                    var tabsRect = inRect.LeftPartPixels(170);
+                    var contentRect = new Rect(inRect);
+                    contentRect.xMin += 180;
+                    GUIUtility.ExecuteSafeGUIAction(() =>
+                    {
+                        DoSidebar(tabsRect);
+                    });
+                    GUIUtility.ExecuteSafeGUIAction(() =>
+                    {
+                        Text.CurFontStyle.fontStyle = FontStyle.Bold;
+                        Text.Font = GameFont.Medium;
+                        GUI.Label(contentRect.TopPartPixels(25), curTab.Label);
+                    });
+                    contentRect.yMin += 30;
+                    GUIUtility.ExecuteSafeGUIAction(() =>
+                    {
+                        curTab.DoContent(contentRect);
+                    });
+                }
+                else
+                {
+                    // TODO fix this API                
+                    // inRect.yMin += 40;
+                    // var tabRect = new Rect(inRect);
+                    // tabRect.height = 0;                
+                    // MakeRecords();
+                    // TabDrawer.DrawTabs(tabRect, tabsRecord);
+                    // curTab.DoContent(inRect);
+                    // -----------------------
+                    throw new InvalidOperationException("ROCKETMAN: this is an outdated API!");
+                }
+            }, fallbackAction: null, catchExceptions: false);
         }
 
         public void AddTab(ITabContent newTab)
@@ -141,7 +149,7 @@ namespace RocketMan.Tabs
             Widgets.BeginScrollView(rect, ref scrollPosition, tabBarRect);
             Text.Anchor = TextAnchor.MiddleLeft;
             Text.Font = GameFont.Tiny;
-            var curRect = new Rect(5, 5, 160, 30);
+            var curRect = new Rect(rect.xMin + 5, rect.yMin + 5, 160, 30);
             var counter = 0;
             foreach (var tab in tabs)
             {
@@ -171,7 +179,6 @@ namespace RocketMan.Tabs
                 curRect.y += 30;
                 counter++;
             }
-
             Widgets.EndScrollView();
         }
     }

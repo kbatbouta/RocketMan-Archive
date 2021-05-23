@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -14,7 +14,7 @@ namespace Soyuz.Profiling
 
         private Vector2 scrollView = Vector2.zero;
             
-        public override bool IsVisible => Finder.logData && Finder.debug && Prefs.LogVerbose && Prefs.DevMode;
+        public override bool IsVisible => RocketDebugPrefs.logData && RocketDebugPrefs.debug && Prefs.LogVerbose && Prefs.DevMode;
 
         public override void UpdateSize()
         {

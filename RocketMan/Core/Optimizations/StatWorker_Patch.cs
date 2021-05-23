@@ -11,7 +11,7 @@ using Verse;
 
 namespace RocketMan.Optimizations
 {
-    [RocketPatch(typeof(StatWorker), "GetValueUnfinalized", parameters = new[] { typeof(StatRequest), typeof(bool) })]
+    [RocketPatch(typeof(StatWorker), "GetValueUnfinalized", parameters: new[] { typeof(StatRequest), typeof(bool) })]
     internal static class StatWorker_GetValueUnfinalized_Interrupt_Patch
     {
         public static HashSet<MethodBase> callingMethods = new HashSet<MethodBase>();
@@ -32,13 +32,13 @@ namespace RocketMan.Optimizations
 
         public static void Interrupt(StatWorker statWorker, StatRequest req, bool applyPostProcess)
         {
-            if (Finder.learning && Finder.statLogging)
+            if (Finder.learning && RocketDebugPrefs.statLogging)
             {
                 StackTrace trace = new StackTrace();
                 StackFrame frame = trace.GetFrame(2);
                 MethodBase method = frame.GetMethod();
                 string handler = method.GetMethodPath();
-                if (Finder.debug) Log.Message(string.Format("ROCKETMAN: called stats.GetUnfinalizedValue from {0}", handler));
+                if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: called stats.GetUnfinalizedValue from {0}", handler));
                 callingMethods.Add(method);
             }
         }
@@ -117,7 +117,7 @@ namespace RocketMan.Optimizations
         {
             var signature = pawn.GetSignature(true);
 #if DEBUG
-            if (Finder.debug) Log.Message(string.Format("ROCKETMAN: changed signature for pawn {0} to {1}", pawn, signature));
+            if (RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: changed signature for pawn {0} to {1}", pawn, signature));
 #endif
         }
 
@@ -173,7 +173,8 @@ namespace RocketMan.Optimizations
             if (true
                 && Finder.enabled
                 && Current.Game != null
-                && tick >= 600)
+                && tick >= 600
+                && !IgnoreMeDatabase.ShouldIgnore(statWorker.stat))
             {
                 var key = Tools.GetKey(statWorker, req, applyPostProcess);
                 var signature = req.thingInt?.GetSignature() ?? -1;

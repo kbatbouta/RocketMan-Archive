@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using RocketMan;
 using Verse;
@@ -20,6 +21,8 @@ namespace Soyuz
         public static void PostScribe()
         {
             Scribe_Deep.Look(ref Context.settings, "soyuzSettings");
+            if (Scribe.mode != LoadSaveMode.Saving && pawnDefs != null)
+                CheckExtras();
             Finder.soyuzLoaded = true;
         }
 
@@ -38,6 +41,32 @@ namespace Soyuz
                 }
                 element.Cache();
             }
+            CheckExtras();
+        }
+
+        public static void CheckExtras()
+        {
+            if (pawnDefs.Count == Context.dilationByDef.Count)
+                return;
+            bool foundAnything = false;
+            foreach (var def in pawnDefs)
+            {
+                if (def?.race != null && !Context.dilationByDef.TryGetValue(def, out _))
+                {
+                    RaceSettings element;
+                    Context.settings.raceSettings.Add(element = new RaceSettings()
+                    {
+                        pawnDef = def,
+                        pawnDefName = def.defName,
+                        dilated = def.race.Animal && !def.race.Humanlike && !def.race.IsMechanoid,
+                        ignoreFactions = false
+                    });
+                    element.Cache();
+                    foundAnything = true;
+                }
+            }
+            if (foundAnything && Scribe.mode == LoadSaveMode.Inactive)
+                Finder.rocketMod.WriteSettings();
         }
 
         public static void CreateSettings()
@@ -53,8 +82,25 @@ namespace Soyuz
                     ignoreFactions = false
                 });
             }
-
             Finder.rocketMod.WriteSettings();
+        }
+
+        public static RaceSettings GetRaceSettings(this Pawn pawn)
+        {
+            if (pawn.def == null)
+                return null;
+            if (Context.dilationByDef.TryGetValue(pawn.def, out RaceSettings settings))
+                return settings;
+            ThingDef def = pawn.def;
+            Context.settings.raceSettings.Add(settings = new RaceSettings()
+            {
+                pawnDef = def,
+                pawnDefName = def.defName,
+                dilated = def.race.Animal && !def.race.Humanlike && !def.race.IsMechanoid,
+                ignoreFactions = false
+            });
+            settings.Cache();
+            return settings;
         }
     }
 }

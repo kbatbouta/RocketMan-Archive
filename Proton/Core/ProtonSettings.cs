@@ -1,60 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using RimWorld;
+using RocketMan;
 using RocketMan.Tabs;
 using Verse;
 
 namespace Proton
 {
-    public class ThingDefSettings : IExposable
-    {
-        public ThingDef thingDef;
-        public string thingDefName;
-        public bool isCritical = true;
-        public bool isRecyclable = false;
-
-        public bool IsJunk
-        {
-            get => !isCritical;
-        }
-
-        public ThingDefSettings()
-        {
-        }
-
-        public ThingDefSettings(string thingDefName)
-        {
-            this.thingDefName = thingDefName;
-        }
-
-        public void ExposeData()
-        {
-            Scribe_Values.Look(ref thingDefName, "thingDefName");
-            Scribe_Values.Look(ref isCritical, "isCritical");
-            Scribe_Values.Look(ref isRecyclable, "isRecyclable");
-        }
-
-        public void ResolveContent()
-        {
-            if (DefDatabase<ThingDef>.defsByName.TryGetValue(this.thingDefName, out var def))
-                this.thingDef = def;
-        }
-
-        public void Cache()
-        {
-            if (this.thingDef == null) return;
-            Context.thingSettingsByDef[thingDef] = this;
-            Context.thingJunkByDef[thingDef.index] = !isCritical;
-        }
-    }
-
     public class ProtonSettings : IExposable
     {
-        public List<ThingDefSettings> thingDefSettings = new List<ThingDefSettings>();
+        public float executionTimeLimit = 25f;
+
+        public float minInterval = 25f;
 
         public void ExposeData()
         {
-            Scribe_Collections.Look(ref thingDefSettings, "thingDefSettings", LookMode.Deep);
-            if (thingDefSettings == null) thingDefSettings = new List<ThingDefSettings>();
+            List<AlertSettings> alertsSettings = Context.alertSettingsByIndex?.ToList() ?? new List<AlertSettings>();
+            Scribe_Collections.Look(ref alertsSettings, "settings", LookMode.Deep);
+            Scribe_Values.Look(ref executionTimeLimit, "executionTimeLimit", 25f);
+            Scribe_Values.Look(ref minInterval, "minInterval", 2f);
+            if (Scribe.mode != LoadSaveMode.Saving && alertsSettings != null)
+            {
+                foreach (var s in alertsSettings)
+                {
+                    Context.typeIdToSettings[s.typeId] = s;
+                }
+            }
         }
     }
 }

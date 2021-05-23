@@ -6,7 +6,7 @@ using Verse;
 
 namespace RocketMan
 {
-    public static class FunctionUtility
+    public static class FunctionsUtility
     {
         public static Type[] GetLoadableTypes(this Assembly a)
         {
@@ -17,7 +17,7 @@ namespace RocketMan
             }
             catch (ReflectionTypeLoadException e)
             {
-                Log.Warning($"<color=blue>[ROCKETMAN]</color>:[{a.FullName}] Gettypes fallback mod activated!");
+                if (RocketDebugPrefs.debug) Log.Warning($"<color=blue>[ROCKETMAN]</color>:[{a.FullName}] Gettypes fallback mod activated!");
                 types = new List<Type>();
                 foreach (Type type in e.Types)
                 {
@@ -37,14 +37,14 @@ namespace RocketMan
 
         public static IEnumerable<Action> GetActions<T>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found action with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Found action with attribute {0}, {1}:{2}", typeof(T).Name,
                      method.DeclaringType.Name, method.Name));
                 yield return () => { method.Invoke(null, null); };
             }
@@ -52,14 +52,14 @@ namespace RocketMan
 
         public static IEnumerable<Func<P>> GetFunctions<T, P>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return () => { return (P)method.Invoke(null, null); };
             }
@@ -67,14 +67,14 @@ namespace RocketMan
 
         public static IEnumerable<Func<P, K>> GetFunctions<T, P, K>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return (input) => (K)method.Invoke(null, new object[] { input });
             }
@@ -82,14 +82,14 @@ namespace RocketMan
 
         public static IEnumerable<Func<P, K, U>> GetFunctions<T, P, K, U>() where T : Attribute
         {
-            foreach (var method in Finder.RocketManAssemblies
+            foreach (var method in RocketAssembliesInfo.Assemblies
                 .Where(ass => !ass.FullName.Contains("System") && !ass.FullName.Contains("VideoTool"))
                 .SelectMany(a => a.GetLoadableTypes())
                 .SelectMany(t => t.GetMethods())
                 .Where(m => m.HasAttribute<T>())
                 .ToArray())
             {
-                if (Prefs.DevMode) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
+                if (Prefs.DevMode && RocketDebugPrefs.debug) Log.Message(string.Format("ROCKETMAN: Found function with attribute {0}, {1}:{2}", typeof(T).Name,
                     method.DeclaringType.Name, method.Name));
                 yield return (input1, input2) => (U)method.Invoke(null, new object[] { input1, input2 });
             }

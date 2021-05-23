@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Verse;
 
 namespace RocketMan.Patches
@@ -8,7 +8,7 @@ namespace RocketMan.Patches
     {
         public static bool Prefix() => !Prefs.DevMode;
     }
-    
+
     [RocketPatch(typeof(TimeSlower), nameof(TimeSlower.SignalForceNormalSpeedShort))]
     public class TimeSlower_SignalForceNormalSpeedShort_Patch
     {

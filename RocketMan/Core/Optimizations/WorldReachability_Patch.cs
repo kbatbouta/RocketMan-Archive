@@ -9,11 +9,6 @@ namespace RocketMan.Optimizations
 {
     public class WorldReachability_Patch
     {
-        public static bool ShouldPatch()
-        {
-            return !RimWarThreadedHelper.Instance.IsLoaded() && !RimWarHelper.Instance.IsLoaded();
-        }
-
         [RocketPatch(typeof(WorldReachability), nameof(WorldReachability.CanReach), parameters = new[] { typeof(int), typeof(int) })]
         public static class WorldReachability_CanReach_Patch
         {
@@ -34,11 +29,6 @@ namespace RocketMan.Optimizations
             internal static Thread thread;
             internal static ThreadStart threadStart;
 
-            internal static bool Prepare()
-            {
-                return ShouldPatch();
-            }
-
             internal static void StartIslandGeneration()
             {
                 lock (locker)
@@ -52,7 +42,7 @@ namespace RocketMan.Optimizations
                     }
                     catch (Exception er)
                     {
-                        if (Finder.debug)
+                        if (RocketDebugPrefs.debug)
                         {
                             messages.Add(string.Format("ROCKETMAN: Error in island generation with message {0} at {1}",
                                 er.Message, er.StackTrace));
@@ -143,7 +133,7 @@ namespace RocketMan.Optimizations
 #if DEBUG
                 if (Prefs.DevMode)
                 {
-                    if (Finder.debug)
+                    if (RocketDebugPrefs.debug)
                         messages.Add(string.Format("ROCKETMAN: Island counter {0}, visited {1}", currentIslandCounter,
                             visitedTilesCount));
                     messages.Add(string.Format("ROCKETMAN: FINISHED BUILDING ISLANDS!, {0}, {1}, {2}, {3}",
@@ -162,7 +152,7 @@ namespace RocketMan.Optimizations
                     if (message.ToLower().Contains("error"))
                         Log.Error(message);
                     else
-                        if (Finder.debug) Log.Message(message);
+                        if (RocketDebugPrefs.debug) Log.Message(message);
                 }
             }
 
@@ -199,14 +189,14 @@ namespace RocketMan.Optimizations
                 {
                     if (world != Find.World)
                     {
-                        if (Finder.debug)
+                        if (RocketDebugPrefs.debug)
                             Log.Message("ROCKETMAN: Creating world map cache");
                         Initialize();
                     }
 
                     if (!finished)
                     {
-                        if (Finder.debug)
+                        if (RocketDebugPrefs.debug)
                             Log.Warning("ROCKETMAN: Tried to call WorldReachability while still processing");
                         return true;
                     }
@@ -214,13 +204,13 @@ namespace RocketMan.Optimizations
                     if (tilesToIsland[startTile] == 0 || tilesToIsland[destTile] == 0 ||
                         tilesToIsland[startTile] != tilesToIsland[destTile])
                     {
-                        if (Finder.debug) Log.Message("ROCKETMAN: Not Allowed");
+                        if (RocketDebugPrefs.debug) Log.Message("ROCKETMAN: Not Allowed");
                         __result = false;
                     }
 
                     if (tilesToIsland[startTile] == tilesToIsland[destTile])
                     {
-                        if (Finder.debug) Log.Message("ROCKETMAN: Allowed");
+                        if (RocketDebugPrefs.debug) Log.Message("ROCKETMAN: Allowed");
                         __result = true;
                     }
 
