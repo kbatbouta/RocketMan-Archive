@@ -85,9 +85,16 @@ namespace Soyuz.Tabs
                 selectionRect.yMin += 54;
                 standard_extras.Begin(selectionRect.ContractedBy(3));
                 Text.Font = GameFont.Tiny;
-                standard_extras.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.enabled, tooltip: "Used to control which races are dilated/throttled in case of a problem.");
-                standard_extras.CheckboxLabeled($"Disable dilation for all factions except the player faction", ref curSelection.ignoreFactions);
-                standard_extras.CheckboxLabeled($"Disable dilation for the player faction", ref curSelection.ignorePlayerFaction);
+                if (!IgnoreMeDatabase.ShouldIgnore(curSelection.pawnDef))
+                {
+                    standard_extras.CheckboxLabeled($"Enable dilation for {curSelection.pawnDef?.label ?? "_"}", ref curSelection.enabled, tooltip: "Used to control which races are dilated/throttled in case of a problem.");
+                    standard_extras.CheckboxLabeled($"Disable dilation for all factions except the player faction", ref curSelection.ignoreFactions);
+                    standard_extras.CheckboxLabeled($"Disable dilation for the player faction", ref curSelection.ignorePlayerFaction);
+                }
+                else
+                {
+                    standard_extras.Label($"This race will be ignored due to a mod <color=red>incompability issues or by a modder request!</color>");
+                }
                 if (RocketDebugPrefs.debug)
                 {
                     if (curSelection.pawnDef.StatBaseDefined(StatDefOf.MoveSpeed))

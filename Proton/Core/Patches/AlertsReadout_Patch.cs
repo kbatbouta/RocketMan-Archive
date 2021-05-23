@@ -15,6 +15,7 @@ namespace Proton
     public static class AlertsReadout_Constructor_Patch
     {
         public static MethodBase mAlertsReadout = AccessTools.Constructor(typeof(AlertsReadout));
+
         public static MethodBase mPostfix = AccessTools.Method(typeof(AlertsReadout_Constructor_Patch), nameof(AlertsReadout_Constructor_Patch.Postfix));
 
         [Main.OnInitialization]
@@ -25,8 +26,9 @@ namespace Proton
 
         public static void Postfix(AlertsReadout __instance)
         {
+            __instance.AllAlerts.SortBy(a => a.GetName());
             Context.alerts = __instance.AllAlerts.ToArray();
-            Context.alertsSettings = new AlertSettings[Context.alerts.Length];
+            Context.alertSettingsByIndex = new AlertSettings[Context.alerts.Length];
             int index = 0;
             Context.readoutInstance = __instance;
             foreach (Alert alert in Context.alerts)
@@ -34,16 +36,92 @@ namespace Proton
                 string id = alert.GetType().Name;
                 if (Context.typeIdToSettings.TryGetValue(alert.GetType().Name, out AlertSettings settings))
                 {
-                    Context.alertsSettings[index] = settings;
+                    Context.alertSettingsByIndex[index] = settings;
                 }
                 else
                 {
                     settings = new AlertSettings() { typeId = id };
                     Context.typeIdToSettings[id] = settings;
-                    Context.alertsSettings[index] = settings;
+                    Context.alertSettingsByIndex[index] = settings;
                 }
+                Context.alertToSettings[alert] = settings;
+                settings.alert = alert;
                 index++;
             }
+        }
+    }
+
+    [ProtonPatch(typeof(AlertsReadout), nameof(AlertsReadout.AlertsReadoutOnGUI))]
+    public static class AlertsReadout_AlertsReadoutOnGUI_Patch
+    {
+        private static FieldInfo fAlertThrottling = AccessTools.Field(typeof(Finder), nameof(Finder.alertThrottling));
+
+        private static FieldInfo fAlertsDisabled = AccessTools.Field(typeof(Finder), nameof(Finder.disableAllAlert));
+
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            CodeInstruction[] codes = instructions.ToArray();
+            Label l1 = generator.DefineLabel();
+            Label l2 = generator.DefineLabel();
+
+            yield return new CodeInstruction(OpCodes.Ldsfld, fAlertThrottling);
+            yield return new CodeInstruction(OpCodes.Brfalse_S, l1);
+
+            yield return new CodeInstruction(OpCodes.Ldsfld, fAlertsDisabled);
+            yield return new CodeInstruction(OpCodes.Brtrue_S, l2);
+
+            yield return new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(UnityEngine.Time), nameof(UnityEngine.Time.frameCount)));
+            yield return new CodeInstruction(OpCodes.Ldc_I4_S, 30);
+            yield return new CodeInstruction(OpCodes.Rem);
+            yield return new CodeInstruction(OpCodes.Brtrue_S, l1);
+
+            yield return new CodeInstruction(OpCodes.Ldarg_0);
+            yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AlertsReadout_AlertsReadoutOnGUI_Patch), nameof(AlertsReadout_AlertsReadoutOnGUI_Patch.CheckAllActiveAlerts)));
+
+            if (codes[0].labels == null)
+            {
+                codes[0].labels = new List<Label>();
+            }
+            codes[0].labels.Add(l1);
+            foreach (CodeInstruction code in codes)
+            {
+                if (code.opcode == OpCodes.Ret)
+                {
+                    if (code.labels == null)
+                    {
+                        code.labels = new List<Label>();
+                    }
+                    code.labels.Add(l2);
+                }
+                yield return code;
+            }
+        }
+
+        private static void CheckAllActiveAlerts(AlertsReadout readoutInstance)
+        {
+            if (!Finder.alertThrottling)
+                return;
+            if (Finder.disableAllAlert && readoutInstance.activeAlerts.Count > 0)
+            {
+                readoutInstance.activeAlerts.Clear();
+                foreach (Alert alert in readoutInstance.AllAlerts)
+                    alert.cachedActive = false;
+                return;
+            }
+            List<Alert> removalList = new List<Alert>();
+            for (int i = 0; i < readoutInstance.activeAlerts.Count; i++)
+            {
+                Alert alert = readoutInstance.activeAlerts[i];
+                if (Context.alertToSettings.TryGetValue(alert, out AlertSettings settings) && !settings.Enabled)
+                {
+                    settings.UpdateAlert(removeReadout: false);
+                    removalList.Add(alert);
+                }
+            }
+            if (removalList.Count == 0)
+                return;
+            foreach (Alert alert in removalList)
+                readoutInstance.activeAlerts.Remove(alert);
         }
     }
 
@@ -150,12 +228,12 @@ namespace Proton
 
         private static bool ShouldUpdate(int index)
         {
-            AlertSettings settings = Context.alertsSettings[index];
+            if (Finder.disableAllAlert)
+                return false;
+            AlertSettings settings = Context.alertSettingsByIndex[index];
             if (settings == null)
-            {
                 return true;
-            }
-            return settings.enabled && settings.ShouldUpdate;
+            return settings.Enabled && settings.ShouldUpdate;
         }
 
         private static void StartProfiling(int index)
@@ -165,7 +243,7 @@ namespace Proton
 
         private static void StopProfiling(int index)
         {
-            Context.alertsSettings[index]?.UpdatePerformanceMetrics((float)stopwatch.ElapsedTicks * 1000.0f / (float)Stopwatch.Frequency);
+            Context.alertSettingsByIndex[index]?.UpdatePerformanceMetrics((float)stopwatch.ElapsedTicks * 1000.0f / (float)Stopwatch.Frequency);
             stopwatch.Stop();
         }
 

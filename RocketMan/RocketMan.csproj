@@ -361,6 +361,8 @@
         <Compile Include="Core\RocketDebugPrefs.cs" />
         <Compile Include="Core\GUI\Windows\Window_HiddenDebugMenu.cs" />
         <Compile Include="Core\GUI\Windows\Window_Main.cs" />
+        <Compile Include="Core\Optimizations\FloatMenuMakerMap_Patch.cs" />
+        <Compile Include="Core\Others\StringUtility.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

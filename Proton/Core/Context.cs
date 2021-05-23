@@ -9,8 +9,9 @@ namespace Proton
     {
         public static ProtonSettings settings;
         public static Dictionary<string, AlertSettings> typeIdToSettings = new Dictionary<string, AlertSettings>();
+        public static Dictionary<Alert, AlertSettings> alertToSettings = new Dictionary<Alert, AlertSettings>();
         public static AlertsReadout readoutInstance;
-        public static AlertSettings[] alertsSettings;
+        public static AlertSettings[] alertSettingsByIndex;
         public static Alert[] alerts;
     }
 }

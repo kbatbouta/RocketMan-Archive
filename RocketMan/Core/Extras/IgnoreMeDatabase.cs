@@ -91,7 +91,7 @@ namespace RocketMan
                 }
                 // ------------------------------
                 // Publish report to avoid spam..
-                if (RocketDebugPrefs.debug) Log.Message(report);
+                Log.Message(report);
             }
             catch (Exception er) { Log.Error($"ROCKETRULES: Parsing error! {er}"); }
         }

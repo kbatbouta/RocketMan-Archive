@@ -28,6 +28,10 @@ namespace Proton
 
         public static void Postfix(Alert __instance)
         {
+            if (Context.typeIdToSettings.TryGetValue(__instance.GetType().Name, out AlertSettings settings))
+            {
+                settings.alert = __instance;
+            }
         }
     }
 }
