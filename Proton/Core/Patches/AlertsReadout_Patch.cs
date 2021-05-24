@@ -26,7 +26,8 @@ namespace Proton
 
         public static void Postfix(AlertsReadout __instance)
         {
-            __instance.AllAlerts.SortBy(a => a.GetName());
+            //
+            //__instance.AllAlerts.SortBy(a => a.GetName());
             Context.alerts = __instance.AllAlerts.ToArray();
             Context.alertSettingsByIndex = new AlertSettings[Context.alerts.Length];
             int index = 0;
@@ -40,7 +41,7 @@ namespace Proton
                 }
                 else
                 {
-                    settings = new AlertSettings() { typeId = id };
+                    settings = new AlertSettings(id);
                     Context.typeIdToSettings[id] = settings;
                     Context.alertSettingsByIndex[index] = settings;
                 }

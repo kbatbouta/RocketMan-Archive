@@ -17,9 +17,11 @@ namespace Proton
 
         public bool enabledInt = true;
 
+        public bool ignored = false;
+
         public bool Enabled
         {
-            get => enabledInt && (avgT < Context.settings.executionTimeLimit || counter < 30);
+            get => enabledInt && (avgT < Context.settings.executionTimeLimit || counter < 15 || ignored);
             set
             {
                 enabledInt = value;
@@ -37,17 +39,21 @@ namespace Proton
 
         public float TimeSinceLastExecution
         {
-            get => stopwatch?.ElapsedMilliseconds ?? -1f;
+            get => (float)Math.Round((float)(stopwatch?.ElapsedTicks ?? 0) / Stopwatch.Frequency, 3);
         }
 
         public bool ShouldUpdate
         {
             get
             {
-                if (!Enabled)
+                if (!enabledInt)
                     return false;
                 if (counter < 15)
                     return true;
+                if (ignored)
+                    return true;
+                if (avgT >= Context.settings.executionTimeLimit)
+                    return false;
                 float elapsedSeconds = ((float)stopwatch.ElapsedTicks / Stopwatch.Frequency);
                 if (avgT > 2.5f)
                     return elapsedSeconds > Math.Min(30f * (avgT - 1.5f), 60);
@@ -65,6 +71,18 @@ namespace Proton
 
         private Stopwatch stopwatch = new Stopwatch();
 
+        private string lastVersion;
+
+        public AlertSettings()
+        {
+        }
+
+        public AlertSettings(string typeId)
+        {
+            this.typeId = typeId;
+            this.Verify();
+        }
+
         public void UpdatePerformanceMetrics(float t)
         {
             avgT = avgT * 0.9f + 0.1f * t;
@@ -74,7 +92,7 @@ namespace Proton
                 stopwatch = new Stopwatch();
                 stopwatch.Start();
             }
-            if (counter > 30 && avgT > Context.settings.executionTimeLimit)
+            if (!ignored && counter > 30 && avgT > Context.settings.executionTimeLimit)
             {
                 enabledInt = false;
                 UpdateAlert();
@@ -84,9 +102,16 @@ namespace Proton
 
         public void ExposeData()
         {
+            Scribe_Values.Look(ref ignored, "ignore", false);
             Scribe_Values.Look(ref typeId, "typeId");
-            Scribe_Values.Look(ref avgT, "avgT", 0.05f);
             Scribe_Values.Look(ref enabledInt, "enabled2", true);
+            Scribe_Values.Look(ref avgT, "avgT", 0.05f);
+            Scribe_Values.Look(ref lastVersion, "lastVersion");
+            if (lastVersion != RocketAssembliesInfo.Version)
+            {
+                this.lastVersion = RocketAssembliesInfo.Version;
+                this.Verify();
+            }
         }
 
         public void UpdateAlert(bool removeReadout = true)
@@ -111,7 +136,27 @@ namespace Proton
                     alert.cachedActive = false;
                 }
             }
+        }
 
+        private void Verify()
+        {
+            string temp = typeId.ToLower();
+            if (temp.Contains("lowfood"))
+                ignored = true;
+            if (temp.Contains("majororextreem"))
+                ignored = true;
+            if (temp.Contains("extreem"))
+                ignored = true;
+            if (temp.Contains("needdoctor"))
+                ignored = true;
+            if (temp.Contains("starvation"))
+                ignored = true;
+            if (temp.Contains("lifethreateninghediff"))
+                ignored = true;
+            if (temp.Contains("hypothermia"))
+                ignored = true;
+            if (temp.Contains("heatstroke"))
+                ignored = true;
         }
     }
 }

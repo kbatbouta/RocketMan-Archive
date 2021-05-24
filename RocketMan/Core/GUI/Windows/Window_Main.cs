@@ -16,9 +16,7 @@ namespace RocketMan
 
         private int _errors = 0;
 
-        private Listing_Standard standard = new Listing_Standard();
-
-        public override Vector2 InitialSize => new Vector2(650, 450);
+        public override Vector2 InitialSize => new Vector2(685, 650);
 
         public Window_MainControls()
         {
@@ -29,7 +27,10 @@ namespace RocketMan
             drawShadow = true;
             doCloseButton = false;
             doCloseX = true;
+            resizeLater = false;
             layer = WindowLayer.SubSuper;
+            resizer = new WindowResizer();
+            resizer.minWindowSize = new Vector2(InitialSize.x, 450);
             tabs = new TabHolder(new List<ITabContent>()
             {
                 new TabContent_Settings(){ Selected = true },
@@ -47,7 +48,6 @@ namespace RocketMan
         public override void DoWindowContents(Rect inRect)
         {
             GUIUtility.StashGUIState();
-            Rect originalRect = new Rect(inRect);
             Rect rect = inRect.TopPartPixels(25);
             try
             {

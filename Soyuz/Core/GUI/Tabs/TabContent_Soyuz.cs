@@ -122,7 +122,7 @@ namespace Soyuz.Tabs
             viewRect.height = 60 * Context.settings.raceSettings.Count;
             viewRect.width -= 15;
             Widgets.BeginScrollView(rect, ref scrollPosition, viewRect.AtZero());
-            Rect curRect = viewRect.TopPartPixels(54);
+            Rect curRect = viewRect.TopPartPixels(58);
             curRect.width -= 15;
             var counter = 0;
             foreach (var element in Context.settings.raceSettings)
@@ -135,8 +135,8 @@ namespace Soyuz.Tabs
                 counter++;
                 if (counter % 2 == 0)
                     Widgets.DrawBoxSolid(curRect, new Color(0.2f, 0.2f, 0.2f));
-                Widgets.DrawHighlightIfMouseover(curRect);
-                Widgets.DefLabelWithIcon(curRect.ContractedBy(3), element.pawnDef);
+                //Widgets.DrawHighlightIfMouseover(curRect);
+                Widgets.DefLabelWithIcon(curRect, element.pawnDef);
                 if (Widgets.ButtonInvisible(curRect))
                 {
                     curSelection = element;

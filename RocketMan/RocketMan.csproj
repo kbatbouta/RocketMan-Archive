@@ -338,11 +338,11 @@
         <Compile Include="Core\Others\PatchingUtility.cs" />
         <Compile Include="Core\Others\FunctionsUtility.cs" />
         <Compile Include="Core\Others\CompatibilityUtility.cs" />
-        <Compile Include="Core\Extras\XMLParser.cs" />
-        <Compile Include="Core\Extras\IgnoreMeDatabase.cs" />
+        <Compile Include="Core\XML\XMLParser.cs" />
+        <Compile Include="Core\XML\IgnoreMeDatabase.cs" />
         <Compile Include="Core\Patches\EditWindow_Log_Patch.cs" />
         <Compile Include="Core\Others\LogUtility.cs" />
-        <Compile Include="Core\Extras\NotificationsManager.cs" />
+        <Compile Include="Core\XML\NotificationsManager.cs" />
         <Compile Include="Core\Collections\FlagsArray.cs" />
         <Compile Include="Core\Components\WarmUpMapComponent.cs" />
         <Compile Include="Core\Others\FieldsUtility.cs" />
@@ -356,13 +356,14 @@
         <Compile Include="Core\IPatch.cs" />
         <Compile Include="Core\IPatchType.cs" />
         <Compile Include="Core\IPatchInfo.cs" />
-        <Compile Include="Core\Extras\IncompatibilityHelper.cs" />
+        <Compile Include="Core\XML\IncompatibilityHelper.cs" />
         <Compile Include="Core\Patches\DebugWindowsOpener_Patch.cs" />
         <Compile Include="Core\RocketDebugPrefs.cs" />
         <Compile Include="Core\GUI\Windows\Window_HiddenDebugMenu.cs" />
         <Compile Include="Core\GUI\Windows\Window_Main.cs" />
         <Compile Include="Core\Optimizations\FloatMenuMakerMap_Patch.cs" />
         <Compile Include="Core\Others\StringUtility.cs" />
+        <Compile Include="Core\XML\Parts\IgnoreMe.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />
@@ -387,12 +388,13 @@
         <Folder Include="Core\Collections\" />
         <Folder Include="Core\Patches\" />
         <Folder Include="Core\Optimizations\Obsolete\" />
-        <Folder Include="Core\Extras\" />
+        <Folder Include="Core\XML\" />
         <Folder Include="Core\Diagnosis\" />
         <Folder Include="Core\Components\" />
         <Folder Include="Properties\" />
         <Folder Include="About\" />
         <Folder Include="Core\GUI\Windows\" />
+        <Folder Include="Core\XML\Parts\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <PropertyGroup>

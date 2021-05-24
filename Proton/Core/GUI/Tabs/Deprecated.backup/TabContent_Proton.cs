@@ -10,12 +10,15 @@ namespace Proton
     public class TabContent_Proton : ITabContent
     {
         private const float rowHeight = 50;
+
         private readonly Color difColor = new Color(0.2f, 0.2f, 0.2f);
+
         private Vector2 scrollPosition = Vector2.zero;
+
         private string searchString;
 
         public override string Label => "Alerts settings";
-        public override bool ShouldShow => Finder.enabled;
+        public override bool ShouldShow => true;
 
         public override void DoContent(Rect rect)
         {
@@ -37,26 +40,26 @@ namespace Proton
                 }
             });
             rect.yMin += 45;
+            Widgets.DrawMenuSection(rect.TopPartPixels(90));
             RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
             {
-                Rect curRect = rect.TopPartPixels(55);
+                Rect curRect = rect.TopPartPixels(45);
                 Widgets.DrawMenuSection(curRect);
-                curRect = curRect.ContractedBy(4);
+                curRect = curRect.ContractedBy(3);
                 Widgets.Label(curRect.TopHalf(), "Max execution time (If an alert takes more than this it won't be executed again)");
                 Context.settings.executionTimeLimit = Widgets.HorizontalSlider(
                     curRect.BottomHalf(), Context.settings.executionTimeLimit, 0.25f, 50f, label: $"{Context.settings.executionTimeLimit} MS");
             });
-            rect.yMin += 60;
+            rect.yMin += 45;
             RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
             {
-                Rect curRect = rect.TopPartPixels(55);
-                Widgets.DrawMenuSection(curRect);
-                curRect = curRect.ContractedBy(4);
+                Rect curRect = rect.TopPartPixels(45);
+                curRect = curRect.ContractedBy(3);
                 Widgets.Label(curRect.TopHalf(), "Min refresh interval (The lower this is the the more updates but at the cost of performance)");
                 Context.settings.minInterval = Widgets.HorizontalSlider(
                     curRect.BottomHalf(), Context.settings.minInterval, 1.0f, 7.5f, label: $"{Context.settings.minInterval} Seconds");
             });
-            rect.yMin += 60;
+            rect.yMin += 45;
             string oldSearchString = searchString;
             searchString = Widgets.TextField(rect.TopPartPixels(25), searchString).ToLower();
             if (oldSearchString != searchString)
@@ -70,10 +73,12 @@ namespace Proton
                 {
                     Rect current = new Rect(0, 0, rect.width - 15, rowHeight);
                     int j = 0;
-                    for (int i = 0; i < count; i++)
+                    for (int i = 0; i < Context.alerts.Length; i++)
                     {
                         AlertSettings alertSettings = Context.alertSettingsByIndex[i];
                         Alert alert = Context.alerts[i];
+                        if (alertSettings == null)
+                            continue;
                         if (!searchString.Trim().NullOrEmpty() && !alert.GetName().ToLower().Contains(searchString))
                             continue;
                         if (j++ % 2 == 0)

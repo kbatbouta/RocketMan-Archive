@@ -67,6 +67,7 @@ namespace RocketMan
             }
             catch (Exception er)
             {
+                Log.Error($"ROCKETMAN:UI error in ExecuteSafeGUIAction {er}");
                 exception = er;
             }
             finally
@@ -83,6 +84,107 @@ namespace RocketMan
                     throw exception;
             }
             return exception;
+        }
+
+        private static readonly Color _altGray = new Color(0.2f, 0.2f, 0.2f);
+
+        public static void ScrollView<T>(Rect rect, ref Vector2 scrollPosition, IEnumerable<T> elements, Func<T, float> heightLambda, Action<Rect, T> elementLambda, Func<T, IComparable> orderByLambda = null, bool drawBackground = true, bool showScrollbars = true, bool catchExceptions = false, bool drawMouseOverHighlights = true)
+        {
+            Exception exception = null;
+            if (drawBackground)
+            {
+                Widgets.DrawMenuSection(rect);
+                rect = rect.ContractedBy(2);
+            }
+            Rect contentRect = new Rect(0, 0, showScrollbars ? rect.width - 23 : rect.width, 0);
+            IEnumerable<T> elementsInt = orderByLambda == null ? elements : elements.OrderBy(orderByLambda);
+            float[] heights = new float[elementsInt.Count()];
+            float h = 0f;
+            int j = 0;
+            foreach (T element in elementsInt)
+            {
+                h = heightLambda.Invoke(element);
+                heights[j++] = h;
+                contentRect.height += Math.Max(h, 0f);
+            }
+            j = 0;
+            Widgets.BeginScrollView(rect, ref scrollPosition, contentRect, showScrollbars: showScrollbars);
+            try
+            {
+                Rect currentRect = new Rect(1, 0, showScrollbars ? rect.width - 16 : rect.width, 0);
+                foreach (T element in elementsInt)
+                {
+                    if (heights[j] <= 0.0f)
+                        continue;
+                    if (drawBackground && j % 2 == 0)
+                        Widgets.DrawBoxSolid(currentRect, _altGray);
+                    if (drawMouseOverHighlights)
+                        Widgets.DrawHighlightIfMouseover(currentRect);
+                    currentRect.height = heights[j];
+                    ExecuteSafeGUIAction(() =>
+                    {
+                        elementLambda.Invoke(currentRect, element);
+                    });
+                    currentRect.y += heights[j];
+                    j++;
+                }
+            }
+            catch (Exception er)
+            {
+                Log.Error($"ROCKETMAN:UI error in ScrollView {er}");
+                exception = er;
+            }
+            finally
+            {
+                Widgets.EndScrollView();
+            }
+            if (exception != null && !catchExceptions)
+                throw exception;
+        }
+
+        public static void GridView<T>(Rect rect, int columns, List<T> elements, Action<Rect, T> cellLambda, bool drawBackground = true, bool drawVerticalDivider = false)
+        {
+            if (drawBackground)
+            {
+                Widgets.DrawMenuSection(rect);
+            }
+            rect = rect.ContractedBy(1);
+            int rows = (int)Math.Ceiling((decimal)elements.Count / columns);
+            float columnStep = rect.width / columns;
+            float rowStep = rect.height / rows;
+            Rect curRect = new Rect(0, 0, columnStep, rowStep);
+            int k = 0;
+            for (int i = 0; i < columns && k < elements.Count; i++)
+            {
+                curRect.x = i * columnStep + rect.x;
+                for (int j = 0; j < rows && k < elements.Count; j++)
+                {
+                    curRect.y = j * rowStep + rect.y;
+                    ExecuteSafeGUIAction(() =>
+                    {
+                        Text.Anchor = TextAnchor.MiddleLeft;
+                        Text.Font = GameFont.Tiny;
+                        cellLambda(curRect, elements[k++]);
+                    });
+                }
+            }
+        }
+
+        public static void ColorBoxDescription(Rect rect, Color color, string description)
+        {
+            Rect textRect = new Rect(rect.x + 30, rect.y, rect.width - 30, rect.height);
+            Rect boxRect = new Rect(0, 0, 10, 10);
+            boxRect.center = new Vector2(rect.xMin + 15, rect.yMin + rect.height / 2);
+            ExecuteSafeGUIAction(() =>
+            {
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Text.Font = GameFont.Tiny;
+                Text.CurFontStyle.fontStyle = FontStyle.Normal;
+                Widgets.DrawBoxSolid(boxRect, color);
+                //GUI.color = Color.white;
+                //Widgets.DrawBox(boxRect, 2);
+                Widgets.Label(textRect, description.Fit(textRect));
+            });
         }
     }
 }

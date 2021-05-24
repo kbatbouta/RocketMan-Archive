@@ -13,5 +13,10 @@ namespace Proton
             string typeName = alert.GetType().Name;
             return typeName.Replace("Alert_", string.Empty).SplitStringByCapitalLetters();
         }
+
+        public static string GetNameLower(this Alert alert)
+        {
+            return alert.GetName().ToLower();
+        }
     }
 }
