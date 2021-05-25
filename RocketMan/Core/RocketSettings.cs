@@ -37,7 +37,7 @@ namespace RocketMan
             {
                 if (RocketEnvironmentInfo.IsDevEnv)
                 {
-                    Log.Error("ROCKETMAN: <color=yellow>YOU ARE LOADING AN EXPERIMENTAL PLUGIN!</colo>");
+                    Log.Warning("ROCKETMAN: YOU ARE LOADING AN EXPERIMENTAL PLUGIN!");
                     LoadPlugins(content, "Gagarin.dll", "Gagarin");
                 }
                 LoadPlugins(content, "Soyuz.dll", "Soyuz");
