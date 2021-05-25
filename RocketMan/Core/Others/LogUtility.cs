@@ -7,6 +7,7 @@ namespace RocketMan
         private static readonly int _SOYUZ_HEADER_LENGHT = "SOYUZ:".Length;
         private static readonly int _ROCKETERR_HEADER_LENGHT = "ROCKETEER:".Length;
         private static readonly int _PROTON_HEADER_LENGHT = "PROTON:".Length;
+        private static readonly int _GAGARIN_HEADER_LENGHT = "GAGARIN:".Length;
         private static string rocketColor = "orange";
 
         public static string StylizeRocketLog(this string text)
@@ -34,6 +35,11 @@ namespace RocketMan
                 {
                     replacement = $"<color={rocketColor}>ROCKETMAN</color>+<color=green>PROTON:</color> ";
                     startIndex = _PROTON_HEADER_LENGHT;
+                }
+                else if (text.StartsWith("GAGARIN:"))
+                {
+                    replacement = $"<color={rocketColor}>ROCKETMAN</color>+<color=blue>GAGARIN:</color>[<color=red>EXPERIMENTAL</color>] ";
+                    startIndex = _GAGARIN_HEADER_LENGHT;
                 }
                 else return text;
                 return replacement + text.Substring(startIndex).Trim();

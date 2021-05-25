@@ -75,6 +75,8 @@ namespace RocketMan
 
         public static bool rocketeerLoaded = false;
 
+        public static bool gagarinLoaded = false;
+
         public static int lastFrame;
 
         public static bool mainButtonToggle = true;

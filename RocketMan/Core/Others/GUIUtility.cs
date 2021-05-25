@@ -101,6 +101,7 @@ namespace RocketMan
             float[] heights = new float[elementsInt.Count()];
             float h = 0f;
             int j = 0;
+            int k = 0;
             foreach (T element in elementsInt)
             {
                 h = heightLambda.Invoke(element);
@@ -114,9 +115,12 @@ namespace RocketMan
                 Rect currentRect = new Rect(1, 0, showScrollbars ? rect.width - 16 : rect.width, 0);
                 foreach (T element in elementsInt)
                 {
-                    if (heights[j] <= 0.0f)
+                    if (heights[j] <= 0.05f)
+                    {
+                        j++;
                         continue;
-                    if (drawBackground && j % 2 == 0)
+                    }
+                    if (drawBackground && k % 2 == 0)
                         Widgets.DrawBoxSolid(currentRect, _altGray);
                     if (drawMouseOverHighlights)
                         Widgets.DrawHighlightIfMouseover(currentRect);
@@ -126,6 +130,7 @@ namespace RocketMan
                         elementLambda.Invoke(currentRect, element);
                     });
                     currentRect.y += heights[j];
+                    k++;
                     j++;
                 }
             }
@@ -170,6 +175,31 @@ namespace RocketMan
             }
         }
 
+        public static void Row(Rect rect, List<Action<Rect>> contentLambdas, bool drawDivider = true, bool drawBackground = false)
+        {
+            if (drawBackground)
+            {
+                Widgets.DrawMenuSection(rect);
+            }
+            float step = rect.width / contentLambdas.Count;
+            Rect curRect = new Rect(rect.x - 5, rect.y, step - 10, rect.height);
+            for (int i = 0; i < contentLambdas.Count; i++)
+            {
+                Action<Rect> lambda = contentLambdas[i];
+                if (drawDivider && i + 1 < contentLambdas.Count)
+                {
+                    Vector2 start = new Vector2(curRect.xMax + 5, curRect.yMin + 1);
+                    Vector2 end = new Vector2(curRect.xMax + 5, curRect.yMax - 1);
+                    Widgets.DrawLine(start, end, Color.white, 1);
+                }
+                ExecuteSafeGUIAction(() =>
+                {
+                    lambda.Invoke(curRect);
+                    curRect.x += step;
+                });
+            }
+        }
+
         public static void ColorBoxDescription(Rect rect, Color color, string description)
         {
             Rect textRect = new Rect(rect.x + 30, rect.y, rect.width - 30, rect.height);
@@ -181,8 +211,6 @@ namespace RocketMan
                 Text.Font = GameFont.Tiny;
                 Text.CurFontStyle.fontStyle = FontStyle.Normal;
                 Widgets.DrawBoxSolid(boxRect, color);
-                //GUI.color = Color.white;
-                //Widgets.DrawBox(boxRect, 2);
                 Widgets.Label(textRect, description.Fit(textRect));
             });
         }

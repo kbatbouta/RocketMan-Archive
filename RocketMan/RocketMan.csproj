@@ -364,6 +364,7 @@
         <Compile Include="Core\Optimizations\FloatMenuMakerMap_Patch.cs" />
         <Compile Include="Core\Others\StringUtility.cs" />
         <Compile Include="Core\XML\Parts\IgnoreMe.cs" />
+        <Compile Include="Core\RocketEnvironmentnfo.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config" />

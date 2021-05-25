@@ -70,32 +70,66 @@ namespace Proton
                 }
                 rect.yMin += 25;
             });
-            RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
-            {
-                rect.yMin += 5;
-                Text.Anchor = TextAnchor.MiddleLeft;
-                if (buffer1 == null)
-                {
-                    buffer1 = $"{Context.settings.executionTimeLimit}";
-                }
-                Widgets.TextFieldNumericLabeled(rect.TopPartPixels(20), "Max execution time in <color=blue>MS</color> is ", ref Context.settings.executionTimeLimit, ref buffer1, 1.0f, 100.0f);
-                rect.yMin += 25;
-                if (buffer2 == null)
-                {
-                    buffer2 = $"{Context.settings.minInterval}";
-                }
-                Widgets.TextFieldNumericLabeled(rect.TopPartPixels(20), "Min update interval in <color=blue>seconds</color> is ", ref Context.settings.minInterval, ref buffer2, 0.5f, 25f);
-                rect.yMin += 25;
-            });
+            float max = rect.yMax;
+            rect.yMax -= 65;
             if (Finder.alertThrottling && !Finder.disableAllAlert)
                 DoScrollView(rect);
             else RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
-               {
-                   Text.Anchor = TextAnchor.MiddleCenter;
-                   Text.Font = GameFont.Medium;
-                   Widgets.DrawMenuSection(rect);
-                   Widgets.Label(rect, Finder.disableAllAlert ? "Alerts are disabled!" : "Alerts contorls disabled!");
-               });
+            {
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Text.Font = GameFont.Medium;
+                Widgets.DrawMenuSection(rect);
+                Widgets.Label(rect, Finder.disableAllAlert ? "Alerts are disabled!" : "Alerts contorls disabled!");
+            });
+            rect.yMin = max - 60;
+            rect.yMax = max;
+            RocketMan.GUIUtility.ExecuteSafeGUIAction(() =>
+            {
+                Rect curRect = rect;
+                Widgets.DrawMenuSection(curRect);
+                curRect.yMax -= 5;
+                curRect.xMin += 15;
+                curRect = curRect.ContractedBy(3);
+                RocketMan.GUIUtility.Row(curRect.TopHalf(), new List<Action<Rect>>()
+                {
+                    (tempRect) =>
+                    {
+                        Text.Anchor = TextAnchor.MiddleLeft;
+                        Text.Font = GameFont.Tiny;
+                        Widgets.Label(tempRect, "Max execution in <color=blue>MS</color>");
+                    },
+                    (tempRect) =>
+                    {
+                        Text.Anchor = TextAnchor.MiddleLeft;
+                        Text.Font = GameFont.Tiny;
+                        Widgets.Label(tempRect, "Min update interval in <color=blue>MS</color>");
+                    },
+                }, drawDivider: false);
+                RocketMan.GUIUtility.Row(curRect.BottomHalf(), new List<Action<Rect>>()
+                {
+                     (tempRect) =>
+                    {
+                        Text.Anchor = TextAnchor.MiddleLeft;
+                        Text.Font = GameFont.Tiny;
+                        if (buffer1 == null)
+                        {
+                            buffer1 = $"{Context.settings.executionTimeLimit}";
+                        }
+                        Widgets.TextFieldNumeric(tempRect, ref Context.settings.executionTimeLimit, ref buffer1, 1.0f, 100.0f);
+                    },
+                    (tempRect) =>
+                    {
+                        Text.Anchor = TextAnchor.MiddleLeft;
+                        Text.Font = GameFont.Tiny;
+                        if (buffer2 == null)
+                        {
+                            buffer2 = $"{Context.settings.minInterval}";
+                        }
+                        Widgets.TextFieldNumeric(tempRect, ref Context.settings.minInterval, ref buffer2, 0.5f, 25f);
+                    },
+                }, drawDivider: false);
+                rect.yMin += 63;
+            });
         }
 
         private void DoScrollView(Rect inRect)

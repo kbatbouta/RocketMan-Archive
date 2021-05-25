@@ -27,6 +27,7 @@ namespace RocketMan
         private static int frameCounter = 0;
 
         public static RocketMod instance;
+
         public static Vector2 scrollPositionStatSettings = Vector2.zero;
 
         public RocketMod(ModContentPack content) : base(content)
@@ -34,6 +35,11 @@ namespace RocketMan
             Finder.rocketMod = this;
             try
             {
+                if (RocketEnvironmentInfo.IsDevEnv)
+                {
+                    Log.Error("ROCKETMAN: <color=yellow>YOU ARE LOADING AN EXPERIMENTAL PLUGIN!</colo>");
+                    LoadPlugins(content, "Gagarin.dll", "Gagarin");
+                }
                 LoadPlugins(content, "Soyuz.dll", "Soyuz");
                 LoadPlugins(content, "Proton.dll", "Proton");
                 LoadPlugins(content, "Rocketeer.dll", "Rocketeer");
