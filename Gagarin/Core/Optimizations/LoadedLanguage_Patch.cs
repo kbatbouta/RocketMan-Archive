@@ -26,7 +26,7 @@ namespace Gagarin
 
         public static GagarinPatchInfo[] patches = new GagarinPatchInfo[] {
                 new GagarinPatchInfo(typeof(LoadedLanguage_ApplyPatches_Patch)),
-                new GagarinPatchInfo(typeof(LoadedLanguage_CombineIntoUnifiedXML_Patch)),
+                //new GagarinPatchInfo(typeof(LoadedLanguage_CombineIntoUnifiedXML_Patch)),
                 new GagarinPatchInfo(typeof(LoadedLanguage_LoadModXML_Patch))
             };
 
@@ -72,7 +72,9 @@ namespace Gagarin
             {
                 if (!cacheExists || failed)
                     return true;
-                __result = new LoadableXmlAsset[] { };
+                __result = new LoadableXmlAsset[] {
+                    new LoadableXmlAsset(_SECRET, _SECRET, _SECRET) { mod = Finder.ModContentPack }
+                };
                 return false;
             }
         }
@@ -87,16 +89,51 @@ namespace Gagarin
                 if (!cacheExists || failed)
                     return true;
                 if (false
-                    && _SECRET == name
-                    && _SECRET == fullFolderPath
-                    && _SECRET == contents)
-                    return false;
-                return true;
+                    || _SECRET != name
+                    || _SECRET != fullFolderPath
+                    || _SECRET != contents)
+                    return true;
+                contents = File.ReadAllText(unifiedXmlPath);
+                __instance.name = "unified.xml";
+                __instance.fullFolderPath = cachePath;
+                try
+                {
+                    XmlReaderSettings settings = new XmlReaderSettings
+                    {
+                        IgnoreComments = true,
+                        IgnoreWhitespace = true,
+                        CheckCharacters = false
+                    };
+                    StringReader input = new StringReader(contents);
+                    XmlReader xmlReader = XmlReader.Create(input, settings);
+                    __instance.xmlDoc = new XmlDocument();
+                    __instance.xmlDoc.Load(xmlReader);
+                    document = __instance.xmlDoc;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning("Exception reading " + name + " as XML: " + ex);
+                    __instance.xmlDoc = null;
+                }
+                return false;
             }
         }
 
-        [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.CombineIntoUnifiedXML))]
-        public static class LoadedLanguage_CombineIntoUnifiedXML_Patch
+        //[GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.CombineIntoUnifiedXML))]
+        //public static class LoadedLanguage_CombineIntoUnifiedXML_Patch
+        //{
+        //    public static bool Prepare() => !failed;
+
+        //    public static bool Prefix(ref XmlDocument __result)
+        //    {
+        //        if (failed || !cacheExists) return true;
+        //        __result = document;
+        //        return false;
+        //    }
+        //}
+
+        [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.ClearCachedPatches))]
+        public static class LoadedLanguage_ClearCachedPatches_Patch
         {
             public static bool Prepare() => !failed;
 
@@ -115,8 +152,10 @@ namespace Gagarin
             public static bool Prefix(XmlDocument xmlDoc, out bool __state)
             {
                 __state = true;
-                if (failed || cacheExists)
+                if (failed)
                     return true;
+                if (cacheExists)
+                    return false;
                 if (!Directory.Exists(cachePath))
                     Directory.CreateDirectory(cachePath);
                 if (File.Exists(unifiedXmlPath))
