@@ -66,7 +66,7 @@ namespace Soyuz
                 }
             }
             if (foundAnything && Scribe.mode == LoadSaveMode.Inactive)
-                Finder.rocketMod.WriteSettings();
+                Finder.Mod.WriteSettings();
         }
 
         public static void CreateSettings()
@@ -82,7 +82,7 @@ namespace Soyuz
                     ignoreFactions = false
                 });
             }
-            Finder.rocketMod.WriteSettings();
+            Finder.Mod.WriteSettings();
         }
 
         public static RaceSettings GetRaceSettings(this Pawn pawn)

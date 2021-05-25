@@ -147,7 +147,7 @@ namespace Soyuz.Tabs
             Widgets.EndScrollView();
             Text.Font = font;
             Text.Anchor = anchor;
-            Finder.rocketMod.WriteSettings();
+            Finder.Mod.WriteSettings();
             SoyuzSettingsUtility.CacheSettings();
         }
 

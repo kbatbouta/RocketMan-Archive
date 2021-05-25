@@ -32,7 +32,8 @@ namespace RocketMan
 
         public RocketMod(ModContentPack content) : base(content)
         {
-            Finder.rocketMod = this;
+            Finder.Mod = this;
+            Finder.ModContentPack = content;
             try
             {
                 if (RocketEnvironmentInfo.IsDevEnv)

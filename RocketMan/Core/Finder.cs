@@ -9,6 +9,8 @@ namespace RocketMan
     [StaticConstructorOnStartup]
     public static class Finder
     {
+        public static ModContentPack ModContentPack;
+
         public static bool WarmingUp
         {
             get => WarmUpMapComponent.settingsBeingStashed;
@@ -95,7 +97,7 @@ namespace RocketMan
 
         public static readonly string HarmonyID = "Krkr.RocketMan";
 
-        public static RocketMod rocketMod;
+        public static RocketMod Mod;
 
         public static Harmony harmony = new Harmony(HarmonyID);
 
