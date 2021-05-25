@@ -15,9 +15,14 @@ namespace RocketMan
             {
                 if (!isDevEnvInitialized)
                 {
+                    string path = Path.Combine(GenFilePaths.ConfigFolderPath, "rocketeer.0102.txt");
+                    Log.Message($"ROCKETMAN: config path {path}");
                     isDevEnvInitialized = true;
-                    isDevEnv = File.Exists(Path.Combine(GenFilePaths.ConfigFolderPath, "rocketeer.0102.txt"));
-                    Log.Message($"ROCKETMAN: dev environment detected!");
+                    isDevEnv = File.Exists(path);
+                    if (isDevEnv)
+                    {
+                        Log.Warning($"ROCKETMAN: dev environment detected!");
+                    }
                 }
                 return isDevEnv;
             }
