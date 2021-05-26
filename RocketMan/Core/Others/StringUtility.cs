@@ -67,5 +67,11 @@ namespace RocketMan
         {
             return text.GetWidthCached() < rect.width;
         }
+
+        public static string Base64Encode(this string str)
+        {
+            byte[] plainTextBytes = System.Text.Encoding.UTF8.GetBytes(str);
+            return Convert.ToBase64String(plainTextBytes);
+        }
     }
 }
