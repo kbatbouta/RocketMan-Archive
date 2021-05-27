@@ -113,12 +113,46 @@ namespace RocketMan
                 }
                 try
                 {
+                    HarmonyPriority priority;
+
+                    int prefixPriority = -1;
+                    //try
+                    //{
+                    if (prefix != null && prefix.HasAttribute<HarmonyPriority>() && prefix.TryGetAttribute<HarmonyPriority>(out priority))
+                        prefixPriority = priority.info.priority;
+                    //}
+                    //catch { }
+                    int postfixPriority = -1;
+                    //try
+                    //{
+                    if (postfix != null && postfix.HasAttribute<HarmonyPriority>() && postfix.TryGetAttribute<HarmonyPriority>(out priority))
+                        postfixPriority = priority.info.priority;
+                    //}
+                    //catch { }
+                    int transpilerPriority = -1;
+                    //try
+                    //{
+                    if (transpiler != null && transpiler.HasAttribute<HarmonyPriority>() && transpiler.TryGetAttribute<HarmonyPriority>(out priority))
+                        transpilerPriority = priority.info.priority;
+                    //}
+                    //catch { }
+                    int finalizerPriority = -1;
+                    //try
+                    //{
+                    if (finalizer != null && finalizer.HasAttribute<HarmonyPriority>() && finalizer.TryGetAttribute<HarmonyPriority>(out priority))
+                        finalizerPriority = priority.info.priority;
+                    //}
+                    //catch { }
+
                     replacement = harmony.Patch(target,
-                        prefix: prefix != null ? new HarmonyMethod(prefix) : null,
-                        postfix: postfix != null ? new HarmonyMethod(postfix) : null,
-                        transpiler: transpiler != null ? new HarmonyMethod(transpiler) : null,
-                        finalizer: finalizer != null ? new HarmonyMethod(finalizer) : null);
-                    if (RocketDebugPrefs.debug) Log.Message($"{PluginName}:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} finished!");
+                        prefix: prefix != null ? new HarmonyMethod(prefix, priority: prefixPriority) : null,
+                        postfix: postfix != null ? new HarmonyMethod(postfix, priority: postfixPriority) : null,
+                        transpiler: transpiler != null ? new HarmonyMethod(transpiler, priority: transpilerPriority) : null,
+                        finalizer: finalizer != null ? new HarmonyMethod(finalizer, priority: finalizerPriority) : null);
+                    if (RocketDebugPrefs.debug)
+                    {
+                        Log.Message($"{PluginName}:[NOTANERROR] patching {target?.DeclaringType?.Name}:{target} finished!");
+                    }
                     patchedSuccessfully = true;
                     OnPatchingSuccessful(replacement);
                 }

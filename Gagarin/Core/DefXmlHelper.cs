@@ -11,6 +11,7 @@ namespace Gagarin.Core
     public static class DefXmlHelper
     {
         private static HashSet<XmlElement> skipSet = new HashSet<XmlElement>();
+
         private static Dictionary<string, XmlElement> namelookup = new Dictionary<string, XmlElement>();
 
         public static void Clear()
@@ -43,11 +44,12 @@ namespace Gagarin.Core
             {
                 return;
             }
-            if (namelookup.TryGetValue(name, out XmlElement other))
+            if (!namelookup.TryGetValue(name, out _))
             {
-                skipSet.Add(other);
+                namelookup[name] = node;
+                return;
             }
-            namelookup[name] = node;
+            skipSet.Add(node);
         }
     }
 }
