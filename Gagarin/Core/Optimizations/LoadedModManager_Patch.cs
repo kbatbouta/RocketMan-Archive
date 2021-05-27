@@ -9,49 +9,63 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace Gagarin
 {
     public static class LoadedModManager_Patch
     {
-        private const string _SECRET = "eyOvT6fExIMGr1TXQZ4J9I5mA6i7LUXLMS19sllSUAIF0VKvLCeYztC8ikAb";
-
-        public static bool failed = false;
         public static bool cacheExists = false;
-        public static bool usedCache = false;
-        public static bool finished = false;
+        public static bool cacheUsed = false;
 
         public static string cachePath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache");
-        public static string unifiedXmlPath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache/unified.xml");
+        public static string cachedModsListPath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache/mods.xml");
+        public static string cachedUnifiedXmlPath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache/unified.xml");
 
-        public static XmlDocument document = null;
+        public static Dictionary<string, LoadableXmlAsset> loadablelookup = new Dictionary<string, LoadableXmlAsset>();
+        public static Dictionary<XmlNode, string> packageIdlookup = new Dictionary<XmlNode, string>();
 
         public static GagarinPatchInfo[] patches = new GagarinPatchInfo[] {
             new GagarinPatchInfo(typeof(LoadModXML_Patch)),
-            new GagarinPatchInfo(typeof(CombineIntoUnifiedXML_Patch)),
             new GagarinPatchInfo(typeof(ApplyPatches_Patch)),
-            new GagarinPatchInfo(typeof(ParseAndProcessXML_Patch)),
-            new GagarinPatchInfo(typeof(TKeySystem_Parse_Patch)),
+            new GagarinPatchInfo(typeof(ShortHashGiver_GiveAllShortHashes_Patch)),
         };
+
+        public static Stopwatch stopwatch = new Stopwatch();
 
         [Main.OnInitialization]
         public static void Start()
         {
-            LoadedModManager_Patch.PatchAll();
-            if (failed)
+            stopwatch.Start();
+            int loadIndex = 0;
+            HashSet<string> currentMods = new HashSet<string>();
+            foreach (ModContentPack modContent in LoadedModManager.RunningMods)
             {
-                Log.Warning($"GAGARIN: Stopped!");
-                finished = true;
-                return;
+                currentMods.Add(modContent.PackageId);
+                Context.runningMods.Add(modContent);
+                Context.packageIdLoadIndexlookup[modContent.PackageId] = loadIndex++;
             }
-            if (!Directory.Exists(cachePath) || !File.Exists(unifiedXmlPath))
+            LoadedModManager_Patch.PatchAll();
+            cacheExists = true;
+            if (!Directory.Exists(cachePath))
+            {
+                Directory.CreateDirectory(cachePath);
+                Log.Message($"GAGARIN: Created cache folder at {cachedUnifiedXmlPath}");
+            }
+            if (File.Exists(cachedUnifiedXmlPath))
             {
                 Log.Warning($"GAGARIN: Cache not found starting the caching process!");
-                cacheExists = false;
-                return;
+                cacheExists = true;
             }
-            cacheExists = true;
-
+            if (RunningModsSetUtility.Changed(currentMods, cachedModsListPath))
+            {
+                Log.Warning("GAGARIN: Mod list changed!");
+                if (File.Exists(cachedUnifiedXmlPath))
+                    File.Delete(cachedUnifiedXmlPath);
+                cacheExists = false;
+            }
+            RunningModsSetUtility.Dump(Context.runningMods, cachedModsListPath);
+            Log.Warning($"GAGARIN: Cache <color=green>FOUND</color>!");
         }
 
         public static void PatchAll()
@@ -62,7 +76,6 @@ namespace Gagarin
                 catch (Exception er)
                 {
                     Log.Error($"GAGARIN: LoadedLanguage_Patch PATCHING FAILED! {patches[i].DeclaringType}:{er}");
-                    failed = true;
                     break;
                 }
             }
@@ -71,214 +84,107 @@ namespace Gagarin
         [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.LoadModXML))]
         public static class LoadModXML_Patch
         {
-            private static Stopwatch stopwatch = new Stopwatch();
-
-            public static bool Prefix()
+            public static void Postfix(List<LoadableXmlAsset> __result)
             {
-                Log.Message("GAGARIN: started LoadModXML");
-                stopwatch.Start();
-                if (finished || failed)
-                    return true;
-                bool skip = false;
-                try
+                foreach (LoadableXmlAsset loadable in __result)
                 {
-
+                    string packageId = loadable.mod.PackageId;
+                    if (Context.assetPackageIdlookup.TryGetValue(packageId, out List<LoadableXmlAsset> assests))
+                    {
+                        assests.Add(loadable);
+                    }
+                    else
+                    {
+                        assests = new List<LoadableXmlAsset>();
+                        assests.Add(loadable);
+                        Context.assetPackageIdlookup[packageId] = assests;
+                    }
+                    loadablelookup[loadable.GetLoadableId()] = loadable;
+                    foreach (XmlNode node in loadable.xmlDoc.DocumentElement.ChildNodes)
+                        packageIdlookup[node] = packageId;
                 }
-                catch (Exception er)
-                {
-                    Log.Error($"GAGARIN: Error in patch {er}");
-                }
-                return !skip;
-            }
-
-            public static void Postfix()
-            {
-                stopwatch.Stop();
-                Log.Message($"GAGARIN:[<color=orange>PROFILING</color>] LoadModXML took " +
-                    $"{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 4)} MS");
-            }
-        }
-
-        [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.CombineIntoUnifiedXML))]
-        public static class CombineIntoUnifiedXML_Patch
-        {
-            private static Stopwatch stopwatch = new Stopwatch();
-
-            public static bool Prefix()
-            {
-                Log.Message("GAGARIN: started CombineIntoUnifiedXML");
-                stopwatch.Start();
-                if (finished || failed)
-                    return true;
-                bool skip = false;
-                try
-                {
-
-                }
-                catch (Exception er)
-                {
-                    Log.Error($"GAGARIN: Error in patch {er}");
-                }
-                return !skip;
-            }
-
-            public static void Postfix()
-            {
-                stopwatch.Stop();
-                Log.Message($"GAGARIN:[<color=orange>PROFILING</color>] CombineIntoUnifiedXML took " +
-                    $"{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 4)} MS");
-                failed = true;
             }
         }
 
         [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.ApplyPatches))]
         public static class ApplyPatches_Patch
         {
-            private static Stopwatch stopwatch = new Stopwatch();
+            public static Stopwatch stopwatch = new Stopwatch();
 
-            public static bool Prefix(ref XmlDocument xmlDoc, Dictionary<XmlNode, LoadableXmlAsset> assetlookup)
+            public static bool Prefix(XmlDocument xmlDoc, Dictionary<XmlNode, LoadableXmlAsset> assetlookup)
             {
-                Log.Message("GAGARIN: started ApplyPatches");
                 stopwatch.Start();
-                if (finished || failed)
-                    return true;
-                bool skip = false;
-                try
+                return !cacheExists;
+            }
+
+            public static void Postfix(XmlDocument xmlDoc, Dictionary<XmlNode, LoadableXmlAsset> assetlookup)
+            {
+                stopwatch.Stop();
+                Log.Message($"GAGARIN: <color=green>LoadedModManager.ApplyPatches</color> took " +
+                    $"<color=orange>{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 2)} seconds</color>");
+                stopwatch.Restart();
+                if (!cacheExists)
                 {
-                    if (cacheExists)
+                    try
                     {
-                        xmlDoc = new XmlDocument();
-                        xmlDoc.Load(unifiedXmlPath);
-                        usedCache = true;
-                        return false;
+                        LoadableXmlAssetUtility.Dump(assetlookup, xmlDoc, cachedUnifiedXmlPath);
+                        Log.Message($"GAGARIN: Created patched cache at {cachedUnifiedXmlPath}");
+                    }
+                    catch (Exception er)
+                    {
+                        Log.Error($"GAGARIN: creating cache failed {er}");
+                        cacheUsed = false;
                     }
                 }
-                catch (Exception er)
+                else if (cacheExists)
                 {
-                    Log.Error($"GAGARIN: Error in patch {er}");
-                    failed = true;
+                    try
+                    {
+                        LoadableXmlAssetUtility.Load(loadablelookup, assetlookup, xmlDoc, cachedUnifiedXmlPath);
+                        TKeySystem.Clear();
+                        TKeySystem.Parse(xmlDoc);
+                        Log.Message($"GAGARIN: Loaded xml assests from cache");
+                        cacheUsed = true;
+                        foreach (ModContentPack runningMod in LoadedModManager.runningMods)
+                        {
+                            foreach (PatchOperation patch in runningMod.Patches)
+                                patch.neverSucceeded = false;
+                        }
+                    }
+                    catch (Exception er)
+                    {
+                        Log.Error($"GAGARIN: loading cache failed {er}");
+                        cacheUsed = false;
+                    }
                 }
-                return !skip;
-            }
-
-            public static void Postfix(ref XmlDocument xmlDoc, Dictionary<XmlNode, LoadableXmlAsset> assetlookup)
-            {
+                Log.Message($"GAGARIN: cache operations took " +
+                    $"<color=orange>{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 2)} seconds</color>");
                 stopwatch.Stop();
-                Log.Message($"GAGARIN:[<color=orange>PROFILING</color>] ApplyPatches took " +
-                    $"{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 4)} S");
-                if (cacheExists || failed)
-                    return;
-                try
-                {
-                    xmlDoc.Save(unifiedXmlPath);
-                }
-                catch (Exception er)
-                {
-                    if (File.Exists(unifiedXmlPath))
-                        File.Delete(unifiedXmlPath);
-                    Log.Error($"GAGARIN: Loading cached data failed! {er}");
-                    failed = true;
-                }
-            }
-        }
-
-        [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.ParseAndProcessXML))]
-        public static class ParseAndProcessXML_Patch
-        {
-            private static Stopwatch stopwatch = new Stopwatch();
-
-            public static bool Prefix()
-            {
-                Log.Message("GAGARIN: started ParseAndProcessXML");
-                stopwatch.Start();
-                if (finished || failed)
-                    return true;
-                bool skip = false;
-                try
-                {
-
-                }
-                catch (Exception er)
-                {
-                    Log.Error($"GAGARIN: Error in patch {er}");
-                    failed = true;
-                }
-                return !skip;
-            }
-
-            public static void Postfix()
-            {
-                stopwatch.Stop();
-                Log.Message($"GAGARIN:[<color=orange>PROFILING</color>] ParseAndProcessXML took " +
-                    $"{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 4)} S");
-            }
-        }
-
-        [GagarinPatch(typeof(TKeySystem), nameof(TKeySystem.Parse))]
-        public static class TKeySystem_Parse_Patch
-        {
-            private static Stopwatch stopwatch = new Stopwatch();
-
-            public static bool Prefix()
-            {
-                Log.Message("GAGARIN: started TKeySystem.Parse");
-                stopwatch.Start();
-                if (finished || failed)
-                    return true;
-                bool skip = false;
-                try
-                {
-
-                }
-                catch (Exception er)
-                {
-                    Log.Error($"GAGARIN: Error in patch {er}");
-                    failed = true;
-                }
-                return !skip;
-            }
-
-            public static void Postfix()
-            {
-                stopwatch.Stop();
-                Log.Message($"GAGARIN:[<color=orange>PROFILING</color>] TKeySystem.Parse took " +
-                    $"{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 4)} S");
             }
         }
 
         [GagarinPatch(typeof(LoadedModManager), nameof(LoadedModManager.ClearCachedPatches))]
         public static class ClearCachedPatches_Patch
         {
-            private static Stopwatch stopwatch = new Stopwatch();
-
             public static bool Prefix()
             {
-                Log.Message("GAGARIN: started ClearCachedPatches");
-                stopwatch.Start();
-                if (finished || failed)
-                    return true;
-                bool skip = false;
-                try
-                {
-                    if (usedCache)
-                    {
-                        return false;
-                    }
-                }
-                catch (Exception er)
-                {
-                    Log.Error($"GAGARIN: Error in patch {er}");
-                    failed = true;
-                }
-                finally { finished = true; }
-                return !skip;
+                return !cacheUsed;
             }
+        }
+
+        [GagarinPatch(typeof(ShortHashGiver), nameof(ShortHashGiver.GiveAllShortHashes))]
+        public static class ShortHashGiver_GiveAllShortHashes_Patch
+        {
+            private static bool initialized = false;
 
             public static void Postfix()
             {
+                if (initialized)
+                    return;
+                initialized = true;
                 stopwatch.Stop();
-                Log.Message($"GAGARIN:[<color=orange>PROFILING</color>] ClearCachedPatches took " +
-                    $"{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 4)} MS");
+                Log.Message($"GAGARIN: Loading took <color=red>more</color> than " +
+                     $"<color=orange>{Math.Round((float)stopwatch.ElapsedTicks / Stopwatch.Frequency, 2)} seconds</color>");
             }
         }
     }
