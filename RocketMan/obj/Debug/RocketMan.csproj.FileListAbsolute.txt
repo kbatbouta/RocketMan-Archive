@@ -1,5 +1,0 @@
-/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Mods/RocketMan/Assemblies/RocketMan.dll
-/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Mods/RocketMan/Assemblies/RocketMan.pdb
-/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Mods/RocketMan/Source/RocketMan/obj/Debug/RocketMan.csproj.CoreCompileInputs.cache
-/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Mods/RocketMan/Source/RocketMan/obj/Debug/RocketMan.dll
-/Users/karimbatbouta/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Mods/RocketMan/Source/RocketMan/obj/Debug/RocketMan.pdb
