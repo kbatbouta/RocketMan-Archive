@@ -1,0 +1,29 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workbench ActiveDocument="Gagarin/Core/Optimizations/LoadedModManager_Patch.cs">
+    <Files>
+      <File FileName="Gagarin/Core/DefXmlHelper.cs" Line="140" Column="37" />
+      <File FileName="Gagarin/Core/Optimizations/LoadedModManager_Patch.cs" Line="1" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="RocketMan" expanded="True">
+            <Node name="Gagarin" expanded="True">
+              <Node name="Core" expanded="True">
+                <Node name="Optimizations" expanded="True">
+                  <Node name="LoadedModManager_Patch.cs" selected="True" />
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>

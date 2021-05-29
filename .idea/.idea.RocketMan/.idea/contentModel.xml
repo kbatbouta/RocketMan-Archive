@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="$PROJECT_DIR$/../../ColonyManager2/Assemblies" t="ExcludeRecursive" />
+    <e p="$PROJECT_DIR$/../../ColonyManager2/Source/ColonyManager2" t="IncludeRecursive">
+      <e p="Base.cs" t="Include" />
+      <e p="Core" t="Include">
+        <e p="Containers" t="Include">
+          <e p="Selectors" t="Include">
+            <e p="Columns" t="Include">
+              <e p="ColonistColumn_Gear.cs" t="Include" />
+              <e p="ColonistsColumn_Capacity.cs" t="Include" />
+              <e p="ColonistsColumn_Name.cs" t="Include" />
+              <e p="ColonistsColumn_Need.cs" t="Include" />
+              <e p="ColonistsColumn_Skill.cs" t="Include" />
+              <e p="ColonistsColumn_Stat.cs" t="Include" />
+              <e p="IColonistsColumn.cs" t="Include" />
+            </e>
+            <e p="ISelector.cs" t="Include" />
+            <e p="ISelector_GenericSelection.cs" t="Include" />
+            <e p="Selector_AreaSelection.cs" t="Include" />
+            <e p="Selector_ColonistsColumns.cs" t="Include" />
+            <e p="Selector_DefSelection.cs" t="Include" />
+            <e p="Selector_PawnSelection.cs" t="Include" />
+            <e p="Selector_TypeSelection.cs" t="Include" />
+          </e>
+          <e p="Tabs" t="Include">
+            <e p="ITabContent.cs" t="Include" />
+            <e p="TabContent_Colonists.cs" t="Include" />
+            <e p="TabContent_InspectorSettings.cs" t="Include" />
+            <e p="TabContent_Manage.cs" t="Include" />
+            <e p="TabContent_Settings.cs" t="Include" />
+            <e p="TabHolder.cs" t="Include" />
+          </e>
+        </e>
+        <e p="Extensions.cs" t="Include" />
+        <e p="GUIExtensions.cs" t="Include" />
+        <e p="Inspector" t="Include">
+          <e p="IElement.cs" t="Include" />
+          <e p="IElement_AllowedArea.cs" t="Include" />
+          <e p="IElement_Capacity.cs" t="Include" />
+          <e p="IElement_GapLine.cs" t="Include" />
+          <e p="IElement_HealthBar.cs" t="Include" />
+          <e p="IElement_JobLabel.cs" t="Include" />
+          <e p="IElement_Medication.cs" t="Include" />
+          <e p="IElement_MentalStat.cs" t="Include" />
+          <e p="IElement_MoodBar.cs" t="Include" />
+          <e p="IElement_MoodLabel.cs" t="Include" />
+          <e p="IElement_Need.cs" t="Include" />
+          <e p="IElement_Skill.cs" t="Include" />
+          <e p="IElement_Stat.cs" t="Include" />
+          <e p="IElement_String.cs" t="Include" />
+          <e p="IElement_Summary.cs" t="Include" />
+          <e p="IElement_TimeTable.cs" t="Include" />
+          <e p="IHolder.cs" t="Include" />
+          <e p="IHolder_LinearLayout.cs" t="Include" />
+          <e p="InspectorDrawer.cs" t="Include" />
+        </e>
+        <e p="MainButton_Toggle.cs" t="Include" />
+        <e p="Window" t="Include">
+          <e p="IWindowContainer.cs" t="Include" />
+          <e p="WindowContainer_Main.cs" t="Include" />
+        </e>
+        <e p="Workers" t="Include">
+          <e p="IWorker.cs" t="Include" />
+          <e p="IWorker_ResourceManagement.cs" t="Include" />
+          <e p="IWorker_ResourceScanner.cs" t="Include" />
+          <e p="Worker_Wood.cs" t="Include" />
+        </e>
+        <e p="WorldComponent_WorkerTicker.cs" t="Include" />
+      </e>
+      <e p="Finder.cs" t="Include" />
+      <e p="Harmony" t="Include">
+        <e p="InspectPaneFiller_Patch.cs" t="Include" />
+        <e p="InspectPaneUtility_Patch.cs" t="Include" />
+        <e p="MainTabWindow_Inspect_Patch.cs" t="Include" />
+      </e>
+      <e p="Manager2.csproj" t="IncludeRecursive" />
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="Properties" t="Include">
+        <e p="AssemblyInfo.cs" t="Include" />
+      </e>
+    </e>
+    <e p="$PROJECT_DIR$/../About" t="Include">
+      <e p="About.xml" t="Include" />
+    </e>
+    <e p="$PROJECT_DIR$/../Assemblies" t="ExcludeRecursive" />
+    <e p="$PROJECT_DIR$/../Plugins" t="ExcludeRecursive" />
+    <e p="$PROJECT_DIR$" t="IncludeFlat">
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="RocketMan" t="IncludeRecursive">
+        <e p="Core" t="Include">
+          <e p="Collections" t="Include">
+            <e p="CachedDict.cs" t="Include" />
+          </e>
+          <e p="Compatibility" t="Include">
+            <e p="DubsPreformanceAnalyzerHelper.cs" t="Include" />
+            <e p="RimWarHelper.cs" t="Include" />
+            <e p="RimWarThreadedHelper.cs" t="Include" />
+          </e>
+          <e p="Finder.cs" t="Include" />
+          <e p="Gameplay" t="Include">
+            <e p="CorpsesTracker.cs" t="Include" />
+          </e>
+          <e p="GUI" t="Include">
+            <e p="Selectors" t="Include">
+              <e p="ISelector.cs" t="Include" />
+              <e p="ISelector_GenericSelection.cs" t="Include" />
+              <e p="Selector_AreaSelection.cs" t="Include" />
+              <e p="Selector_DefSelection.cs" t="Include" />
+              <e p="Selector_PawnSelection.cs" t="Include" />
+              <e p="Selector_TypeSelection.cs" t="Include" />
+            </e>
+            <e p="Tabs" t="Include">
+              <e p="ITabContent.cs" t="Include" />
+              <e p="TabContent_Debug.cs" t="Include" />
+              <e p="TabContent_Settings.cs" t="Include" />
+              <e p="TabContent_Soyuz.cs" t="Include" />
+              <e p="TabContent_Stats.cs" t="Include" />
+              <e p="TabHolder.cs" t="Include" />
+            </e>
+          </e>
+          <e p="Main.cs" t="Include" />
+          <e p="MainButton_Toggle.cs" t="Include" />
+          <e p="ModHelper.cs" t="Include" />
+          <e p="Optimizations" t="Include">
+            <e p="GlowGrid_Patch.cs" t="Include" />
+            <e p="GraphicConsts_Patch.cs" t="Include" />
+            <e p="Obsolete" t="Include">
+              <e p="Pawn_Patch.cs" t="Include" />
+            </e>
+            <e p="PathFinder_Patch.cs" t="Include" />
+            <e p="PlayLog_Patch.cs" t="Include" />
+            <e p="StatPart_ApparelStatOffSet_Patch.cs" t="Include" />
+            <e p="StatWorker_Patch.cs" t="Include" />
+            <e p="WorldReachability_Patch.cs" t="Include" />
+          </e>
+          <e p="Others" t="Include">
+            <e p="HashUtility.cs" t="Include" />
+            <e p="SignatureUtility.cs" t="Include" />
+            <e p="Tools.cs" t="Include" />
+            <e p="TranspilerUtility.cs" t="Include" />
+          </e>
+          <e p="Patches" t="Include">
+            <e p="Pawn_Notify_Patch.cs" t="Include" />
+            <e p="Pawn_TimetableTracker_Patch.cs" t="Include" />
+            <e p="TickManager_Patch.cs" t="Include" />
+            <e p="TimeSlower_Patch.cs" t="Include" />
+          </e>
+          <e p="RocketPatcher.cs" t="Include" />
+          <e p="RocketSettings.cs" t="Include" />
+          <e p="RocketSettings.Exceptions.cs" t="Include" />
+          <e p="RocketShip.cs" t="Include" />
+          <e p="RocketWindow.cs" t="Include" />
+        </e>
+        <e p="Legacy" t="Include">
+          <e p="Cacheable.cs" t="Include" />
+          <e p="HarmonyPatches" t="Include">
+            <e p="HarmonyUtility.cs" t="Include" />
+            <e p="zStatExtension_Patch.cs" t="Include" />
+          </e>
+          <e p="Model" t="Include">
+            <e p="AbstractStatRequestModel.cs" t="Include" />
+            <e p="GridTempModel.cs" t="Include" />
+            <e p="StatRequestModel.cs" t="Include" />
+            <e p="StatRequestModelComparer.cs" t="Include" />
+          </e>
+        </e>
+        <e p="obj" t="ExcludeRecursive" />
+        <e p="packages.config" t="Include" />
+        <e p="Properties" t="Include">
+          <e p="AssemblyInfo.cs" t="Include" />
+        </e>
+        <e p="RocketMan.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="RocketMan.sln" t="IncludeFlat" />
+    </e>
+    <e p="$PROJECT_DIR$/../../Soyuz/Source/Soyuz" t="IncludeRecursive">
+      <e p="Core" t="Include">
+        <e p="Context.cs" t="Include" />
+        <e p="ContextualExtensions.cs" t="Include" />
+        <e p="Patches" t="Include">
+          <e p="CameraDriver_Patch.cs" t="Include" />
+          <e p="Hediff_Patch.cs" t="Include" />
+          <e p="Hediff_Pregnant_Patch.cs" t="Include" />
+          <e p="HediffComp_Patch.cs" t="Include" />
+          <e p="ImmunityRecord_Patch.cs" t="Include" />
+          <e p="JobDriver_Patch.cs" t="Include" />
+          <e p="MentalBreaker_Patch.cs" t="Include" />
+          <e p="MentalState_Patch.cs" t="Include" />
+          <e p="Need_Rest_Patch.cs" t="Include" />
+          <e p="Pawn_AgeTracker_Patch.cs" t="Include" />
+          <e p="Pawn_CallTracker_Patch.cs" t="Include" />
+          <e p="Pawn_HealthTracker_Patch.cs" t="Include" />
+          <e p="Pawn_JobTracker_Patch.cs" t="Include" />
+          <e p="Pawn_MindState_Patch.cs" t="Include" />
+          <e p="Pawn_NeedsTracker_Patch.cs" t="Include" />
+          <e p="Pawn_Patch.cs" t="Include" />
+          <e p="Pawn_PathFollower_Patch.cs" t="Include" />
+          <e p="Pawn_RecordsTracker_Patch.cs" t="Include" />
+          <e p="Pawn_SkillsTracker_Patch.cs" t="Include" />
+          <e p="WorldPawns_Patch.cs" t="Include" />
+        </e>
+        <e p="Profiling" t="Include">
+          <e p="ITab_History.cs" t="Include" />
+          <e p="PawnHediffModel.cs" t="Include" />
+          <e p="PawnNeedModel.cs" t="Include" />
+          <e p="PawnPerformanceModel.cs" t="Include" />
+        </e>
+        <e p="SoyuzPatcher.cs" t="Include" />
+        <e p="SoyuzSettings.cs" t="Include" />
+        <e p="SoyuzSettingsUtility.cs" t="Include" />
+        <e p="WorldPawnsTicker.cs" t="Include" />
+      </e>
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="Properties" t="Include">
+        <e p="AssemblyInfo.cs" t="Include" />
+      </e>
+      <e p="Soyuz.csproj" t="IncludeRecursive" />
+    </e>
+    <e p="$PROJECT_DIR$/../../../../../../../../../Caches/JetBrains/Rider2020.3/extResources" t="IncludeRecursive" />
+    <e p="$PROJECT_DIR$/../../../../../../../../../Caches/JetBrains/Rider2020.3/resharper-host/local/Transient/Rider/v203/SolutionCaches/_RocketMan.-1735627098.00" t="ExcludeRecursive" />
+  </component>
+</project>

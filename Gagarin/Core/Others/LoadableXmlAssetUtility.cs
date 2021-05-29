@@ -12,6 +12,7 @@ namespace Gagarin
 {
     public static class LoadableXmlAssetUtility
     {
+
         public static void Push(XmlNode node, LoadableXmlAsset asset, XmlDocument document)
         {
             XmlElement current = document.CreateElement("DefXmlNode");
@@ -32,7 +33,7 @@ namespace Gagarin
             dump.RemoveAll();
             dump.AppendChild(dump.CreateElement("DefXmlStorage"));
             DefXmlHelper.Clear();
-            HashSet<XmlElement> skipset = DefXmlHelper.FindDuplicates(document.DocumentElement.ChildNodes);
+            HashSet<XmlElement> skipset = DefXmlHelper.FindInvalidNodes(document.DocumentElement.ChildNodes);
             LoadableXmlAsset asset;
             foreach (XmlNode node in document.DocumentElement.ChildNodes)
             {
@@ -67,21 +68,29 @@ namespace Gagarin
             };
             using StringReader input = new StringReader(File.ReadAllText(dumpPath));
             using XmlReader xmlReader = XmlReader.Create(input, settings);
-
+            LoadableXmlAsset defaultLoadable = new LoadableXmlAsset(Context.core.Name, dumpPath, "<Empty />")
+            {
+                mod = Context.core,
+            };
             XmlDocument dump = new XmlDocument();
             dump.Load(xmlReader);
             document.RemoveAll();
             document.AppendChild(document.CreateElement("Defs"));
             assetlookup.Clear();
-            foreach (XmlElement node in dump.DocumentElement.ChildNodes)
+            foreach (XmlNode child in dump.DocumentElement.ChildNodes)
             {
+                if (child.NodeType != XmlNodeType.Element)
+                {
+                    continue;
+                }
+                XmlElement node = child as XmlElement;
                 string id = node.FirstChild?.InnerText ?? string.Empty;
                 if (!(node.LastChild is XmlElement) || node == null)
                 {
                     continue;
                 }
                 XmlElement defContent = document.ImportNode(node.LastChild, true) as XmlElement;
-                if (!id.NullOrEmpty() && !node.GetAttribute("name").NullOrEmpty())
+                if (!id.NullOrEmpty() && !node.GetAttribute("name").NullOrEmpty() && node.GetAttribute("isCore") == "false")
                 {
                     if (loadablelookup.TryGetValue(id, out LoadableXmlAsset loadable))
                     {
@@ -89,12 +98,12 @@ namespace Gagarin
                     }
                     else
                     {
-                        string name = node.GetAttribute("name");
-                        string packageId = node.GetAttribute("packageId");
-                        string filePath = node.GetAttribute("filePath");
-                        bool isCore = node.GetAttribute("isCore") == "true" ? true : false;
-                        assetlookup[node] = FindLoadable(name, packageId, filePath, isCore);
+                        assetlookup[node] = FindLoadable(node.GetAttribute("name"), node.GetAttribute("packageId"), node.GetAttribute("filePath"), node.GetAttribute("isCore") == "true" ? true : false);
                     }
+                }
+                else
+                {
+                    assetlookup[node] = defaultLoadable;
                 }
                 document.DocumentElement.AppendChild(defContent);
             }

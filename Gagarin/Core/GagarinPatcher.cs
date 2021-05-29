@@ -32,13 +32,14 @@ namespace Gagarin
         public override void OnPatchingSuccessful(MethodBase replacement)
         {
             base.OnPatchingSuccessful(replacement);
-            Log.Message($"GAGARIN: Patched {replacement}");
+            //
+            //Log.Message($"GAGARIN: Patched {replacement}");
         }
 
         public override void OnPatchingFailed(Exception er)
         {
             base.OnPatchingFailed(er);
-            Log.Message($"GAGARIN: Patching failed! {DeclaringType}");
+            Log.Error($"GAGARIN: Patching failed! {DeclaringType}");
         }
     }
 

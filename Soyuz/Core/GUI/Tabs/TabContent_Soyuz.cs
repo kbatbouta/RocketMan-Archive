@@ -71,7 +71,7 @@ namespace Soyuz.Tabs
             rect.yMin += 30;
             if (curSelection != null)
             {
-                var height = 128 + (RocketDebugPrefs.debug ? 25 : 0);
+                var height = 128 + (RocketDebugPrefs.debug ? 75 : 0);
                 var selectionRect = rect.TopPartPixels(height);
                 Widgets.DrawMenuSection(selectionRect);
                 Text.Font = GameFont.Tiny;
@@ -93,10 +93,13 @@ namespace Soyuz.Tabs
                 }
                 else
                 {
-                    standard_extras.Label($"This race will be ignored due to a mod <color=red>incompability issues or by a modder request!</color>");
+                    standard_extras.Label($"This race will be ignored because: <color=red>{ IgnoreMeDatabase.Report(curSelection.pawnDef) }</color>");
                 }
                 if (RocketDebugPrefs.debug)
                 {
+                    standard_extras.GapLine();
+                    standard_extras.Label($"This race modContentPack is { curSelection.pawnDef.modContentPack?.PackageId ?? "UNKNOWN" }");
+                    standard_extras.Label($"This race defName is { curSelection.pawnDef.defName ?? "UNKNOWN" }");
                     if (curSelection.pawnDef.StatBaseDefined(StatDefOf.MoveSpeed))
                         standard_extras.Label($"Base race move speed is {curSelection.pawnDef.GetStatValueAbstract(StatDefOf.MoveSpeed)}:{Context.dilationFastMovingRace[curSelection.pawnDef.index]}");
                     else standard_extras.Label("Base race move speed is not defined");
@@ -135,7 +138,6 @@ namespace Soyuz.Tabs
                 counter++;
                 if (counter % 2 == 0)
                     Widgets.DrawBoxSolid(curRect, new Color(0.2f, 0.2f, 0.2f));
-                //Widgets.DrawHighlightIfMouseover(curRect);
                 Widgets.DefLabelWithIcon(curRect, element.pawnDef);
                 if (Widgets.ButtonInvisible(curRect))
                 {

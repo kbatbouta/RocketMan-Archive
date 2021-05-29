@@ -10,16 +10,20 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using RimWorld;
 
 namespace Gagarin
 {
     public static class LoadedModManager_Patch
     {
         public static bool cacheExists = false;
+
         public static bool cacheUsed = false;
 
         public static string cachePath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache");
+
         public static string cachedModsListPath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache/mods.xml");
+
         public static string cachedUnifiedXmlPath = Path.Combine(GenFilePaths.ConfigFolderPath, "Cache/unified.xml");
 
         public static Dictionary<string, LoadableXmlAsset> loadablelookup = new Dictionary<string, LoadableXmlAsset>();
@@ -41,21 +45,25 @@ namespace Gagarin
             HashSet<string> currentMods = new HashSet<string>();
             foreach (ModContentPack modContent in LoadedModManager.RunningMods)
             {
+                if (Context.core == null && modContent.IsCoreMod)
+                    Context.core = modContent;
+
                 currentMods.Add(modContent.PackageId);
                 Context.runningMods.Add(modContent);
                 Context.packageIdLoadIndexlookup[modContent.PackageId] = loadIndex++;
             }
             LoadedModManager_Patch.PatchAll();
+            // TODO reactivate this
             cacheExists = true;
             if (!Directory.Exists(cachePath))
             {
                 Directory.CreateDirectory(cachePath);
                 Log.Message($"GAGARIN: Created cache folder at {cachedUnifiedXmlPath}");
             }
-            if (File.Exists(cachedUnifiedXmlPath))
+            if (!File.Exists(cachedUnifiedXmlPath))
             {
                 Log.Warning($"GAGARIN: Cache not found starting the caching process!");
-                cacheExists = true;
+                cacheExists = false;
             }
             if (RunningModsSetUtility.Changed(currentMods, cachedModsListPath))
             {

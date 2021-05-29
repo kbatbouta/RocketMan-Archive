@@ -10,90 +10,88 @@ namespace RocketMan
     {
         private static bool[] defsIgnored = new bool[ushort.MaxValue];
 
-        private static HashSet<string> parsedDefNames = new HashSet<string>();
+        private static HashSet<string> defNames = new HashSet<string>();
 
-        public static bool ShouldIgnore(Def def) => defsIgnored[def.index];
+        private static HashSet<string> packageIds = new HashSet<string>();
+
+        private static Dictionary<Def, string> reportlookup = new Dictionary<Def, string>();
 
         private static string report = "ROCKETMAN: <color=red>IgnoreMe report</color>";
 
-        public static void Add(Def def)
+        public static bool ShouldIgnore(Def def) => defsIgnored[def.index];
+
+        public static void Add(Def def, string reason)
         {
-            report += $"\nROCKETMAN: IgnoreMe add def by name:{def.defName}";
+            report += $"\nROCKETRULES: IgnoreMe add def by name: { def.defName }";
+
             defsIgnored[def.index] = true;
+            reportlookup[def] = reason;
         }
 
-        public static void Add(string defName) => parsedDefNames.Add(defName);
-
-        public static void AddAll(ModContentPack mod)
+        public static void Add(string defName)
         {
-            foreach (Def def in mod.AllDefs) Add(def);
+            defNames.Add(defName);
         }
 
         public static void AddPackageId(string packageId)
         {
-            packageId = packageId.ToLower();
-            try { AddAll(LoadedModManager.runningMods.First(m => m.PackageId.ToLower() == packageId)); }
-            catch (Exception) { report += $"\nROCKETMAN: Failed to find mod with packageId {packageId}"; }
+            packageIds.Add(packageId.ToLower());
+
+            Log.Message($"ROCKETRULES: IgnoreMeRule for { packageId }");
+        }
+
+        public static string Report(Def def)
+        {
+            return reportlookup.TryGetValue(def, out string report) ? report : string.Empty;
         }
 
         public static void ParsePrepare()
         {
             try
             {
-                Dictionary<string, ThingDef> thingDefsByName =
-                    DefDatabase<ThingDef>.defsByName;
-                Dictionary<string, StatDef> statDefsByName =
-                    DefDatabase<StatDef>.defsByName;
-                Dictionary<string, HediffDef> hediffDefsByName =
-                    DefDatabase<HediffDef>.defsByName;
-                Dictionary<string, BuildableDef> buildableDefsByName =
-                    DefDatabase<BuildableDef>.defsByName;
-                Dictionary<string, BodyDef> bodyDefsByName =
-                    DefDatabase<BodyDef>.defsByName;
-                Dictionary<string, JobDef> jobsDefsByName =
-                    DefDatabase<JobDef>.defsByName;
-                foreach (string defName in parsedDefNames)
+                // foreach (ModContentPack mod in LoadedModManager.RunningMods)
+                // {
+                //    if (!packageIds.Any(id => ComparePackageIds(id, mod)))
+                //    {
+                //        continue;
+                //    }
+                //    foreach (Def def in mod.AllDefs)
+                //    {
+                //        if (!(def is ThingDef thingDef && thingDef.race != null && thingDef.thingClass != typeof(Pawn)))
+                //        {
+                //            Add(def, $"Ignored because of a compatibility consideration with " +
+                //                $"<color=red>{mod.Name}</color>[<color=blue>{mod.PackageId}</color>]");
+                //        }
+                //    }
+                // }
+
+                foreach (ThingDef thingDef in DefDatabase<ThingDef>.AllDefs)
                 {
-                    try
+                    if (thingDef.race == null)
                     {
-                        if (thingDefsByName.TryGetValue(defName, out ThingDef thingDef))
-                        {
-                            Add(thingDef);
-                            continue;
-                        }
-                        if (statDefsByName.TryGetValue(defName, out StatDef statDef))
-                        {
-                            Add(statDef);
-                            continue;
-                        }
-                        if (hediffDefsByName.TryGetValue(defName, out HediffDef hediffDef))
-                        {
-                            Add(hediffDef);
-                            continue;
-                        }
-                        if (buildableDefsByName.TryGetValue(defName, out BuildableDef buildableDef))
-                        {
-                            Add(buildableDef);
-                            continue;
-                        }
-                        if (bodyDefsByName.TryGetValue(defName, out BodyDef bodyDef))
-                        {
-                            Add(bodyDef);
-                            continue;
-                        }
-                        if (jobsDefsByName.TryGetValue(defName, out JobDef jobDef))
-                        {
-                            Add(jobDef);
-                            continue;
-                        }
+                        continue;
                     }
-                    catch (Exception er) { Log.Warning($"ROCKETMAN: Parsing IgnoreMe rule failed by name {defName} with error {er}"); }
+                    if (thingDef.thingClass != typeof(Pawn))
+                    {
+                        Add(thingDef, $"Ignored because of a custom thingClass { thingDef.thingClass.Name }");
+                    }
                 }
-                // ------------------------------
-                // Publish report to avoid spam..
+            }
+            catch (Exception er)
+            {
+                Log.Error($"ROCKETRULES: Parsing error! {er}");
+            }
+            finally
+            {
                 Log.Message(report);
             }
-            catch (Exception er) { Log.Error($"ROCKETRULES: Parsing error! {er}"); }
+        }
+
+        private static bool ComparePackageIds(string packageId, ModContentPack mod)
+        {
+            string other = mod.PackageId.ToLower();
+            return !other.EndsWith("_steam")
+                ? packageId.ToLower() == other : mod.PackageIdPlayerFacing.ToLower() == packageId.ToLower();
         }
     }
 }

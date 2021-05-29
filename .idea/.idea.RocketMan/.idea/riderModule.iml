@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="RIDER_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$/../../../../ColonyManager2/Source/ColonyManager2" />
+    <content url="file://$MODULE_DIR$/../../../About" />
+    <content url="file://$MODULE_DIR$/../.." />
+    <content url="file://$MODULE_DIR$/../../../../Soyuz/Source/Soyuz" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
